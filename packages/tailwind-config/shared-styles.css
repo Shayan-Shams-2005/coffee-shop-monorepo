@@ -1,7 +1,19 @@
 @import "tailwindcss";
 
 @theme {
-  --color-blue-1000: #2a8af6;
-  --color-purple-1000: #a853ba;
-  --color-red-1000: #e92a67;
+  /* اسپرسو (تیره برای متن‌های اصلی و هدر) */
+  --color-coffee-900: #231511;
+  /* دارک رست (پس‌زمینه دکمه‌ها در حالت هاور) */
+  --color-coffee-800: #3c2317;
+  /* موکا (رنگ اصلی برند) */
+  --color-coffee-600: #754e35;
+  /* لاته (حاشیه‌ها و آیکون‌ها) */
+  --color-coffee-400: #ba8d71;
+  /* کرم/فوم شیر (پس‌زمینه کل سایت) */
+  --color-coffee-100: #f9f6f0;
+
+  /* رنگ کاراملی برای دکمه‌های اصلی و Call to Action */
+  --color-accent: #d4a373;
+  /* رنگ کاراملی تیره‌تر برای Hover */
+  --color-accent-hover: #c28e5c;
 }
