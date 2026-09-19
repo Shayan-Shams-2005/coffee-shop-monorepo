@@ -1,23 +1,43 @@
-import { Button } from "@repo/ui/button";
+import { Hero } from "../components/home/Hero";
+import { QuickLinks } from "../components/home/QuickLinks";
+import { SpecialOffers } from "../components/home/special-offers/SpecialOffers";
+import { AdBanners } from "../components/home/AdBanners";
+import { CategoryGrid } from "../components/home/CategoryGrid";
+import { NewestProducts } from "../components/home/newest-products/NewestProducts";
+import { Bestsellers } from "../components/home/best-sellers/BestSellers";
+import { PopularBrands } from "../components/home/PopularBrands";
+
+// 🚀 ایمپورت دیتای استاتیک
+import {
+  promoBanners4,
+  promoBanners2,
+  promoBanners3,
+} from "../lib/mock/home-data";
 
 export default function Home() {
   return (
-    <div className="bg-coffee-100 min-h-screen flex flex-col items-center justify-center p-8">
-      <div className="max-w-2xl text-center space-y-6">
-        <h1 className="text-5xl font-bold text-coffee-900">
-          به فروشگاه قهوه ما خوش آمدید!
-        </h1>
-        <p className="text-xl text-coffee-600">
-          طعم واقعی اسپرسو را با دانه‌های دست‌چین شده ما تجربه کنید.
-        </p>
+    <main className="w-full flex flex-col items-center">
+      {/* 
+        رنگ پس‌زمینه bg-[#FDFCFB] حذف شد چون توسط globals.css مدیریت می‌شود.
+        عرض 1440 پیکسل برای یکپارچگی المان‌های صفحه اصلی حفظ شد.
+      */}
+      <div className="w-full max-w-[1440px] mx-auto pb-20">
+        <Hero />
+        <QuickLinks />
+        <SpecialOffers />
 
-        <div className="flex justify-center gap-4 pt-4">
-          <Button>مشاهده محصولات</Button>
-          <Button className="bg-coffee-800 hover:bg-coffee-900">
-            حساب کاربری
-          </Button>
-        </div>
+        <AdBanners banners={promoBanners4} />
+
+        <CategoryGrid />
+        <NewestProducts />
+
+        <AdBanners banners={promoBanners2} />
+
+        <Bestsellers />
+        <PopularBrands />
+
+        <AdBanners banners={promoBanners3} />
       </div>
-    </div>
+    </main>
   );
 }

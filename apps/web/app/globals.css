@@ -1,2 +1,52 @@
 @import "tailwindcss";
 @import "@repo/tailwind-config";
+
+/* ==========================================
+   ۱. تنظیمات تم (Theme Variables)
+   ========================================== */
+@theme {
+  --font-sans:
+    var(--font-vazirmatn), ui-sans-serif, system-ui, sans-serif,
+    "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
+}
+
+/* ==========================================
+   ۲. استایل‌های پایه (Base Styles)
+   ========================================== */
+@layer base {
+  body {
+    @apply bg-[#FDFCFB] text-[#2C1E16] antialiased;
+  }
+}
+
+/* ==========================================
+   ۳. کلاس‌های ابزاری (نسخه اصلاح شده برای v4)
+   ========================================== */
+
+/* 🚀 دقت کنید که @utility مستقیماً نوشته شده و داخل @layer نیست */
+
+@utility hide-scrollbar {
+  -ms-overflow-style: none; /* برای IE و Edge */
+  scrollbar-width: none; /* برای Firefox */
+
+  &::-webkit-scrollbar {
+    display: none; /* برای Chrome, Safari و Opera */
+  }
+}
+
+@utility custom-scrollbar {
+  &::-webkit-scrollbar {
+    width: 4px;
+    height: 4px;
+  }
+  &::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  &::-webkit-scrollbar-thumb {
+    background-color: #e8dccb;
+    border-radius: 20px;
+  }
+  &:hover::-webkit-scrollbar-thumb {
+    background-color: #d4a373;
+  }
+}

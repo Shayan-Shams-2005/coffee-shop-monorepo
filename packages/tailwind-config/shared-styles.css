@@ -1,5 +1,8 @@
 @import "tailwindcss";
 
+/* 🚀 Add this line to enable manual dark mode via the toggle button! */
+@variant dark (&:where(.dark, .dark *));
+
 @theme {
   /* اسپرسو (تیره برای متن‌های اصلی و هدر) */
   --color-coffee-900: #231511;
