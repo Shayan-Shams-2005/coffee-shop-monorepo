@@ -19,7 +19,7 @@
   "devEngines": {
     "packageManager": {
       "name": "npm",
-      "version": "11.6.2"
+      "version": "11.19.0"
     }
   },
   "workspaces": [
@@ -28,6 +28,8 @@
   ],
   "dependencies": {
     "lucide-react": "^1.33.0",
+    "react-date-object": "^2.1.9",
+    "react-multi-date-picker": "^4.5.2",
     "zustand": "^5.0.15"
   }
 }
