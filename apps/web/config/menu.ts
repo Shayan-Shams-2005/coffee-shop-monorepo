@@ -18,10 +18,10 @@ export interface MenuCategory {
 export const megaMenuCategories: MenuCategory[] = [
   {
     id: "coffee-types",
-    title: "خرید قهوه (ترکیبی و دمی)",
+    title: "قهوه (ترکیبی و دمی)",
     sections: [
       {
-        title: "خرید قهوه اسپرسو",
+        title: "قهوه اسپرسو",
         items: [
           "پیشنهاد شده برای اسپرسو",
           "پیشنهادات ترکیبی",
@@ -32,7 +32,7 @@ export const megaMenuCategories: MenuCategory[] = [
         ],
       },
       {
-        title: "خرید قهوه فرانسه",
+        title: "قهوه فرانسه",
         items: [
           "پیشنهاد شده برای فرانسه",
           "عطری و گلی میوه ای",
@@ -42,7 +42,7 @@ export const megaMenuCategories: MenuCategory[] = [
         ],
       },
       {
-        title: "خرید قهوه ترک",
+        title: "قهوه ترک",
         items: [
           "قهوه ترک تازه دارک فول کافئین",
           "قهوه ترک تازه مدیوم",
@@ -50,11 +50,11 @@ export const megaMenuCategories: MenuCategory[] = [
         ],
       },
       {
-        title: "خرید قهوه دمی",
+        title: "قهوه دمی",
         items: ["پیشنهاد شده برای دمی", "اسپشیالیتی", "پریمیوم", "اقتصادی"],
       },
       {
-        title: "خرید قهوه های ترکیبی",
+        title: "قهوه های ترکیبی",
         items: [
           "۱۰۰٪ عربیکا",
           "۷۰٪ عربیکا ۳۰٪ روبوستا",
@@ -115,7 +115,7 @@ export const megaMenuCategories: MenuCategory[] = [
     title: "کپسول و قهوه فوری",
     sections: [
       {
-        title: "خرید قهوه فوری",
+        title: "قهوه فوری",
         items: [
           "گلد برزیل",
           "کلاسیک هند",
@@ -125,7 +125,7 @@ export const megaMenuCategories: MenuCategory[] = [
         ],
       },
       {
-        title: "خرید کپسول قهوه",
+        title: "کپسول قهوه",
         items: ["کپسول قهوه مشکی", "کپسول قهوه سبز"],
       },
     ],
