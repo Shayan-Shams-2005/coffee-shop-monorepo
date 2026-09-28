@@ -1,13 +1,17 @@
 // cSpell:disable
 "use client";
 
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo, useEffect, Suspense } from "react";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import { Plus, Edit, Trash2, Filter, PackageSearch, Search, X, Infinity, Timer, Tag } from "lucide-react";
 
 // Importing the shared DRY components from your shop structure
 import { FilterSideBar } from "../../../components/filters/FilterSideBar";
 import { SortBar, SortOption } from "../../../components/sort/SortBar";
+
+// Import categories to generate complete mock data
+import { megaMenuCategories } from "../../../config/menu";
 
 export type SortType =
   | "newest"
@@ -26,6 +30,7 @@ const toFarsiNumber = (num: number | string) => {
   const farsiDigits = ["۰", "۱", "۲", "۳", "۴", "۵", "۶", "۷", "۸", "۹"];
   return num.toString().replace(/\d/g, (x) => farsiDigits[parseInt(x)] || x);
 };
+
 const formatPersianDate = (dateString: string) => {
   const date = new Date(dateString);
   const datePart = new Intl.DateTimeFormat('fa-IR', { day: 'numeric', month: 'long' }).format(date);
@@ -33,53 +38,79 @@ const formatPersianDate = (dateString: string) => {
   return `${datePart}، ${timePart}`;
 };
 
-export default function AdminProductsPage() {
-  const [products, setProducts] = useState([
-    {
-      id: 1,
-      name: "قهوه تخصصی تک‌خاستگاه لاین ۱",
-      category: "قهوه تک خاستگاه، غیرترکیبی",
-      brand: "ایلی",
-      price: 350000,
-      stock: 45,
-      salesVolume: 120,
-      hasOffer: false,
-      newPrice: null,
-      offerEndDate: null,
-      image: "/images/product-1.png",
-    },
-    {
-      id: 2,
-      name: "پکیج ویژه ایلی مدل 2",
-      category: "اکسسوری و ابزار دم آوری",
-      brand: "ایلی",
-      price: 395000,
-      stock: 12,
-      salesVolume: 34,
-      hasOffer: true,
-      newPrice: 335000,
-      offerEndDate: "2026-10-15T23:59:59", // Specific End Date
-      image: "/images/product-2.png",
-    },
-    {
-      id: 3,
-      name: "قهوه فوری گلد کلاسیک",
-      category: "کپسول و قهوه فوری",
-      brand: "نسکافه",
-      price: 280000,
-      stock: 0,
-      salesVolume: 450,
-      hasOffer: true,
-      newPrice: 250000,
-      offerEndDate: null, // Infinite Offer
-      image: "/images/product-3.png",
-    },
-  ]);
+// ==========================================
+// Generate 300 Mock Products for ALL Categories
+// ==========================================
+const getCompleteCategories = () => {
+  const names = new Set<string>();
+  megaMenuCategories.forEach(main => {
+    names.add(main.title);
+    main.sections.forEach(sec => {
+      names.add(sec.title);
+      sec.items.forEach(item => names.add(item));
+    });
+  });
+  return Array.from(names);
+};
+const COMPLETE_CATEGORIES = getCompleteCategories();
+
+const baseProducts = [
+  { name: "قهوه اسپرسو ویژه", price: 350000, brand: "ایلی" },
+  { name: "قهوه ترک مدیوم", price: 280000, brand: "مهمت افندی" },
+  { name: "اسپرسو دارک رست", price: 420000, brand: "لاوازا" },
+  { name: "دان قهوه ۱۰۰٪ عربیکا", price: 550000, brand: "استارباکس" },
+  { name: "کپسول قهوه نسپرسو", price: 480000, brand: "نسپرسو" },
+  { name: "چای سبز لاهیجان", price: 150000, brand: "تی‌کانه" },
+  { name: "ماگ سرامیکی مشکی", price: 220000, brand: "متفرقه" },
+  { name: "موکاپات ۳ کاپ", price: 850000, brand: "بیالتی" },
+  { name: "فرنچ پرس ۶۰۰ میل", price: 450000, brand: "یاتی" },
+  { name: "پودر کاکائو هلندی", price: 320000, brand: "نسکافه" },
+];
+
+const mockProducts = Array.from({ length: 300 }).map((_, index) => {
+  const base = baseProducts[index % baseProducts.length]!;
+  const categoryName = COMPLETE_CATEGORIES[index % COMPLETE_CATEGORIES.length] || "قهوه اسپرسو";
+  
+  return {
+    id: index + 1000,
+    name: `${base.name} (کد ${index + 1})`,
+    category: categoryName,
+    brand: base.brand,
+    price: base.price + ((index % 5) * 15000),
+    stock: index % 7 === 0 ? 0 : 15 + (index % 10),
+    salesVolume: 10 + (index % 50),
+    hasOffer: index % 4 === 0,
+    newPrice: index % 4 === 0 ? base.price - 50000 : null,
+    offerEndDate: index % 4 === 0 ? "2026-10-15T23:59:59" : null,
+    image: `/images/product-${(index % 3) + 1}.png`,
+  };
+});
+
+function ProductsPageContent() {
+  const searchParams = useSearchParams();
+  // Read the category from the URL (e.g., ?category=قهوه اسپرسو)
+  const initialCategory = searchParams.get("category");
+
+  const [products, setProducts] = useState(mockProducts);
 
   // Shared Filter States
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedBrands, setSelectedBrands] = useState<string[]>([]);
-  const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
+  
+  // Initialize the category filter with the URL parameter if it exists!
+  const [selectedCategories, setSelectedCategories] = useState<string[]>(
+    initialCategory ? [initialCategory] : []
+  );
+
+  // 🚀 FIXED: Ensure the category is checked when the URL changes
+  useEffect(() => {
+    if (initialCategory) {
+      setSelectedCategories((prev) =>
+        prev.includes(initialCategory) ? prev : [...prev, initialCategory]
+      );
+    }
+  }, [initialCategory]);
+  
   const [minPrice, setMinPrice] = useState<string>("");
   const [maxPrice, setMaxPrice] = useState<string>("");
   const [activeSort, setActiveSort] = useState<SortType>("newest");
@@ -194,14 +225,12 @@ export default function AdminProductsPage() {
         {/* ================= Main Content Area ================= */}
         <main className="flex-1 w-full min-w-0 space-y-6">
           
-          {/* Reusable SortBar Component */}
           <SortBar
             activeSort={activeSort}
             onSortChange={(sort) => setActiveSort(sort as SortType)}
             productCount={filteredAndSortedProducts.length}
             options={ADMIN_SORT_OPTIONS}
           >
-            {/* Mobile Filter Trigger Button injected as children */}
             <button
               onClick={() => setIsMobileFilterOpen(true)}
               className="lg:hidden flex items-center justify-center gap-2 px-4 py-2 bg-white dark:bg-[#1A110F] border border-[#E3C3A4] dark:border-[#3A221C] text-[#C68E58] dark:text-[#EAE0D5] rounded-xl text-xs font-bold transition-colors"
@@ -229,7 +258,6 @@ export default function AdminProductsPage() {
                   {filteredAndSortedProducts.length > 0 ? (
                     filteredAndSortedProducts.map((product) => (
                       <tr key={product.id} className="hover:bg-[#FCF9F5]/70 dark:hover:bg-[#2A1B16]/50 transition-colors group">
-                        {/* 1. Product & Brand Column */}
                         <td className="p-5">
                           <div className="flex items-center gap-4">
                             <div className="w-14 h-14 rounded-2xl bg-[#FCF9F5] dark:bg-[#231511] border border-gray-100 dark:border-[#3c2317] relative p-1 flex-shrink-0 flex items-center justify-center group-hover:border-[#C68E58]/30 transition-colors">
@@ -244,12 +272,10 @@ export default function AdminProductsPage() {
                           </div>
                         </td>
 
-                        {/* 2. Category Column */}
                         <td className="p-5 font-medium text-[#4A3022] dark:text-[#EAE0D5] whitespace-nowrap truncate max-w-[180px]">
                           {product.category}
                         </td>
 
-                        {/* 3. Price & Offer Column */}
                         <td className="p-5 whitespace-nowrap dir-ltr text-left pl-8">
                           {product.hasOffer && product.newPrice ? (
                             <div className="flex flex-col items-end gap-1">
@@ -267,7 +293,6 @@ export default function AdminProductsPage() {
                           )}
                         </td>
 
-                                        {/* 4. Offer Timer Column */}
                         <td className="p-5 whitespace-nowrap text-center">
                           {product.hasOffer ? (
                             product.offerEndDate ? (
@@ -284,12 +309,11 @@ export default function AdminProductsPage() {
                             <span className="text-[#8C7A6B] font-black text-lg">-</span>
                           )}
                         </td>
-                        {/* 5. Sales Volume Column */}
+                        
                         <td className="p-5 font-black text-[#2C1E16] dark:text-[#D4A373] text-center whitespace-nowrap">
                           {toFarsiNumber(product.salesVolume)}
                         </td>
 
-                        {/* 6. Stock Column */}
                         <td className="p-5 whitespace-nowrap">
                           {product.stock > 0 ? (
                             <span className="text-[#8C7A6B] dark:text-[#A1A1A1] text-xs font-bold">{toFarsiNumber(product.stock)} عدد</span>
@@ -300,7 +324,6 @@ export default function AdminProductsPage() {
                           )}
                         </td>
 
-                        {/* 7. Actions Column */}
                         <td className="p-5">
                           <div className="flex items-center justify-center gap-2 opacity-80 group-hover:opacity-100 transition-opacity">
                             <Link href={`/admin/edit`} className="p-2.5 text-gray-400 hover:text-[#C68E58] hover:bg-[#FCF9F5] dark:text-[#6A5A4F] dark:hover:text-[#C68E58] dark:hover:bg-[#231511] rounded-xl transition-all inline-flex border border-transparent dark:hover:border-[#3c2317]">
@@ -380,5 +403,18 @@ export default function AdminProductsPage() {
         </div>
       )}
     </div>
+  );
+}
+
+// Next.js requires useSearchParams to be wrapped in a Suspense boundary
+export default function AdminProductsPage() {
+  return (
+    <Suspense fallback={
+      <div className="w-full h-64 flex items-center justify-center text-[#8C7A6B] font-bold">
+        در حال بارگذاری...
+      </div>
+    }>
+      <ProductsPageContent />
+    </Suspense>
   );
 }
