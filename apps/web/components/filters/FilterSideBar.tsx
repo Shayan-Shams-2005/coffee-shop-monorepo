@@ -3,7 +3,7 @@
 
 import { Search, Filter } from "lucide-react";
 // در صورت نیاز مسیر ایمپورت‌ها را بر اساس پوشه‌بندی خود تنظیم کنید
-import { ALL_BRANDS } from "../../lib/mock/offers-data"; 
+import { brandsData } from "../../config/brands"; 
 import { megaMenuCategories } from "../../config/menu"; 
 import { FilterAccordion } from "./FilterAccordion";
 import { FilterCheckboxList } from "./FilterCheckboxList";
@@ -24,6 +24,9 @@ const getCompleteCategories = () => {
 
 const COMPLETE_CATEGORIES = getCompleteCategories();
 
+// استخراج فقط نام برندها برای کامپوننت فیلتر
+const ALL_BRANDS_NAMES = brandsData.map(brand => brand.name);
+
 interface OffersSidebarProps {
   searchQuery: string;
   setSearchQuery: (query: string) => void;
@@ -36,11 +39,15 @@ interface OffersSidebarProps {
   maxPrice: string;
   setMaxPrice: (price: string) => void;
   MAX_ALLOWED_PRICE: number;
+  // 🚀 New Props added here
+  isCategoryOpen?: boolean;
+  isBrandOpen?: boolean;
 }
 
 export function FilterSideBar(props: OffersSidebarProps) {
   // بررسی می‌کنیم که آیا دسته‌ای از طریق URL یا کلیک انتخاب شده است یا خیر
-  const hasSelectedCategory = props.selectedCategories.length > 0;
+  const hasSelectedCategory = props.selectedCategories.length > 0 || props.isCategoryOpen;
+  const hasSelectedBrand = props.selectedBrands.length > 0 || props.isBrandOpen;
 
   return (
     <aside className="w-full lg:w-70 shrink-0 self-start lg:sticky lg:top-[100px] z-30">
@@ -90,12 +97,12 @@ export function FilterSideBar(props: OffersSidebarProps) {
           </FilterAccordion>
 
           {/* Brands */}
-          <FilterAccordion title="برندها" defaultOpen={false}>
+          <FilterAccordion title="برندها" defaultOpen={hasSelectedBrand}>
             {/* FIXED: Added dir="ltr" to container to move scrollbar right, and wrapped content in dir="rtl" */}
             <div className="max-h-60 overflow-y-auto pr-3 custom-scrollbar" dir="ltr">
               <div dir="rtl">
                 <FilterCheckboxList
-                  items={ALL_BRANDS}
+                  items={ALL_BRANDS_NAMES}
                   selectedItems={props.selectedBrands}
                   onToggle={props.toggleBrand}
                 />

@@ -55,20 +55,21 @@ const getCompleteCategories = () => {
 const COMPLETE_CATEGORIES = getCompleteCategories();
 
 const baseProducts = [
-  { name: "قهوه اسپرسو ویژه", price: 350000, brand: "ایلی" },
+  { name: "قهوه اسپرسو ویژه", price: 350000, brand: "ایلی" }, // Changed to match filter list
   { name: "قهوه ترک مدیوم", price: 280000, brand: "مهمت افندی" },
-  { name: "اسپرسو دارک رست", price: 420000, brand: "لاوازا" },
-  { name: "دان قهوه ۱۰۰٪ عربیکا", price: 550000, brand: "استارباکس" },
-  { name: "کپسول قهوه نسپرسو", price: 480000, brand: "نسپرسو" },
+  { name: "اسپرسو دارک رست", price: 420000, brand: "لاوازا" }, // Changed to match filter list
+  { name: "دان قهوه ۱۰۰٪ عربیکا", price: 550000, brand: "استارباکس" }, // Changed to match filter list
+  { name: "کپسول قهوه نسپرسو", price: 480000, brand: "نسپرسو" }, // Changed to match filter list
   { name: "چای سبز لاهیجان", price: 150000, brand: "تی‌کانه" },
   { name: "ماگ سرامیکی مشکی", price: 220000, brand: "متفرقه" },
-  { name: "موکاپات ۳ کاپ", price: 850000, brand: "بیالتی" },
+  { name: "موکاپات ۳ کاپ", price: 850000, brand: "بیالتی" }, // Changed to match filter list
   { name: "فرنچ پرس ۶۰۰ میل", price: 450000, brand: "یاتی" },
-  { name: "پودر کاکائو هلندی", price: 320000, brand: "نسکافه" },
+  { name: "پودر کاکائو هلندی", price: 320000, brand: "نسکافه" }, // Changed to match filter list
 ];
 
 const mockProducts = Array.from({ length: 300 }).map((_, index) => {
-  const base = baseProducts[index % baseProducts.length]!;
+  // 🚀 FIXED: Added a fallback object to safely handle potential undefined values
+  const base = baseProducts[index % baseProducts.length] || { name: "قهوه اسپرسو ویژه", price: 350000, brand: "ایلی" };
   const categoryName = COMPLETE_CATEGORIES[index % COMPLETE_CATEGORIES.length] || "قهوه اسپرسو";
   
   return {
@@ -86,23 +87,39 @@ const mockProducts = Array.from({ length: 300 }).map((_, index) => {
   };
 });
 
+// Helper function to strip out the English part in parentheses
+const sanitizeNameForFilter = (name: string | null) => {
+  if (!name) return null;
+  // 🚀 FIXED: Added a fallback empty string to satisfy TypeScript's strict array indexing
+  return (name.split('(')[0] ?? "").trim();
+};
+
 function ProductsPageContent() {
   const searchParams = useSearchParams();
-  // Read the category from the URL (e.g., ?category=قهوه اسپرسو)
-  const initialCategory = searchParams.get("category");
+  
+  // Read and sanitize URL parameters
+  const initialCategory = sanitizeNameForFilter(searchParams.get("category"));
+  const initialBrand = sanitizeNameForFilter(searchParams.get("brand"));
 
   const [products, setProducts] = useState(mockProducts);
-
-  // Shared Filter States
   const [searchQuery, setSearchQuery] = useState("");
-  const [selectedBrands, setSelectedBrands] = useState<string[]>([]);
-  
-  // Initialize the category filter with the URL parameter if it exists!
+
+  const [selectedBrands, setSelectedBrands] = useState<string[]>(
+    initialBrand ? [initialBrand] : []
+  );
+
+  useEffect(() => {
+    if (initialBrand) {
+      setSelectedBrands((prev) =>
+        prev.includes(initialBrand) ? prev : [...prev, initialBrand]
+      );
+    }
+  }, [initialBrand]);
+
   const [selectedCategories, setSelectedCategories] = useState<string[]>(
     initialCategory ? [initialCategory] : []
   );
 
-  // 🚀 FIXED: Ensure the category is checked when the URL changes
   useEffect(() => {
     if (initialCategory) {
       setSelectedCategories((prev) =>
@@ -111,6 +128,7 @@ function ProductsPageContent() {
     }
   }, [initialCategory]);
   
+  // Shared Filter States
   const [minPrice, setMinPrice] = useState<string>("");
   const [maxPrice, setMaxPrice] = useState<string>("");
   const [activeSort, setActiveSort] = useState<SortType>("newest");
@@ -118,7 +136,6 @@ function ProductsPageContent() {
   
   const MAX_ALLOWED_PRICE = 5000000;
 
-  // Handle body scroll locking for mobile drawer
   useEffect(() => {
     document.body.style.overflow = isMobileFilterOpen ? "hidden" : "auto";
     return () => {
@@ -146,9 +163,10 @@ function ProductsPageContent() {
     setSelectedCategories([]);
     setMinPrice("");
     setMaxPrice("");
+    
+    window.history.replaceState({}, '', '/admin/products');
   };
 
-  // Robust Filtering & Sorting Logic
   const filteredAndSortedProducts = useMemo(() => {
     let result = products;
 
@@ -219,6 +237,9 @@ function ProductsPageContent() {
             maxPrice={maxPrice}
             setMaxPrice={setMaxPrice}
             MAX_ALLOWED_PRICE={MAX_ALLOWED_PRICE}
+            // Pass the initial flags to determine which accordions start open
+            isCategoryOpen={!!initialCategory}
+            isBrandOpen={!!initialBrand}
           />
         </div>
 
@@ -271,11 +292,9 @@ function ProductsPageContent() {
                             </div>
                           </div>
                         </td>
-
                         <td className="p-5 font-medium text-[#4A3022] dark:text-[#EAE0D5] whitespace-nowrap truncate max-w-[180px]">
                           {product.category}
                         </td>
-
                         <td className="p-5 whitespace-nowrap dir-ltr text-left pl-8">
                           {product.hasOffer && product.newPrice ? (
                             <div className="flex flex-col items-end gap-1">
@@ -292,7 +311,6 @@ function ProductsPageContent() {
                             </span>
                           )}
                         </td>
-
                         <td className="p-5 whitespace-nowrap text-center">
                           {product.hasOffer ? (
                             product.offerEndDate ? (
@@ -309,11 +327,9 @@ function ProductsPageContent() {
                             <span className="text-[#8C7A6B] font-black text-lg">-</span>
                           )}
                         </td>
-                        
                         <td className="p-5 font-black text-[#2C1E16] dark:text-[#D4A373] text-center whitespace-nowrap">
                           {toFarsiNumber(product.salesVolume)}
                         </td>
-
                         <td className="p-5 whitespace-nowrap">
                           {product.stock > 0 ? (
                             <span className="text-[#8C7A6B] dark:text-[#A1A1A1] text-xs font-bold">{toFarsiNumber(product.stock)} عدد</span>
@@ -323,7 +339,6 @@ function ProductsPageContent() {
                             </span>
                           )}
                         </td>
-
                         <td className="p-5">
                           <div className="flex items-center justify-center gap-2 opacity-80 group-hover:opacity-100 transition-opacity">
                             <Link href={`/admin/edit`} className="p-2.5 text-gray-400 hover:text-[#C68E58] hover:bg-[#FCF9F5] dark:text-[#6A5A4F] dark:hover:text-[#C68E58] dark:hover:bg-[#231511] rounded-xl transition-all inline-flex border border-transparent dark:hover:border-[#3c2317]">
@@ -388,6 +403,8 @@ function ProductsPageContent() {
                 maxPrice={maxPrice}
                 setMaxPrice={setMaxPrice}
                 MAX_ALLOWED_PRICE={MAX_ALLOWED_PRICE}
+                isCategoryOpen={!!initialCategory}
+                isBrandOpen={!!initialBrand}
               />
             </div>
 
