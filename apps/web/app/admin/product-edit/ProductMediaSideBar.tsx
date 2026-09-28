@@ -1,8 +1,8 @@
 // cSpell:disable
 "use client";
 
-import { useState } from "react";
-import { Upload, X, Plus, ImageIcon, Layers, Tag, Eye, GripHorizontal } from "lucide-react";
+import { useState, useEffect } from "react";
+import { Upload, X, Plus, ImageIcon, Layers, Tag, Eye } from "lucide-react";
 import { ProductFormData } from "../../types/admin";
 
 interface Props {
@@ -12,10 +12,66 @@ interface Props {
 
 export function ProductMediaSidebar({ formData, setFormData }: Props) {
   const [previewImage, setPreviewImage] = useState<string | null>(null);
-  
+  const [mainImageBroken, setMainImageBroken] = useState(false);
+
   // Drag and Drop States
   const [draggedIdx, setDraggedIdx] = useState<number | null>(null);
   const [dragOverIdx, setDragOverIdx] = useState<number | null>(null);
+
+  // A main image counts only if it has a real value and it actually loads
+  const hasMainImage = Boolean(formData.mainImage?.trim()) && !mainImageBroken;
+
+  // ================= Validate main image =================
+  // Preload the image in memory so we catch failures even when the <img>
+  // error event fired before React hydrated (e.g. dead blob: URL after refresh).
+  useEffect(() => {
+    setMainImageBroken(false);
+
+    const src = formData.mainImage?.trim();
+    if (!src) return;
+
+    let cancelled = false;
+    const probe = new window.Image();
+    probe.onerror = () => {
+      if (!cancelled) setMainImageBroken(true);
+    };
+    probe.src = src;
+
+    return () => {
+      cancelled = true;
+    };
+  }, [formData.mainImage]);
+
+  // ================= Remove dead / empty gallery images =================
+  // Gallery images only exist when the user adds them. Any entry that is empty
+  // or fails to load (for example a stale blob: URL after a page refresh) is removed.
+  useEffect(() => {
+    if (formData.gallery.length === 0) return;
+
+    let cancelled = false;
+
+    const removeFromGallery = (src: string) => {
+      if (cancelled) return;
+      setFormData((prev) => ({
+        ...prev,
+        gallery: prev.gallery.filter((g) => g !== src),
+      }));
+    };
+
+    formData.gallery.forEach((src) => {
+      if (!src || !src.trim()) {
+        removeFromGallery(src);
+        return;
+      }
+      const probe = new window.Image();
+      probe.onerror = () => removeFromGallery(src);
+      probe.src = src;
+    });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [formData.gallery, setFormData]);
 
   const handleChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     setFormData((prev) => ({ ...prev, [e.target.name]: e.target.value }));
@@ -34,13 +90,13 @@ export function ProductMediaSidebar({ formData, setFormData }: Props) {
     const files = Array.from(e.target.files || []);
     if (files.length > 0) {
       const currentGalleryCount = formData.gallery.length;
-      const remainingSlots = 9 - currentGalleryCount; 
+      const remainingSlots = 9 - currentGalleryCount;
       const filesToAdd = files.slice(0, remainingSlots);
-      
+
       const newImageUrls = filesToAdd.map((file) => URL.createObjectURL(file));
-      setFormData((prev) => ({ 
-        ...prev, 
-        gallery: [...prev.gallery, ...newImageUrls] 
+      setFormData((prev) => ({
+        ...prev,
+        gallery: [...prev.gallery, ...newImageUrls],
       }));
     }
   };
@@ -67,7 +123,7 @@ export function ProductMediaSidebar({ formData, setFormData }: Props) {
   };
 
   const handleDragOver = (e: React.DragEvent, index: number) => {
-    e.preventDefault(); 
+    e.preventDefault();
     if (dragOverIdx !== index) {
       setDragOverIdx(index);
     }
@@ -79,15 +135,15 @@ export function ProductMediaSidebar({ formData, setFormData }: Props) {
       setDragOverIdx(null);
       return;
     }
-    
+
     const newGallery = [...formData.gallery];
     const [draggedItem] = newGallery.splice(draggedIdx, 1);
-    
+
     if (draggedItem) {
       newGallery.splice(index, 0, draggedItem);
-      setFormData(prev => ({ ...prev, gallery: newGallery }));
+      setFormData((prev) => ({ ...prev, gallery: newGallery }));
     }
-    
+
     setDraggedIdx(null);
     setDragOverIdx(null);
   };
@@ -105,7 +161,9 @@ export function ProductMediaSidebar({ formData, setFormData }: Props) {
             <ImageIcon className="w-5 h-5 text-[#C68E58] dark:text-[#C68E58]" /> تصاویر
           </h2>
           <div className="text-xs font-bold text-[#8C7A6B] bg-[#FCF9F5] dark:bg-[#1A0F0C] px-3 py-1.5 rounded-xl flex items-center gap-1">
-            <span dir="ltr">{(formData.gallery.length + (formData.mainImage ? 1 : 0)).toLocaleString("fa-IR")} / ۱۰</span>
+            <span dir="ltr">
+              {(formData.gallery.length + (hasMainImage ? 1 : 0)).toLocaleString("fa-IR")} / ۱۰
+            </span>
             <span>تصویر</span>
           </div>
         </div>
@@ -115,13 +173,18 @@ export function ProductMediaSidebar({ formData, setFormData }: Props) {
           <div>
             <label className="block text-sm font-bold text-[#4A3022] dark:text-[#EAE0D5] mb-2.5">تصویر اصلی</label>
             <div className="w-full h-48 bg-gray-50/50 dark:bg-[#1A0F0C] border-2 border-dashed border-gray-200 dark:border-[#3c2317] rounded-[2rem] flex flex-col items-center justify-center transition-all relative overflow-hidden group">
-              
-              {formData.mainImage ? (
+
+              {hasMainImage ? (
                 <>
-                  <img src={formData.mainImage} alt="" className="w-full h-full object-contain p-2" />
-                  
+                  <img
+                    src={formData.mainImage}
+                    alt=""
+                    onError={() => setMainImageBroken(true)}
+                    className="w-full h-full object-contain p-2"
+                  />
+
                   <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 flex flex-row items-center justify-center gap-6 transition-opacity z-20">
-                    <button 
+                    <button
                       type="button"
                       onClick={() => setPreviewImage(formData.mainImage || null)}
                       className="flex flex-col items-center gap-2 text-white hover:text-[#C68E58] transition-colors"
@@ -133,11 +196,11 @@ export function ProductMediaSidebar({ formData, setFormData }: Props) {
                     <div className="w-px h-12 bg-white/20"></div>
 
                     <div className="relative flex flex-col items-center gap-2 text-white hover:text-[#C68E58] transition-colors cursor-pointer">
-                      <input 
-                        type="file" 
-                        accept="image/*" 
+                      <input
+                        type="file"
+                        accept="image/*"
                         onChange={handleMainImageUpload}
-                        className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-30" 
+                        className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-30"
                       />
                       <Upload className="w-7 h-7 drop-shadow-lg" />
                       <span className="text-xs font-bold drop-shadow-md">تغییر</span>
@@ -146,11 +209,11 @@ export function ProductMediaSidebar({ formData, setFormData }: Props) {
                 </>
               ) : (
                 <>
-                  <input 
-                    type="file" 
-                    accept="image/*" 
+                  <input
+                    type="file"
+                    accept="image/*"
                     onChange={handleMainImageUpload}
-                    className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10" 
+                    className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
                   />
                   <Upload className="w-8 h-8 text-gray-300 dark:text-[#6A5A4F] mb-3 group-hover:text-[#C68E58] dark:group-hover:text-[#C68E58] transition-colors group-hover:-translate-y-1 duration-300" />
                   <span className="text-sm font-bold text-gray-400 dark:text-[#8C7A6B] group-hover:text-[#C68E58]">آپلود تصویر اصلی</span>
@@ -166,7 +229,7 @@ export function ProductMediaSidebar({ formData, setFormData }: Props) {
             </label>
             <div className="grid grid-cols-3 gap-3">
               {formData.gallery.map((img, i) => (
-                <div 
+                <div
                   key={img + i}
                   draggable
                   onDragStart={(e) => handleDragStart(e, i)}
@@ -178,10 +241,20 @@ export function ProductMediaSidebar({ formData, setFormData }: Props) {
                     ${draggedIdx === i ? "opacity-40" : ""}
                   `}
                 >
-                  <img src={img} alt="" className="w-full h-full object-cover rounded-2xl pointer-events-none" />
-                  
+                  <img
+                    src={img}
+                    alt=""
+                    onError={() =>
+                      setFormData((prev) => ({
+                        ...prev,
+                        gallery: prev.gallery.filter((g) => g !== img),
+                      }))
+                    }
+                    className="w-full h-full object-cover rounded-2xl pointer-events-none"
+                  />
+
                   <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 flex flex-row items-center justify-center gap-3 transition-opacity z-10 rounded-2xl">
-                    <button 
+                    <button
                       type="button"
                       onClick={() => setPreviewImage(img)}
                       className="text-white hover:text-[#C68E58] transition-colors p-1"
@@ -193,34 +266,34 @@ export function ProductMediaSidebar({ formData, setFormData }: Props) {
                     <div className="w-px h-6 bg-white/30"></div>
 
                     <div className="relative text-white hover:text-[#C68E58] transition-colors cursor-pointer p-1" title="تغییر">
-                      <input 
-                        type="file" 
-                        accept="image/*" 
+                      <input
+                        type="file"
+                        accept="image/*"
                         onChange={(e) => handleGalleryImageReplace(i, e)}
-                        className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-30" 
+                        className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-30"
                       />
                       <Upload className="w-5 h-5 drop-shadow-md" />
                     </div>
                   </div>
 
-                  <button 
-                    type="button" 
-                    onClick={() => removeGalleryImage(i)} 
+                  <button
+                    type="button"
+                    onClick={() => removeGalleryImage(i)}
                     className="absolute -top-2 -right-2 bg-rose-500 text-white p-1.5 rounded-full shadow-lg hover:bg-rose-600 hover:scale-110 transition-transform z-20 opacity-0 group-hover:opacity-100"
                   >
                     <X className="w-3 h-3" />
                   </button>
                 </div>
               ))}
-              
+
               {formData.gallery.length < 9 && (
                 <div className="aspect-square bg-gray-50/50 dark:bg-[#1A0F0C] border-2 border-dashed border-gray-200 dark:border-[#3c2317] hover:border-[#C68E58] dark:hover:border-[#C68E58] rounded-2xl flex items-center justify-center cursor-pointer transition-colors group relative">
-                  <input 
-                    type="file" 
-                    accept="image/*" 
-                    multiple 
+                  <input
+                    type="file"
+                    accept="image/*"
+                    multiple
                     onChange={handleGalleryUpload}
-                    className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10" 
+                    className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
                   />
                   <Plus className="w-6 h-6 text-gray-300 dark:text-[#6A5A4F] group-hover:text-[#C68E58]" />
                 </div>
@@ -260,23 +333,23 @@ export function ProductMediaSidebar({ formData, setFormData }: Props) {
 
       {/* ================= Lightbox / Image Preview Modal ================= */}
       {previewImage && (
-        <div 
+        <div
           className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 animate-in fade-in duration-200"
           onClick={() => setPreviewImage(null)}
         >
           <div className="relative max-w-5xl w-full flex justify-center">
-            <button 
+            <button
               type="button"
               onClick={() => setPreviewImage(null)}
               className="absolute -top-12 right-0 sm:-right-12 p-2 bg-white/10 hover:bg-rose-500 text-white rounded-full transition-colors z-10"
             >
               <X className="w-6 h-6" />
             </button>
-            <img 
-              src={previewImage} 
-              alt="Preview" 
+            <img
+              src={previewImage}
+              alt="Preview"
               className="max-w-full max-h-[85vh] object-contain rounded-2xl shadow-2xl"
-              onClick={(e) => e.stopPropagation()} 
+              onClick={(e) => e.stopPropagation()}
             />
           </div>
         </div>
