@@ -1,3 +1,4 @@
+// cSpell:disable
 "use client";
 
 import { Search, Filter } from "lucide-react";
@@ -22,11 +23,9 @@ interface OffersSidebarProps {
 
 export function FilterSideBar(props: OffersSidebarProps) {
   return (
-    // 🚀 FIXED: Restored brackets for [100px] because it's a custom pixel value
     <aside className="w-full lg:w-70 shrink-0 self-start lg:sticky lg:top-[100px] z-30">
       <div
         dir="ltr"
-        // 🚀 FIXED: Restored brackets for [450px] and [550px]
         className="bg-white dark:bg-[#1A110F] rounded-3xl shadow-[0_8px_30px_rgba(0,0,0,0.03)] dark:shadow-[0_8px_30px_rgba(0,0,0,0.4)] border border-[#F5EFE6] dark:border-[#3A221C] w-full max-h-[450px] lg:max-h-[550px] overflow-y-auto overscroll-none hover-scroll-trigger transition-colors duration-300"
       >
         <div dir="rtl" className="p-5 sm:p-6 flex flex-col gap-6">
@@ -50,7 +49,6 @@ export function FilterSideBar(props: OffersSidebarProps) {
                 value={props.searchQuery}
                 onChange={(e) => props.setSearchQuery(e.target.value)}
                 style={{ textAlign: "right", direction: "rtl" }}
-                // 🚀 FIXED: Restored brackets around the hex color: dark:bg-[#231511]
                 className="w-full h-11 border border-[#E3C3A4] dark:border-[#3A221C] rounded-xl pr-3 pl-10 text-[13px] text-[#3D2616] dark:text-[#EAE0D5] placeholder-[#A1A1A1] dark:placeholder-[#6A5A4F] focus:outline-none focus:border-[#C68E58] dark:focus:border-[#C68E58] focus:ring-1 focus:ring-[#C68E58] bg-[#FFFDFB] dark:bg-[#231511] transition-all"
               />
               <Search className="w-5 h-5 text-[#A1A1A1] dark:text-[#6A5A4F] absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none transition-colors" />
@@ -58,7 +56,8 @@ export function FilterSideBar(props: OffersSidebarProps) {
           </div>
 
           {/* Categories */}
-          <FilterAccordion title="دسته‌بندی محصولات">
+          {/* 🚀 FIXED: Added defaultOpen={false} to make it closed initially */}
+          <FilterAccordion title="دسته‌بندی محصولات" defaultOpen={false}>
             <FilterCheckboxList
               items={PRODUCT_CATEGORIES}
               selectedItems={props.selectedCategories}
@@ -67,7 +66,8 @@ export function FilterSideBar(props: OffersSidebarProps) {
           </FilterAccordion>
 
           {/* Brands */}
-          <FilterAccordion title="برندها">
+          {/* 🚀 FIXED: Added defaultOpen={false} to make it closed initially */}
+          <FilterAccordion title="برندها" defaultOpen={false}>
             <FilterCheckboxList
               items={ALL_BRANDS}
               selectedItems={props.selectedBrands}
@@ -76,7 +76,8 @@ export function FilterSideBar(props: OffersSidebarProps) {
           </FilterAccordion>
 
           {/* Price Range */}
-          <FilterAccordion title="محدوده قیمت" maxHeight="max-h-[500px]">
+          {/* 🚀 FIXED: Added defaultOpen={false} to make it closed initially */}
+          <FilterAccordion title="محدوده قیمت" maxHeight="max-h-[500px]" defaultOpen={false}>
             <FilterPrice
               minPrice={props.minPrice}
               setMinPrice={props.setMinPrice}
