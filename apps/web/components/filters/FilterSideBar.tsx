@@ -2,10 +2,27 @@
 "use client";
 
 import { Search, Filter } from "lucide-react";
-import { ALL_BRANDS, PRODUCT_CATEGORIES } from "../../lib/mock/offers-data";
+// در صورت نیاز مسیر ایمپورت‌ها را بر اساس پوشه‌بندی خود تنظیم کنید
+import { ALL_BRANDS } from "../../lib/mock/offers-data"; 
+import { megaMenuCategories } from "../../config/menu"; 
 import { FilterAccordion } from "./FilterAccordion";
 import { FilterCheckboxList } from "./FilterCheckboxList";
 import { FilterPrice } from "./FilterPrice";
+
+// این تابع تمام دسته‌های اصلی و زیردسته‌ها را از منو استخراج کرده و به یک لیست تبدیل می‌کند
+const getCompleteCategories = () => {
+  const names = new Set<string>();
+  megaMenuCategories.forEach(main => {
+    names.add(main.title); // دسته‌های اصلی
+    main.sections.forEach(sec => {
+      names.add(sec.title); // بخش‌ها
+      sec.items.forEach(item => names.add(item)); // آیتم‌های نهایی (مثل پیشنهاد شده برای اسپرسو)
+    });
+  });
+  return Array.from(names);
+};
+
+const COMPLETE_CATEGORIES = getCompleteCategories();
 
 interface OffersSidebarProps {
   searchQuery: string;
@@ -22,11 +39,14 @@ interface OffersSidebarProps {
 }
 
 export function FilterSideBar(props: OffersSidebarProps) {
+  // بررسی می‌کنیم که آیا دسته‌ای از طریق URL یا کلیک انتخاب شده است یا خیر
+  const hasSelectedCategory = props.selectedCategories.length > 0;
+
   return (
     <aside className="w-full lg:w-70 shrink-0 self-start lg:sticky lg:top-[100px] z-30">
       <div
         dir="ltr"
-        className="bg-white dark:bg-[#1A110F] rounded-3xl shadow-[0_8px_30px_rgba(0,0,0,0.03)] dark:shadow-[0_8px_30px_rgba(0,0,0,0.4)] border border-[#F5EFE6] dark:border-[#3A221C] w-full max-h-[450px] lg:max-h-[550px] overflow-y-auto overscroll-none hover-scroll-trigger transition-colors duration-300"
+        className="bg-white dark:bg-[#1A110F] rounded-3xl shadow-[0_8px_30px_rgba(0,0,0,0.03)] dark:shadow-[0_8px_30px_rgba(0,0,0,0.4)] border border-[#F5EFE6] dark:border-[#3A221C] w-full max-h-[450px] lg:max-h-[550px] overflow-y-auto overscroll-none hover-scroll-trigger transition-colors duration-300 custom-scrollbar"
       >
         <div dir="rtl" className="p-5 sm:p-6 flex flex-col gap-6">
           {/* Header */}
@@ -56,27 +76,34 @@ export function FilterSideBar(props: OffersSidebarProps) {
           </div>
 
           {/* Categories */}
-          {/* 🚀 FIXED: Added defaultOpen={false} to make it closed initially */}
-          <FilterAccordion title="دسته‌بندی محصولات" defaultOpen={false}>
-            <FilterCheckboxList
-              items={PRODUCT_CATEGORIES}
-              selectedItems={props.selectedCategories}
-              onToggle={props.toggleCategory}
-            />
+          <FilterAccordion title="دسته‌بندی محصولات" defaultOpen={hasSelectedCategory}>
+            {/* FIXED: Added dir="ltr" to container to move scrollbar right, and wrapped content in dir="rtl" */}
+            <div className="max-h-60 overflow-y-auto pr-3 custom-scrollbar" dir="ltr">
+              <div dir="rtl">
+                <FilterCheckboxList
+                  items={COMPLETE_CATEGORIES}
+                  selectedItems={props.selectedCategories}
+                  onToggle={props.toggleCategory}
+                />
+              </div>
+            </div>
           </FilterAccordion>
 
           {/* Brands */}
-          {/* 🚀 FIXED: Added defaultOpen={false} to make it closed initially */}
           <FilterAccordion title="برندها" defaultOpen={false}>
-            <FilterCheckboxList
-              items={ALL_BRANDS}
-              selectedItems={props.selectedBrands}
-              onToggle={props.toggleBrand}
-            />
+            {/* FIXED: Added dir="ltr" to container to move scrollbar right, and wrapped content in dir="rtl" */}
+            <div className="max-h-60 overflow-y-auto pr-3 custom-scrollbar" dir="ltr">
+              <div dir="rtl">
+                <FilterCheckboxList
+                  items={ALL_BRANDS}
+                  selectedItems={props.selectedBrands}
+                  onToggle={props.toggleBrand}
+                />
+              </div>
+            </div>
           </FilterAccordion>
 
           {/* Price Range */}
-          {/* 🚀 FIXED: Added defaultOpen={false} to make it closed initially */}
           <FilterAccordion title="محدوده قیمت" maxHeight="max-h-[500px]" defaultOpen={false}>
             <FilterPrice
               minPrice={props.minPrice}
