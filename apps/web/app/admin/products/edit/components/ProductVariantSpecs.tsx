@@ -8,73 +8,113 @@ interface Props {
   setFormData: React.Dispatch<React.SetStateAction<ProductFormData>>;
 }
 
-export function ProductVariantSpecs({ formData, setFormData }: Props) {
-  const MAX_OPTIONS_PER_GROUP = 10;
-  const MAX_OPTION_GROUPS = 5;
-  const MAX_KEY_FEATURES = 10;
-  const MAX_SPECS = 30;
+const MAX_OPTIONS_PER_GROUP = 10;
+const MAX_OPTION_GROUPS = 5;
+const MAX_KEY_FEATURES = 10;
+const MAX_SPECS = 30;
 
+export function ProductVariantSpecs({ formData, setFormData }: Props) {
+
+  // General array helpers
   const updateArrayItem = (arrayName: 'keyFeatures' | 'specs', index: number, field: "key" | "value", val: string) => {
-    setFormData(p => ({ ...p, [arrayName]: p[arrayName].map((item, i) => i === index ? { ...item, [field]: val } : item) }));
+    setFormData(prev => ({ 
+      ...prev, 
+      [arrayName]: prev[arrayName].map((item, i) => i === index ? { ...item, [field]: val } : item) 
+    }));
   };
 
   const removeArrayItem = (arrayName: 'keyFeatures' | 'specs', index: number) => {
-    setFormData(p => ({ ...p, [arrayName]: p[arrayName].filter((_, i) => i !== index) }));
+    setFormData(prev => ({ 
+      ...prev, 
+      [arrayName]: prev[arrayName].filter((_, i) => i !== index) 
+    }));
   };
 
   const addArrayItem = (arrayName: 'keyFeatures' | 'specs') => {
-    setFormData(p => {
-      const currentList = p[arrayName];
+    setFormData(prev => {
+      const currentList = prev[arrayName] || [];
       const limit = arrayName === 'keyFeatures' ? MAX_KEY_FEATURES : MAX_SPECS;
-      if (currentList.length >= limit) return p;
-      return { ...p, [arrayName]: [...currentList, { key: "", value: "" }] };
+      if (currentList.length >= limit) return prev;
+      return { ...prev, [arrayName]: [...currentList, { key: "", value: "" }] };
     });
   };
 
-  const updateOptionGroupTitle = (index: number, title: string) => setFormData(p => ({ ...p, optionGroups: p.optionGroups.map((g, i) => i === index ? { ...g, title } : g) }));
+  // Option Group helpers
+  const updateOptionGroupTitle = (index: number, title: string) => {
+    setFormData(prev => ({ 
+      ...prev, 
+      optionGroups: prev.optionGroups.map((g, i) => i === index ? { ...g, title } : g) 
+    }));
+  };
   
-  const addOptionToGroup = (groupIndex: number) => setFormData(p => ({ 
-    ...p, 
-    optionGroups: p.optionGroups.map((g, i) => 
-      (i === groupIndex && g.options.length < MAX_OPTIONS_PER_GROUP) 
-        ? { ...g, options: [...g.options, ""] } 
-        : g
-    ) 
-  }));
+  const addOptionToGroup = (groupIndex: number) => {
+    setFormData(prev => ({ 
+      ...prev, 
+      optionGroups: prev.optionGroups.map((g, i) => 
+        (i === groupIndex && g.options.length < MAX_OPTIONS_PER_GROUP) 
+          ? { ...g, options: [...g.options, ""] } 
+          : g
+      ) 
+    }));
+  };
 
-  const updateOption = (groupIndex: number, optionIndex: number, value: string) => setFormData(p => ({ ...p, optionGroups: p.optionGroups.map((g, i) => i === groupIndex ? { ...g, options: g.options.map((o, j) => j === optionIndex ? value : o) } : g) }));
-  const removeOption = (groupIndex: number, optionIndex: number) => setFormData(p => ({ ...p, optionGroups: p.optionGroups.map((g, i) => i === groupIndex ? { ...g, options: g.options.filter((_, j) => j !== optionIndex) } : g) }));
-  const removeOptionGroup = (groupIndex: number) => setFormData(p => ({ ...p, optionGroups: p.optionGroups.filter((_, i) => i !== groupIndex) }));
+  const updateOption = (groupIndex: number, optionIndex: number, value: string) => {
+    setFormData(prev => ({ 
+      ...prev, 
+      optionGroups: prev.optionGroups.map((g, i) => i === groupIndex 
+        ? { ...g, options: g.options.map((o, j) => j === optionIndex ? value : o) } 
+        : g
+      ) 
+    }));
+  };
+
+  const removeOption = (groupIndex: number, optionIndex: number) => {
+    setFormData(prev => ({ 
+      ...prev, 
+      optionGroups: prev.optionGroups.map((g, i) => i === groupIndex 
+        ? { ...g, options: g.options.filter((_, j) => j !== optionIndex) } 
+        : g
+      ) 
+    }));
+  };
+
+  const removeOptionGroup = (groupIndex: number) => {
+    setFormData(prev => ({ 
+      ...prev, 
+      optionGroups: prev.optionGroups.filter((_, i) => i !== groupIndex) 
+    }));
+  };
   
-  const addOptionGroup = () => setFormData(p => ({ 
-    ...p, 
-    optionGroups: p.optionGroups.length < MAX_OPTION_GROUPS 
-      ? [...p.optionGroups, { title: "", options: [""] }] 
-      : p.optionGroups 
-  }));
+  const addOptionGroup = () => {
+    setFormData(prev => ({ 
+      ...prev, 
+      optionGroups: prev.optionGroups.length < MAX_OPTION_GROUPS 
+        ? [...prev.optionGroups, { title: "", options: [""] }] 
+        : prev.optionGroups 
+    }));
+  };
 
   return (
     <>
+      {/* Key Features Section */}
       <div className="bg-white dark:bg-[#231511] p-6 sm:p-8 rounded-[2rem] border border-gray-100 dark:border-[#3c2317] shadow-[0_2px_15px_rgba(198,142,88,0.03)] dark:shadow-none transition-all space-y-6">
         <div className="flex justify-between items-center border-b border-gray-100 dark:border-[#3c2317] pb-4 transition-colors flex-row-reverse">
-          {formData.keyFeatures.length < MAX_KEY_FEATURES ? (
+          {(formData.keyFeatures?.length || 0) < MAX_KEY_FEATURES && (
             <button type="button" onClick={() => addArrayItem('keyFeatures')} className="text-[#C68E58] dark:text-[#C68E58] hover:text-[#A87242] dark:hover:text-[#EAE0D5] text-sm font-bold flex items-center gap-1.5 transition-colors bg-[#FCF9F5] dark:bg-[#1A0F0C] px-3 py-1.5 rounded-xl border border-transparent hover:border-[#C68E58]/20">
               افزودن ویژگی <Plus className="w-4 h-4" /> 
             </button>
-          ) : (
-            <div></div>
           )}
           <h2 className="font-bold text-[#2C1E16] dark:text-white text-lg flex items-center gap-3" dir="rtl">
             <div className="w-1.5 h-6 bg-[#C68E58] rounded-full"></div> 
             ویژگی‌های کلیدی
             <span className="text-xs font-bold text-[#8C7A6B]" dir="ltr">
-              ({formData.keyFeatures.length.toLocaleString("fa-IR")} / {MAX_KEY_FEATURES.toLocaleString("fa-IR")})
+              {(formData.keyFeatures?.length || 0).toLocaleString("fa-IR")} / {MAX_KEY_FEATURES.toLocaleString("fa-IR")}
             </span>
           </h2>
         </div>
         
         <div className="grid grid-cols-1 xl:grid-cols-2 gap-4" dir="rtl">
-          {formData.keyFeatures.map((kf, index) => (
+          {(formData.keyFeatures || []).map((kf, index) => (
             <div key={index} className="flex items-center gap-2 group bg-gray-50/50 dark:bg-[#1A0F0C] p-2 rounded-2xl border border-gray-100 dark:border-[#3c2317] focus-within:border-[#C68E58] dark:focus-within:border-[#C68E58] transition-all">
               <input 
                 type="text" 
@@ -102,26 +142,25 @@ export function ProductVariantSpecs({ formData, setFormData }: Props) {
         </div>
       </div>
 
+      {/* Options/Variants Section */}
       <div className="bg-white dark:bg-[#231511] p-6 sm:p-8 rounded-[2rem] border border-gray-100 dark:border-[#3c2317] shadow-[0_2px_15px_rgba(198,142,88,0.03)] dark:shadow-none transition-all space-y-6">
         <div className="flex justify-between items-center border-b border-gray-100 dark:border-[#3c2317] pb-4 transition-colors flex-row-reverse">
-          {formData.optionGroups.length < MAX_OPTION_GROUPS ? (
+          {(formData.optionGroups?.length || 0) < MAX_OPTION_GROUPS && (
             <button type="button" onClick={addOptionGroup} className="text-[#C68E58] dark:text-[#C68E58] hover:text-[#A87242] dark:hover:text-[#EAE0D5] text-sm font-bold flex items-center gap-1.5 transition-colors bg-[#FCF9F5] dark:bg-[#1A0F0C] px-3 py-1.5 rounded-xl border border-transparent hover:border-[#C68E58]/20">
                افزودن گروه <Plus className="w-4 h-4" />
             </button>
-          ) : (
-            <div></div>
           )}
           <h2 className="font-bold text-[#2C1E16] dark:text-white text-lg flex items-center gap-3" dir="rtl">
             <div className="w-1.5 h-6 bg-[#C68E58] rounded-full"></div> 
             گزینه‌های انتخابی
             <span className="text-xs font-bold text-[#8C7A6B]" dir="ltr">
-              ({formData.optionGroups.length.toLocaleString("fa-IR")} / {MAX_OPTION_GROUPS.toLocaleString("fa-IR")})
+              {(formData.optionGroups?.length || 0).toLocaleString("fa-IR")} / {MAX_OPTION_GROUPS.toLocaleString("fa-IR")}
             </span>
           </h2>
         </div>
         
         <div className="space-y-6" dir="rtl">
-          {formData.optionGroups.map((group, groupIdx) => (
+          {(formData.optionGroups || []).map((group, groupIdx) => (
             <div key={groupIdx} className="bg-gray-50/50 dark:bg-[#1A0F0C] p-5 rounded-2xl border border-gray-100 dark:border-[#3c2317] transition-all">
               <div className="flex items-center gap-4 mb-5">
                 <div className="flex-1">
@@ -176,7 +215,7 @@ export function ProductVariantSpecs({ formData, setFormData }: Props) {
               </div>
             </div>
           ))}
-          {formData.optionGroups.length === 0 && (
+          {(!formData.optionGroups || formData.optionGroups.length === 0) && (
             <div className="text-center py-6 bg-gray-50/50 dark:bg-[#1A0F0C] border border-dashed border-gray-200 dark:border-[#3c2317] rounded-2xl">
               <ListChecks className="w-8 h-8 text-gray-300 dark:text-[#6A5A4F] mx-auto mb-2" />
               <p className="text-sm font-medium text-gray-400 dark:text-[#6A5A4F]">هیچ گزینه انتخابی برای این محصول تعریف نشده است.</p>
@@ -185,26 +224,25 @@ export function ProductVariantSpecs({ formData, setFormData }: Props) {
         </div>
       </div>
 
+      {/* Specifications Section */}
       <div className="bg-white dark:bg-[#231511] p-6 sm:p-8 rounded-[2rem] border border-gray-100 dark:border-[#3c2317] shadow-[0_2px_15px_rgba(198,142,88,0.03)] dark:shadow-none transition-all space-y-6">
         <div className="flex justify-between items-center border-b border-gray-100 dark:border-[#3c2317] pb-4 transition-colors flex-row-reverse">
-          {formData.specs.length < MAX_SPECS ? (
+          {(formData.specs?.length || 0) < MAX_SPECS && (
             <button type="button" onClick={() => addArrayItem('specs')} className="text-[#C68E58] dark:text-[#C68E58] hover:text-[#A87242] dark:hover:text-[#EAE0D5] text-sm font-bold flex items-center gap-1.5 transition-colors bg-[#FCF9F5] dark:bg-[#1A0F0C] px-3 py-1.5 rounded-xl border border-transparent hover:border-[#C68E58]/20">
               سطر جدید <Plus className="w-4 h-4" /> 
             </button>
-          ) : (
-            <div></div>
           )}
           <h2 className="font-bold text-[#2C1E16] dark:text-white text-lg flex items-center gap-3" dir="rtl">
             <div className="w-1.5 h-6 bg-[#C68E58] rounded-full"></div> 
             سایر مشخصات فنی
             <span className="text-xs font-bold text-[#8C7A6B]" dir="ltr">
-              ({formData.specs.length.toLocaleString("fa-IR")} / {MAX_SPECS.toLocaleString("fa-IR")})
+              {(formData.specs?.length || 0).toLocaleString("fa-IR")} / {MAX_SPECS.toLocaleString("fa-IR")}
             </span>
           </h2>
         </div>
         
         <div className="grid grid-cols-1 xl:grid-cols-2 gap-4" dir="rtl">
-          {formData.specs.map((spec, index) => (
+          {(formData.specs || []).map((spec, index) => (
             <div key={index} className="flex items-center gap-2 group bg-gray-50/50 dark:bg-[#1A0F0C] p-2 rounded-2xl border border-gray-100 dark:border-[#3c2317] focus-within:border-[#C68E58] dark:focus-within:border-[#C68E58] transition-all">
               <input 
                 type="text" 

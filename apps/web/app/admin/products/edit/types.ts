@@ -1,3 +1,5 @@
+// app/admin/products/edit/types.ts
+
 export interface ProductFormData {
   title: string;
   description: string;

@@ -1,4 +1,3 @@
-// cSpell:disable
 "use client";
 
 import { useState, useEffect } from "react";
@@ -20,6 +19,7 @@ export function ProductMediaSidebar({ formData, setFormData }: Props) {
     { id: "instant-coffee", name: "قهوه فوری" },
     { id: "brewing-tools", name: "تجهیزات دم‌آوری" }
   ]);
+  
   const [brands, setBrands] = useState([
     { id: "illy", name: "ایلی (illy)" },
     { id: "lavazza", name: "لاوازا (Lavazza)" },
@@ -50,7 +50,7 @@ export function ProductMediaSidebar({ formData, setFormData }: Props) {
   }, [formData.mainImage]);
 
   useEffect(() => {
-    if (formData.gallery.length === 0) return;
+    if (!formData.gallery || formData.gallery.length === 0) return;
     let cancelled = false;
 
     const removeFromGallery = (src: string) => {
@@ -82,28 +82,24 @@ export function ProductMediaSidebar({ formData, setFormData }: Props) {
     }));
   };
 
-  // Custom handlers for stock increment/decrement
+  // Safe stock updaters
   const incrementStock = () => {
-    setFormData((prev) => ({
-      ...prev,
-      // @ts-ignore
-      stock: (prev.stock || 0) + 1
-    }));
+    setFormData((prev) => {
+      const currentStock = (prev as any).stock ? Number((prev as any).stock) : 0;
+      return { ...prev, stock: currentStock + 1 };
+    });
   };
 
   const decrementStock = () => {
-    setFormData((prev) => ({
-      ...prev,
-      // @ts-ignore
-      stock: Math.max(0, (prev.stock || 0) - 1)
-    }));
+    setFormData((prev) => {
+      const currentStock = (prev as any).stock ? Number((prev as any).stock) : 0;
+      return { ...prev, stock: Math.max(0, currentStock - 1) };
+    });
   };
 
-  // ================= Add New Option Handlers =================
   const handleAddNewItem = () => {
     if (!newItemName.trim()) return;
     
-    // Create a simple URL-safe ID from the Persian name
     const newId = `custom-${Date.now()}`;
     const newItem = { id: newId, name: newItemName.trim() };
 
@@ -123,7 +119,6 @@ export function ProductMediaSidebar({ formData, setFormData }: Props) {
     setNewItemName("");
   };
 
-  // ================= Image Upload Handlers =================
   const handleMainImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
@@ -135,12 +130,12 @@ export function ProductMediaSidebar({ formData, setFormData }: Props) {
   const handleGalleryUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []);
     if (files.length > 0) {
-      const remainingSlots = 9 - formData.gallery.length;
+      const remainingSlots = 9 - (formData.gallery?.length || 0);
       const filesToAdd = files.slice(0, remainingSlots);
       const newImageUrls = filesToAdd.map((file) => URL.createObjectURL(file));
       setFormData((prev) => ({
         ...prev,
-        gallery: [...prev.gallery, ...newImageUrls],
+        gallery: [...(prev.gallery || []), ...newImageUrls],
       }));
     }
   };
@@ -160,15 +155,17 @@ export function ProductMediaSidebar({ formData, setFormData }: Props) {
     setFormData((p) => ({ ...p, gallery: p.gallery.filter((_, i) => i !== index) }));
   };
 
-  // ================= Drag & Drop Reordering Handlers =================
+  // Drag & Drop Handlers
   const handleDragStart = (e: React.DragEvent, index: number) => {
     setDraggedIdx(index);
     e.dataTransfer.effectAllowed = "move";
   };
+  
   const handleDragOver = (e: React.DragEvent, index: number) => {
     e.preventDefault();
     if (dragOverIdx !== index) setDragOverIdx(index);
   };
+  
   const handleDrop = (e: React.DragEvent, index: number) => {
     e.preventDefault();
     if (draggedIdx === null || draggedIdx === index) {
@@ -184,6 +181,7 @@ export function ProductMediaSidebar({ formData, setFormData }: Props) {
     setDraggedIdx(null);
     setDragOverIdx(null);
   };
+  
   const handleDragEnd = () => {
     setDraggedIdx(null);
     setDragOverIdx(null);
@@ -191,7 +189,7 @@ export function ProductMediaSidebar({ formData, setFormData }: Props) {
 
   return (
     <>
-      {/* ================= Images Section ================= */}
+      {/* Images Section */}
       <div className="bg-white dark:bg-[#231511] p-6 sm:p-8 rounded-[2rem] border border-gray-100 dark:border-[#3c2317] shadow-[0_2px_15px_rgba(198,142,88,0.03)] dark:shadow-none transition-all space-y-6">
         <div className="flex justify-between items-center border-b border-gray-100 dark:border-[#3c2317] pb-4 transition-colors">
           <h2 className="font-bold text-[#2C1E16] dark:text-white text-lg flex items-center gap-3" dir="rtl">
@@ -199,14 +197,13 @@ export function ProductMediaSidebar({ formData, setFormData }: Props) {
           </h2>
           <div className="text-xs font-bold text-[#8C7A6B] bg-[#FCF9F5] dark:bg-[#1A0F0C] px-3 py-1.5 rounded-xl flex items-center gap-1">
             <span dir="ltr">
-              {(formData.gallery.length + (hasMainImage ? 1 : 0)).toLocaleString("fa-IR")} / ۱۰
+              {((formData.gallery?.length || 0) + (hasMainImage ? 1 : 0)).toLocaleString("fa-IR")} / ۱۰
             </span>
             <span>تصویر</span>
           </div>
         </div>
 
         <div className="space-y-5" dir="rtl">
-          {/* Main Image Upload */}
           <div>
             <label className="block text-sm font-bold text-[#4A3022] dark:text-[#EAE0D5] mb-2.5">تصویر اصلی</label>
             <div className="w-full h-48 bg-gray-50/50 dark:bg-[#1A0F0C] border-2 border-dashed border-gray-200 dark:border-[#3c2317] rounded-[2rem] flex flex-col items-center justify-center transition-all relative overflow-hidden group">
@@ -248,20 +245,19 @@ export function ProductMediaSidebar({ formData, setFormData }: Props) {
                     onChange={handleMainImageUpload}
                     className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
                   />
-                  <Upload className="w-8 h-8 text-gray-300 dark:text-[#6A5A4F] mb-3 group-hover:text-[#C68E58] dark:group-hover:text-[#C68E58] transition-colors group-hover:-translate-y-1 duration-300" />
+                  <Upload className="w-8 h-8 text-gray-300 dark:text-[#6A5A4F] mb-3 group-hover:text-[#C68E58] transition-colors group-hover:-translate-y-1 duration-300" />
                   <span className="text-sm font-bold text-gray-400 dark:text-[#8C7A6B] group-hover:text-[#C68E58]">آپلود تصویر اصلی</span>
                 </>
               )}
             </div>
           </div>
 
-          {/* Gallery Images Upload */}
           <div>
             <label className="block text-sm font-bold text-[#4A3022] dark:text-[#EAE0D5] mb-2.5">
               گالری تصاویر
             </label>
             <div className="grid grid-cols-3 gap-3">
-              {formData.gallery.map((img, i) => (
+              {(formData.gallery || []).map((img, i) => (
                 <div
                   key={img + i}
                   draggable
@@ -277,12 +273,7 @@ export function ProductMediaSidebar({ formData, setFormData }: Props) {
                   <img
                     src={img}
                     alt=""
-                    onError={() =>
-                      setFormData((prev) => ({
-                        ...prev,
-                        gallery: prev.gallery.filter((g) => g !== img),
-                      }))
-                    }
+                    onError={() => removeGalleryImage(i)}
                     className="w-full h-full object-cover rounded-2xl pointer-events-none"
                   />
                   <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 flex flex-row items-center justify-center gap-3 transition-opacity z-10 rounded-2xl">
@@ -314,7 +305,7 @@ export function ProductMediaSidebar({ formData, setFormData }: Props) {
                   </button>
                 </div>
               ))}
-              {formData.gallery.length < 9 && (
+              {(formData.gallery?.length || 0) < 9 && (
                 <div className="aspect-square bg-gray-50/50 dark:bg-[#1A0F0C] border-2 border-dashed border-gray-200 dark:border-[#3c2317] hover:border-[#C68E58] dark:hover:border-[#C68E58] rounded-2xl flex items-center justify-center cursor-pointer transition-colors group relative">
                   <input
                     type="file"
@@ -331,14 +322,13 @@ export function ProductMediaSidebar({ formData, setFormData }: Props) {
         </div>
       </div>
 
-      {/* ================= Category & Brand Section ================= */}
+      {/* Category & Brand Section */}
       <div className="bg-white dark:bg-[#231511] p-6 sm:p-8 rounded-[2rem] border border-gray-100 dark:border-[#3c2317] shadow-[0_2px_15px_rgba(198,142,88,0.03)] dark:shadow-none transition-all space-y-6">
         <h2 className="font-bold text-[#2C1E16] dark:text-white text-lg flex items-center gap-3 border-b border-gray-100 dark:border-[#3c2317] pb-4 transition-colors" dir="rtl">
           <Layers className="w-5 h-5 text-[#C68E58] dark:text-[#C68E58]" /> دسته‌بندی و برند
         </h2>
         
         <div className="space-y-5" dir="rtl">
-          {/* Category Dropdown */}
           <div>
             <div className="flex justify-between items-center mb-2.5">
               <label className="text-sm font-bold text-[#4A3022] dark:text-[#EAE0D5] flex items-center gap-2">
@@ -360,7 +350,6 @@ export function ProductMediaSidebar({ formData, setFormData }: Props) {
             </select>
           </div>
 
-          {/* Brand Dropdown */}
           <div>
             <div className="flex justify-between items-center mb-2.5">
               <label className="text-sm font-bold text-[#4A3022] dark:text-[#EAE0D5] flex items-center gap-2">
@@ -384,7 +373,7 @@ export function ProductMediaSidebar({ formData, setFormData }: Props) {
         </div>
       </div>
 
-      {/* ================= Stock Quantity Section ================= */}
+      {/* Stock Quantity Section */}
       <div className="bg-white dark:bg-[#231511] p-6 sm:p-8 rounded-[2rem] border border-gray-100 dark:border-[#3c2317] shadow-[0_2px_15px_rgba(198,142,88,0.03)] dark:shadow-none transition-all space-y-6">
         <h2 className="font-bold text-[#2C1E16] dark:text-white text-lg flex items-center gap-3 border-b border-gray-100 dark:border-[#3c2317] pb-4 transition-colors" dir="rtl">
           <Package className="w-5 h-5 text-[#C68E58] dark:text-[#C68E58]" /> موجودی انبار
@@ -399,17 +388,13 @@ export function ProductMediaSidebar({ formData, setFormData }: Props) {
               <input 
                 type="number" 
                 name="stock" 
-                // @ts-ignore
-                value={formData.stock ?? ""} 
+                value={(formData as any).stock ?? ""} 
                 onChange={handleChange} 
                 placeholder="مثال: ۵۰"
                 min="0"
-                // Hide default browser spinners, enforce text alignment
                 className="w-full h-14 bg-gray-50/50 dark:bg-[#1A0F0C] border border-gray-100 dark:border-[#3c2317] rounded-2xl px-5 text-[#2C1E16] dark:text-[#EAE0D5] focus:border-[#C68E58] dark:focus:border-[#C68E58] focus:ring-4 focus:ring-[#C68E58]/10 outline-none transition-all !text-right font-medium [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none pl-[4.5rem]"
                 dir="rtl"
               />
-              
-                    {/* Custom controls firmly on the left */}
               <div className="absolute left-2 top-1/2 -translate-y-1/2 flex items-center bg-white dark:bg-[#231511] border border-gray-100 dark:border-[#3c2317] rounded-xl overflow-hidden shadow-sm">
                 <button 
                   type="button"
@@ -432,7 +417,7 @@ export function ProductMediaSidebar({ formData, setFormData }: Props) {
         </div>
       </div>
 
-      {/* ================= Add Option Modal ================= */}
+      {/* Modals */}
       {activeModal && (
         <div className="fixed inset-0 z-[110] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-in fade-in duration-200" dir="rtl">
           <div className="bg-white dark:bg-[#231511] w-full max-w-sm rounded-[2rem] p-6 shadow-2xl border border-gray-100 dark:border-[#3c2317]">
@@ -472,7 +457,6 @@ export function ProductMediaSidebar({ formData, setFormData }: Props) {
         </div>
       )}
 
-      {/* ================= Lightbox / Image Preview Modal ================= */}
       {previewImage && (
         <div
           className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 animate-in fade-in duration-200"

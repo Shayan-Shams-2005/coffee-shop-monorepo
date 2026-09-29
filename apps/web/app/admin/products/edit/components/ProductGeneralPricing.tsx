@@ -6,20 +6,21 @@ import DatePicker from "react-multi-date-picker";
 import persian from "react-date-object/calendars/persian";
 import persian_fa from "react-date-object/locales/persian_fa";
 import TimePicker from "react-multi-date-picker/plugins/time_picker";
-import { ProductFormData } from "../../types/admin";
+import { ProductFormData } from "../types";
 
 interface Props {
   formData: ProductFormData;
   setFormData: React.Dispatch<React.SetStateAction<ProductFormData>>;
 }
 
+const TITLE_MAX_LENGTH = 150;
+const DESC_MAX_LENGTH = 2000;
+
 export function ProductGeneralPricing({ formData, setFormData }: Props) {
   const [isDiscountActive, setIsDiscountActive] = useState(false);
   const [discountPercent, setDiscountPercent] = useState(0);
 
-  const TITLE_MAX_LENGTH = 150;
-  const DESC_MAX_LENGTH = 2000;
-
+  // Calculate discount percentage automatically
   useEffect(() => {
     if (isDiscountActive && formData.basePrice > 0 && formData.salePrice > 0 && formData.salePrice <= formData.basePrice) {
       const diff = formData.basePrice - formData.salePrice;
@@ -35,24 +36,15 @@ export function ProductGeneralPricing({ formData, setFormData }: Props) {
 
   const handlePriceChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
+    // Convert Persian numbers to English and strip non-numeric characters
     const englishValue = value.replace(/[۰-۹]/g, (w) => "0123456789"["۰۱۲۳۴۵۶۷۸۹".indexOf(w)] || w);
     const numValue = parseInt(englishValue.replace(/\D/g, ""), 10) || 0;
     setFormData((prev) => ({ ...prev, [name]: numValue }));
   };
 
   return (
-    <>
-      <style dangerouslySetInnerHTML={{
-        __html: `
-          .custom-calendar .rmdp-time-picker input {
-            width: 38px !important;
-            font-size: 14px !important;
-            margin: 0 2px !important;
-            text-align: center !important;
-          }
-        `
-      }} />
-
+    <div className="space-y-6 lg:space-y-8">
+      {/* General Information */}
       <div className="bg-white dark:bg-[#231511] p-6 sm:p-8 rounded-[2rem] border border-gray-100 dark:border-[#3c2317] shadow-[0_2px_15px_rgba(198,142,88,0.03)] dark:shadow-none transition-all space-y-6">
         <h2 className="font-bold text-[#2C1E16] dark:text-white text-lg flex items-center gap-3 border-b border-gray-100 dark:border-[#3c2317] pb-4 transition-colors">
           <div className="w-1.5 h-6 bg-[#C68E58] rounded-full"></div> اطلاعات کلی
@@ -93,6 +85,7 @@ export function ProductGeneralPricing({ formData, setFormData }: Props) {
         </div>
       </div>
 
+      {/* Pricing & Discounts */}
       <div className="bg-white dark:bg-[#231511] p-6 sm:p-8 rounded-[2rem] border border-gray-100 dark:border-[#3c2317] shadow-[0_2px_15px_rgba(198,142,88,0.03)] dark:shadow-none transition-all space-y-6">
         <div className="flex justify-between items-center border-b border-gray-100 dark:border-[#3c2317] pb-4 transition-colors">
           <h2 className="font-bold text-[#2C1E16] dark:text-white text-lg flex items-center gap-3">
@@ -101,7 +94,11 @@ export function ProductGeneralPricing({ formData, setFormData }: Props) {
           <button
             type="button"
             onClick={() => setIsDiscountActive(!isDiscountActive)}
-            className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-bold transition-all border ${isDiscountActive ? "bg-rose-50 text-rose-600 border-rose-200 dark:bg-rose-500/10 dark:text-rose-400 dark:border-rose-500/20" : "bg-[#FCF9F5] text-[#8C7A6B] border-transparent hover:border-[#C68E58]/20 dark:bg-[#1A0F0C] dark:hover:border-[#3c2317]"}`}
+            className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-bold transition-all border ${
+              isDiscountActive 
+                ? "bg-rose-50 text-rose-600 border-rose-200 dark:bg-rose-500/10 dark:text-rose-400 dark:border-rose-500/20" 
+                : "bg-[#FCF9F5] text-[#8C7A6B] border-transparent hover:border-[#C68E58]/20 dark:bg-[#1A0F0C] dark:hover:border-[#3c2317]"
+            }`}
           >
             <Percent className="w-4 h-4" /> {isDiscountActive ? "تخفیف فعال است" : "فعال‌سازی تخفیف"}
           </button>
@@ -151,7 +148,7 @@ export function ProductGeneralPricing({ formData, setFormData }: Props) {
             <div className="relative">
               <DatePicker
                 value={formData.offerEndDate}
-                onChange={(date) => setFormData(prev => ({ ...prev, offerEndDate: date as any }))}
+                onChange={(date) => setFormData(prev => ({ ...prev, offerEndDate: date as unknown as Date }))}
                 disabled={!isDiscountActive}
                 calendar={persian}
                 locale={persian_fa}
@@ -166,6 +163,6 @@ export function ProductGeneralPricing({ formData, setFormData }: Props) {
           </div>
         </div>
       </div>
-    </>
+    </div>
   );
 }
