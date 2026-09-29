@@ -1,10 +1,12 @@
+// cSpell:disable
 "use client";
 
 import Link from "next/link";
 import { 
   Users, ShoppingBag, DollarSign, Package, 
   Layers, Tag, Image as ImageIcon,
-  Clock, CheckCircle, RotateCcw, ChevronLeft
+  Clock, CheckCircle, RotateCcw, ChevronLeft,
+  Bell, MessageSquare, TicketPercent
 } from "lucide-react";
 
 export default function AdminDashboard() {
@@ -22,6 +24,10 @@ export default function AdminDashboard() {
     { title: "بنرهای تبلیغاتی", desc: "مدیریت اسلایدر و بنرهای صفحه اصلی", href: "/admin/banners", icon: ImageIcon, accent: "text-[#C68E58] dark:text-rose-500", bg: "bg-[#FCF9F5] dark:bg-rose-500/10", hover: "group-hover:bg-[#C68E58] group-hover:text-white dark:group-hover:bg-rose-500 dark:group-hover:text-[#1A110F] group-hover:shadow-lg group-hover:shadow-[#C68E58]/30" },
     { title: "سفارشات مشتریان", desc: "بررسی و تغییر وضعیت سفارشات", href: "/admin/orders", icon: ShoppingBag, accent: "text-[#C68E58] dark:text-emerald-500", bg: "bg-[#FCF9F5] dark:bg-emerald-500/10", hover: "group-hover:bg-[#C68E58] group-hover:text-white dark:group-hover:bg-emerald-500 dark:group-hover:text-[#1A110F] group-hover:shadow-lg group-hover:shadow-[#C68E58]/30" },
     { title: "لیست کاربران", desc: "مشاهده و مدیریت حساب‌های کاربری", href: "/admin/users", icon: Users, accent: "text-[#C68E58] dark:text-blue-500", bg: "bg-[#FCF9F5] dark:bg-blue-500/10", hover: "group-hover:bg-[#C68E58] group-hover:text-white dark:group-hover:bg-blue-500 dark:group-hover:text-[#1A110F] group-hover:shadow-lg group-hover:shadow-[#C68E58]/30" },
+    // 🚀 New Sections Added Below
+    { title: "صندوق پیام‌ها و خطاها", desc: "بررسی سوالات و گزارشات باگ", href: "/admin/notifications", icon: Bell, accent: "text-[#C68E58] dark:text-orange-500", bg: "bg-[#FCF9F5] dark:bg-orange-500/10", hover: "group-hover:bg-[#C68E58] group-hover:text-white dark:group-hover:bg-orange-500 dark:group-hover:text-[#1A110F] group-hover:shadow-lg group-hover:shadow-[#C68E58]/30" },
+    { title: "مدیریت نظرات", desc: "تایید یا حذف نظرات کاربران", href: "/admin/reviews", icon: MessageSquare, accent: "text-[#C68E58] dark:text-teal-500", bg: "bg-[#FCF9F5] dark:bg-teal-500/10", hover: "group-hover:bg-[#C68E58] group-hover:text-white dark:group-hover:bg-teal-500 dark:group-hover:text-[#1A110F] group-hover:shadow-lg group-hover:shadow-[#C68E58]/30" },
+    { title: "کدهای تخفیف", desc: "ساخت و مدیریت درصدهای تخفیف", href: "/admin/coupons", icon: TicketPercent, accent: "text-[#C68E58] dark:text-pink-500", bg: "bg-[#FCF9F5] dark:bg-pink-500/10", hover: "group-hover:bg-[#C68E58] group-hover:text-white dark:group-hover:bg-pink-500 dark:group-hover:text-[#1A110F] group-hover:shadow-lg group-hover:shadow-[#C68E58]/30" },
   ];
 
   const recentOrders = [
