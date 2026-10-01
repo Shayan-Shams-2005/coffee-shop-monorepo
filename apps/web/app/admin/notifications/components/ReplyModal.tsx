@@ -33,26 +33,26 @@ export function ReplyModal({ isOpen, activeReply, onClose, onSubmit }: ReplyModa
     <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
       <div className="absolute inset-0 bg-black/60 dark:bg-black/80 backdrop-blur-sm" onClick={onClose} />
       
-      <div className="relative bg-white dark:bg-[#1A1412] w-full max-w-lg rounded-3xl shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200" dir="rtl">
+      <div className="relative bg-[#FCF9F5] dark:bg-[#1A1412] w-full max-w-lg rounded-3xl shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200" dir="rtl">
         
-        <div className="flex items-center justify-between p-6 border-b border-[#F5EFE6] dark:border-[#3c2317]">
-          <h2 className="text-lg font-black text-[#2C1E16] dark:text-white flex items-center gap-2">
+        <div className="flex items-center justify-between p-6 border-b border-[#E3C3A4]/60 dark:border-[#3c2317] bg-white dark:bg-[#1A0F0C]">
+          <h2 className="text-lg font-black text-[#4A3022] dark:text-white flex items-center gap-2">
             <CornerDownLeft className="w-5 h-5 text-[#C68E58]" />
             پاسخ به {activeReply.userName}
           </h2>
-          <button onClick={onClose} className="text-gray-400 hover:text-gray-700 dark:hover:text-white transition-colors p-1 bg-gray-100 dark:bg-[#2A1B16] rounded-full">
+          <button onClick={onClose} className="text-[#8C7A6B] hover:text-[#4A3022] dark:text-[#A1A1A1] dark:hover:text-white transition-colors p-1 bg-[#FCF9F5] dark:bg-[#2A1B16] rounded-full">
             <X className="w-5 h-5" />
           </button>
         </div>
 
         <form onSubmit={handleSubmit} className="p-6 space-y-6">
-          <div className="bg-[#FCF9F5] dark:bg-[#231511] border border-[#F5EFE6] dark:border-[#3c2317] rounded-xl p-4">
+          <div className="bg-white dark:bg-[#231511] border border-[#E3C3A4]/60 dark:border-[#3c2317] rounded-xl p-4">
             <p className="text-xs text-[#8C7A6B] mb-2 font-bold">پاسخ شما برای راه‌های ارتباطی زیر ارسال خواهد شد:</p>
             <div className="flex items-center gap-4">
-              <span className="flex items-center gap-1.5 text-sm font-bold text-[#2C1E16] dark:text-white">
+              <span className="flex items-center gap-1.5 text-sm font-bold text-[#4A3022] dark:text-white">
                 <Phone className="w-4 h-4 text-[#C68E58]" /> <span className="dir-ltr inline-block">{toFarsiNumber(activeReply.phone)}</span>
               </span>
-              <span className="flex items-center gap-1.5 text-sm font-bold text-[#2C1E16] dark:text-white">
+              <span className="flex items-center gap-1.5 text-sm font-bold text-[#4A3022] dark:text-white">
                 <Mail className="w-4 h-4 text-[#C68E58]" /> {activeReply.email}
               </span>
             </div>
@@ -66,7 +66,7 @@ export function ReplyModal({ isOpen, activeReply, onClose, onSubmit }: ReplyModa
               value={replyMessage}
               onChange={(e) => setReplyMessage(e.target.value)}
               style={{ textAlign: 'right', direction: 'rtl' }}
-              className="w-full bg-[#FCF9F5] dark:bg-[#231511] border border-[#E3C3A4] dark:border-[#3c2317] rounded-xl px-4 py-3 text-[#2C1E16] dark:text-white focus:outline-none focus:ring-2 focus:ring-[#C68E58]/50 transition-all resize-none"
+              className="w-full bg-white dark:bg-[#231511] border border-[#E3C3A4]/60 dark:border-[#3c2317] rounded-xl px-4 py-3 text-[#4A3022] dark:text-white focus:outline-none focus:border-[#C68E58] transition-all resize-none"
               placeholder="متن پاسخ خود را اینجا بنویسید..."
               autoFocus
             />
@@ -74,7 +74,7 @@ export function ReplyModal({ isOpen, activeReply, onClose, onSubmit }: ReplyModa
 
           <button
             type="submit"
-            className="w-full flex items-center justify-center gap-2 bg-[#C68E58] hover:bg-[#A87242] text-white font-bold py-3.5 rounded-xl transition-colors shadow-[0_4px_15px_rgba(198,142,88,0.25)] dark:shadow-none"
+            className="w-full flex items-center justify-center gap-2 bg-[#C68E58] hover:bg-[#D4A373] dark:bg-[#7D4F35] dark:hover:bg-[#633E29] text-white font-bold py-3.5 rounded-xl transition-colors shadow-[0_4px_15px_rgba(198,142,88,0.25)] dark:shadow-none"
           >
             <Send className="w-5 h-5" /> {activeReply.adminReply ? "ثبت ویرایش پاسخ" : "ارسال پاسخ"}
           </button>

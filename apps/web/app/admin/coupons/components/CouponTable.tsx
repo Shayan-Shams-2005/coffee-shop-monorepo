@@ -22,14 +22,14 @@ export function CouponTable({ coupons, onToggleStatus, onEdit, onDelete }: Coupo
   };
 
   return (
-    <div className="bg-white dark:bg-[#1A0F0C] rounded-[1.5rem] border border-[#F5EFE6] dark:border-[#3c2317] overflow-hidden shadow-[0_2px_15px_rgba(198,142,88,0.03)] dark:shadow-none">
-      <div className="p-5 sm:p-6 border-b border-[#F5EFE6] dark:border-[#3c2317]">
-        <h2 className="text-lg font-black text-[#2C1E16] dark:text-white">کدهای تخفیف ایجاد شده</h2>
+    <div className="bg-[#FCF9F5] dark:bg-[#1A0F0C] rounded-[1.5rem] border border-[#E3C3A4]/60 dark:border-[#3c2317] overflow-hidden shadow-[0_4px_20px_rgba(198,142,88,0.03)] dark:shadow-none">
+      <div className="p-5 sm:p-6 border-b border-[#E3C3A4]/60 dark:border-[#3c2317] bg-white dark:bg-[#231511]/30">
+        <h2 className="text-lg font-black text-[#4A3022] dark:text-white">کدهای تخفیف ایجاد شده</h2>
       </div>
       
       <div className="overflow-x-auto">
         <table className="w-full text-right text-sm">
-          <thead className="bg-[#FCF9F5] dark:bg-[#231511] text-[#8C7A6B] font-bold border-b border-[#F5EFE6] dark:border-[#3c2317]">
+          <thead className="bg-[#E3C3A4]/15 dark:bg-[#231511] text-[#8C7A6B] dark:text-[#A1A1A1] font-bold border-b border-[#E3C3A4]/60 dark:border-[#3c2317]">
             <tr>
               <th className="p-5 whitespace-nowrap">کد تخفیف</th>
               <th className="p-5 whitespace-nowrap text-center">درصد تخفیف</th>
@@ -38,20 +38,20 @@ export function CouponTable({ coupons, onToggleStatus, onEdit, onDelete }: Coupo
               <th className="p-5 whitespace-nowrap text-center">عملیات</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-[#F5EFE6] dark:divide-[#3c2317]">
+          <tbody className="divide-y divide-[#E3C3A4]/40 dark:divide-[#3c2317]">
             {coupons.length > 0 ? (
               coupons.map((coupon) => (
-                <tr key={coupon.id} className="hover:bg-[#FCF9F5]/70 dark:hover:bg-[#2A1B16]/50 transition-colors group">
+                <tr key={coupon.id} className="hover:bg-[#C68E58]/5 dark:hover:bg-[#2A1B16]/50 transition-colors group">
                   <td className="p-5">
                     <div className="flex items-center gap-3">
                       <button 
                         onClick={() => handleCopy(coupon.code, coupon.id)}
-                        className="p-1.5 bg-[#FCF9F5] dark:bg-[#231511] border border-[#E3C3A4] dark:border-[#3c2317] rounded-lg text-[#8C7A6B] hover:text-[#C68E58] transition-colors"
+                        className="p-1.5 bg-white dark:bg-[#231511] border border-[#E3C3A4]/60 dark:border-[#3c2317] rounded-lg text-[#C68E58] hover:bg-[#F5EFE6] dark:hover:bg-[#3A221C] transition-colors"
                         title="کپی کد"
                       >
                         {copiedId === coupon.id ? <Check className="w-4 h-4 text-emerald-500" /> : <Copy className="w-4 h-4" />}
                       </button>
-                      <span className="font-black text-lg text-[#2C1E16] dark:text-white dir-ltr tracking-wider">
+                      <span className="font-black text-lg text-[#4A3022] dark:text-white dir-ltr tracking-wider">
                         {coupon.code}
                       </span>
                     </div>
@@ -69,7 +69,7 @@ export function CouponTable({ coupons, onToggleStatus, onEdit, onDelete }: Coupo
                       className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-colors ${
                         coupon.isActive 
                           ? 'bg-emerald-50 text-emerald-600 border border-emerald-200 hover:bg-emerald-100 dark:bg-emerald-500/10 dark:text-emerald-400 dark:border-emerald-500/20' 
-                          : 'bg-gray-100 text-gray-500 border border-gray-200 hover:bg-gray-200 dark:bg-[#231511] dark:text-gray-400 dark:border-[#3c2317]'
+                          : 'bg-white text-gray-500 border border-[#E3C3A4]/60 hover:bg-[#F5EFE6] dark:bg-[#231511] dark:text-gray-400 dark:border-[#3c2317] dark:hover:bg-[#3A221C]'
                       }`}
                       title="تغییر وضعیت"
                     >
@@ -86,17 +86,18 @@ export function CouponTable({ coupons, onToggleStatus, onEdit, onDelete }: Coupo
                   </td>
 
                   <td className="p-5">
-                    <div className="flex items-center justify-center gap-2 opacity-80 group-hover:opacity-100 transition-opacity">
+                    {/* 🚀 Changed to vivid solid colors for action buttons */}
+                    <div className="flex items-center justify-center gap-2 transition-opacity">
                       <button 
                         onClick={() => onEdit(coupon)}
-                        className="p-2.5 text-gray-400 hover:text-[#C68E58] bg-gray-50 hover:bg-[#FCF9F5] dark:bg-[#231511] dark:text-[#6A5A4F] dark:hover:text-[#C68E58] rounded-xl transition-all border border-transparent dark:hover:border-[#3c2317]"
+                        className="p-2.5 text-[#C68E58] hover:text-[#D4A373] hover:bg-[#F5EFE6] dark:text-[#C68E58] dark:hover:text-[#E3C3A4] dark:hover:bg-[#231511] rounded-xl transition-all border border-transparent dark:hover:border-[#3c2317]"
                         title="ویرایش کوپن"
                       >
                         <Edit className="w-4 h-4" />
                       </button>
                       <button 
                         onClick={() => onDelete(coupon.id)} 
-                        className="p-2.5 text-gray-400 hover:text-rose-500 bg-gray-50 hover:bg-rose-50 dark:bg-[#231511] dark:text-[#6A5A4F] dark:hover:text-rose-400 rounded-xl transition-all border border-transparent dark:hover:border-rose-500/20"
+                        className="p-2.5 text-rose-500 hover:text-rose-400 hover:bg-rose-50 dark:text-rose-500 dark:hover:text-rose-400 dark:hover:bg-rose-500/10 rounded-xl transition-all border border-transparent dark:hover:border-rose-500/20"
                         title="حذف کوپن"
                       >
                         <Trash2 className="w-4 h-4" />

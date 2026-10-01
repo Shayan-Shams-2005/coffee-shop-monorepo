@@ -1,3 +1,4 @@
+// app/admin/products/edit/components/ProductGeneralPricing.tsx
 "use client";
 
 import { useState, useEffect } from "react";
@@ -20,7 +21,6 @@ export function ProductGeneralPricing({ formData, setFormData }: Props) {
   const [isDiscountActive, setIsDiscountActive] = useState(false);
   const [discountPercent, setDiscountPercent] = useState(0);
 
-  // Calculate discount percentage automatically
   useEffect(() => {
     if (isDiscountActive && formData.basePrice > 0 && formData.salePrice > 0 && formData.salePrice <= formData.basePrice) {
       const diff = formData.basePrice - formData.salePrice;
@@ -36,7 +36,6 @@ export function ProductGeneralPricing({ formData, setFormData }: Props) {
 
   const handlePriceChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
-    // Convert Persian numbers to English and strip non-numeric characters
     const englishValue = value.replace(/[۰-۹]/g, (w) => "0123456789"["۰۱۲۳۴۵۶۷۸۹".indexOf(w)] || w);
     const numValue = parseInt(englishValue.replace(/\D/g, ""), 10) || 0;
     setFormData((prev) => ({ ...prev, [name]: numValue }));
@@ -44,9 +43,8 @@ export function ProductGeneralPricing({ formData, setFormData }: Props) {
 
   return (
     <div className="space-y-6 lg:space-y-8">
-      {/* General Information */}
-      <div className="bg-white dark:bg-[#231511] p-6 sm:p-8 rounded-[2rem] border border-gray-100 dark:border-[#3c2317] shadow-[0_2px_15px_rgba(198,142,88,0.03)] dark:shadow-none transition-all space-y-6">
-        <h2 className="font-bold text-[#2C1E16] dark:text-white text-lg flex items-center gap-3 border-b border-gray-100 dark:border-[#3c2317] pb-4 transition-colors">
+      <div className="bg-[#FCF9F5] dark:bg-[#1A0F0C] p-6 sm:p-8 rounded-[2rem] border border-[#E3C3A4]/60 dark:border-[#3c2317] shadow-[0_4px_20px_rgba(198,142,88,0.03)] dark:shadow-none transition-all space-y-6">
+        <h2 className="font-bold text-[#4A3022] dark:text-[#EAE0D5] text-lg flex items-center gap-3 border-b border-[#E3C3A4]/60 dark:border-[#3c2317] pb-4 transition-colors">
           <div className="w-1.5 h-6 bg-[#C68E58] rounded-full"></div> اطلاعات کلی
         </h2>
         <div className="space-y-5">
@@ -63,7 +61,7 @@ export function ProductGeneralPricing({ formData, setFormData }: Props) {
               value={formData.title} 
               onChange={handleChange} 
               maxLength={TITLE_MAX_LENGTH}
-              className="w-full h-14 bg-gray-50/50 dark:bg-[#1A0F0C] border border-gray-100 dark:border-[#3c2317] rounded-2xl px-5 text-[#2C1E16] dark:text-[#EAE0D5] focus:border-[#C68E58] dark:focus:border-[#C68E58] focus:ring-4 focus:ring-[#C68E58]/10 outline-none transition-all" 
+              className="w-full h-14 bg-white dark:bg-[#231511] border border-[#E3C3A4]/60 dark:border-[#3c2317] rounded-2xl px-5 text-[#4A3022] dark:text-[#EAE0D5] focus:border-[#C68E58] dark:focus:border-[#C68E58] focus:ring-4 focus:ring-[#C68E58]/10 outline-none transition-all" 
             />
           </div>
           <div>
@@ -79,16 +77,15 @@ export function ProductGeneralPricing({ formData, setFormData }: Props) {
               onChange={handleChange} 
               maxLength={DESC_MAX_LENGTH}
               rows={5} 
-              className="w-full bg-gray-50/50 dark:bg-[#1A0F0C] border border-gray-100 dark:border-[#3c2317] rounded-2xl p-5 text-[#2C1E16] dark:text-[#EAE0D5] focus:border-[#C68E58] dark:focus:border-[#C68E58] focus:ring-4 focus:ring-[#C68E58]/10 outline-none resize-none transition-all" 
+              className="w-full bg-white dark:bg-[#231511] border border-[#E3C3A4]/60 dark:border-[#3c2317] rounded-2xl p-5 text-[#4A3022] dark:text-[#EAE0D5] focus:border-[#C68E58] dark:focus:border-[#C68E58] focus:ring-4 focus:ring-[#C68E58]/10 outline-none resize-none transition-all" 
             />
           </div>
         </div>
       </div>
 
-      {/* Pricing & Discounts */}
-      <div className="bg-white dark:bg-[#231511] p-6 sm:p-8 rounded-[2rem] border border-gray-100 dark:border-[#3c2317] shadow-[0_2px_15px_rgba(198,142,88,0.03)] dark:shadow-none transition-all space-y-6">
-        <div className="flex justify-between items-center border-b border-gray-100 dark:border-[#3c2317] pb-4 transition-colors">
-          <h2 className="font-bold text-[#2C1E16] dark:text-white text-lg flex items-center gap-3">
+      <div className="bg-[#FCF9F5] dark:bg-[#1A0F0C] p-6 sm:p-8 rounded-[2rem] border border-[#E3C3A4]/60 dark:border-[#3c2317] shadow-[0_4px_20px_rgba(198,142,88,0.03)] dark:shadow-none transition-all space-y-6">
+        <div className="flex justify-between items-center border-b border-[#E3C3A4]/60 dark:border-[#3c2317] pb-4 transition-colors">
+          <h2 className="font-bold text-[#4A3022] dark:text-[#EAE0D5] text-lg flex items-center gap-3">
             <div className="w-1.5 h-6 bg-[#C68E58] rounded-full"></div> قیمت‌گذاری و تخفیف
           </h2>
           <button
@@ -97,7 +94,7 @@ export function ProductGeneralPricing({ formData, setFormData }: Props) {
             className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-bold transition-all border ${
               isDiscountActive 
                 ? "bg-rose-50 text-rose-600 border-rose-200 dark:bg-rose-500/10 dark:text-rose-400 dark:border-rose-500/20" 
-                : "bg-[#FCF9F5] text-[#8C7A6B] border-transparent hover:border-[#C68E58]/20 dark:bg-[#1A0F0C] dark:hover:border-[#3c2317]"
+                : "bg-white text-[#8C7A6B] border-[#E3C3A4]/60 hover:border-[#C68E58]/50 dark:bg-[#231511] dark:hover:border-[#3c2317]"
             }`}
           >
             <Percent className="w-4 h-4" /> {isDiscountActive ? "تخفیف فعال است" : "فعال‌سازی تخفیف"}
@@ -114,7 +111,7 @@ export function ProductGeneralPricing({ formData, setFormData }: Props) {
               style={{ textAlign: "left" }}
               value={formData.basePrice ? formData.basePrice.toLocaleString("fa-IR") : ""} 
               onChange={handlePriceChange} 
-              className="w-full h-14 bg-gray-50/50 dark:bg-[#1A0F0C] border border-gray-100 dark:border-[#3c2317] rounded-2xl px-5 !text-left font-black text-[#2C1E16] dark:text-[#EAE0D5] focus:border-[#C68E58] dark:focus:border-[#C68E58] focus:ring-4 focus:ring-[#C68E58]/10 outline-none transition-all" 
+              className="w-full h-14 bg-white dark:bg-[#231511] border border-[#E3C3A4]/60 dark:border-[#3c2317] rounded-2xl px-5 !text-left font-black text-[#4A3022] dark:text-[#EAE0D5] focus:border-[#C68E58] dark:focus:border-[#C68E58] focus:ring-4 focus:ring-[#C68E58]/10 outline-none transition-all" 
               placeholder="۰"
             />
           </div>
@@ -136,7 +133,7 @@ export function ProductGeneralPricing({ formData, setFormData }: Props) {
               disabled={!isDiscountActive} 
               value={formData.salePrice ? formData.salePrice.toLocaleString("fa-IR") : ""} 
               onChange={handlePriceChange} 
-              className="w-full h-14 bg-gray-50/50 dark:bg-[#1A0F0C] border border-gray-100 dark:border-[#3c2317] rounded-2xl px-5 !text-left font-black text-rose-500 dark:text-rose-400 focus:border-rose-400 dark:focus:border-rose-500 focus:ring-4 focus:ring-rose-500/10 outline-none transition-all" 
+              className="w-full h-14 bg-white dark:bg-[#231511] border border-[#E3C3A4]/60 dark:border-[#3c2317] rounded-2xl px-5 !text-left font-black text-rose-500 dark:text-rose-400 focus:border-rose-400 dark:focus:border-rose-500 focus:ring-4 focus:ring-rose-500/10 outline-none transition-all" 
               placeholder="۰"
             />
           </div>
@@ -156,7 +153,7 @@ export function ProductGeneralPricing({ formData, setFormData }: Props) {
                 format="YYYY/MM/DD - HH:mm:ss"
                 plugins={[<TimePicker position="bottom" key="time-picker" />]}
                 containerClassName="w-full"
-                inputClass="w-full h-14 bg-gray-50/50 dark:bg-[#1A0F0C] border border-gray-100 dark:border-[#3c2317] rounded-2xl px-5 !text-left font-medium text-[#2C1E16] dark:text-[#EAE0D5] focus:border-[#C68E58] dark:focus:border-[#C68E58] focus:ring-4 focus:ring-[#C68E58]/10 outline-none transition-all placeholder-gray-400 dir-ltr"
+                inputClass="w-full h-14 bg-white dark:bg-[#231511] border border-[#E3C3A4]/60 dark:border-[#3c2317] rounded-2xl px-5 !text-left font-medium text-[#4A3022] dark:text-[#EAE0D5] focus:border-[#C68E58] dark:focus:border-[#C68E58] focus:ring-4 focus:ring-[#C68E58]/10 outline-none transition-all placeholder-gray-400 dir-ltr"
                 placeholder="انتخاب تاریخ و ساعت..."
               />
             </div>

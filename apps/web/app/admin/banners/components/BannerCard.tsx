@@ -20,7 +20,7 @@ export function BannerCard({ banner, sectionId, onEdit, onDelete }: BannerCardPr
   }, [banner.imageUrl]);
 
   return (
-    <div className="group relative rounded-2xl border border-[#F5EFE6] dark:border-[#3c2317] overflow-hidden bg-[#FCF9F5] dark:bg-[#231511] transition-all hover:border-[#C68E58]/50 hover:shadow-lg">
+    <div className="group relative rounded-2xl border border-[#E3C3A4]/60 dark:border-[#3c2317] overflow-hidden bg-white dark:bg-[#231511] transition-all hover:border-[#C68E58]/70 hover:shadow-[0_4px_20px_rgba(198,142,88,0.1)]">
       
       {/* Image Thumbnail */}
       <div className={`relative overflow-hidden ${sectionId === 'above_header' ? 'h-24' : 'aspect-video'}`}>
@@ -42,13 +42,13 @@ export function BannerCard({ banner, sectionId, onEdit, onDelete }: BannerCardPr
         <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-3 backdrop-blur-[2px]">
           <button 
             onClick={() => onEdit(banner)}
-            className="w-10 h-10 rounded-full bg-white/20 hover:bg-white text-white hover:text-[#C68E58] flex items-center justify-center transition-colors"
+            className="w-10 h-10 rounded-xl bg-white/20 hover:bg-white text-white hover:text-[#C68E58] flex items-center justify-center transition-colors shadow-sm"
           >
             <Edit className="w-4 h-4" />
           </button>
           <button 
             onClick={() => onDelete(banner.id)}
-            className="w-10 h-10 rounded-full bg-white/20 hover:bg-rose-500 text-white flex items-center justify-center transition-colors"
+            className="w-10 h-10 rounded-xl bg-white/20 hover:bg-rose-500 text-white flex items-center justify-center transition-colors shadow-sm"
           >
             <Trash2 className="w-4 h-4" />
           </button>
@@ -56,8 +56,8 @@ export function BannerCard({ banner, sectionId, onEdit, onDelete }: BannerCardPr
       </div>
 
       {/* Banner Details */}
-      <div className="p-4 border-t border-[#F5EFE6] dark:border-[#3c2317]">
-        <h3 className="font-bold text-sm text-[#2C1E16] dark:text-white truncate mb-2" title={banner.alt}>
+      <div className="p-4 border-t border-[#E3C3A4]/60 dark:border-[#3c2317]">
+        <h3 className="font-bold text-sm text-[#4A3022] dark:text-white truncate mb-2" title={banner.alt}>
           {banner.alt || "بدون عنوان جایگزین (Alt)"}
         </h3>
         <div className="flex items-center gap-1.5 text-xs text-[#8C7A6B] dark:text-[#A1A1A1] dir-ltr text-left overflow-hidden">

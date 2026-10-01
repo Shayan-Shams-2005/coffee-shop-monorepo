@@ -24,7 +24,6 @@ export function BrandModal({ isOpen, onClose, editingBrand, defaultCategory, uni
     imagePreview: "",
   });
 
-  // Reset or populate form when modal opens
   useEffect(() => {
     if (isOpen) {
       if (editingBrand) {
@@ -76,13 +75,13 @@ export function BrandModal({ isOpen, onClose, editingBrand, defaultCategory, uni
     <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
       <div className="absolute inset-0 bg-black/50 dark:bg-black/70 backdrop-blur-sm" onClick={onClose} />
       
-      <div className="relative bg-white dark:bg-[#1A1412] w-full max-w-md rounded-3xl shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200" dir="rtl">
-        <div className="flex items-center justify-between p-6 border-b border-[#F5EFE6] dark:border-[#3c2317]">
-          <h2 className="text-lg font-black text-[#2C1E16] dark:text-white flex items-center gap-2">
+      <div className="relative bg-[#FCF9F5] dark:bg-[#1A1412] w-full max-w-md rounded-3xl shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200" dir="rtl">
+        <div className="flex items-center justify-between p-6 border-b border-[#E3C3A4]/60 dark:border-[#3c2317] bg-white dark:bg-[#1A0F0C]">
+          <h2 className="text-lg font-black text-[#4A3022] dark:text-white flex items-center gap-2">
             {editingBrand ? <Edit className="w-5 h-5 text-[#C68E58]" /> : <Plus className="w-5 h-5 text-[#C68E58]" />}
             {editingBrand ? "ویرایش برند" : "افزودن برند جدید"}
           </h2>
-          <button onClick={onClose} className="text-gray-400 hover:text-gray-700 dark:hover:text-white transition-colors p-1">
+          <button onClick={onClose} className="text-[#8C7A6B] hover:text-[#4A3022] dark:text-[#A1A1A1] dark:hover:text-white transition-colors p-1 bg-[#FCF9F5] dark:bg-[#2A1B16] rounded-full">
             <X className="w-5 h-5" />
           </button>
         </div>
@@ -96,7 +95,7 @@ export function BrandModal({ isOpen, onClose, editingBrand, defaultCategory, uni
               required
               value={formData.name}
               onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-              className="strict-persian-input w-full bg-[#FCF9F5] dark:bg-[#231511] border border-[#E3C3A4] dark:border-[#3c2317] rounded-xl px-4 py-3 text-[#2C1E16] dark:text-white focus:outline-none focus:ring-2 focus:ring-[#C68E58]/50 transition-all"
+              className="strict-persian-input w-full bg-white dark:bg-[#231511] border border-[#E3C3A4]/60 dark:border-[#3c2317] rounded-xl px-4 py-3 text-[#4A3022] dark:text-white focus:outline-none focus:ring-2 focus:ring-[#C68E58]/50 transition-all"
               placeholder="مثال: نسپرسو"
             />
           </div>
@@ -110,7 +109,7 @@ export function BrandModal({ isOpen, onClose, editingBrand, defaultCategory, uni
               value={formData.enName}
               onChange={(e) => setFormData({ ...formData, enName: e.target.value })}
               style={{ textAlign: 'left', direction: 'ltr' }}
-              className="w-full bg-[#FCF9F5] dark:bg-[#231511] border border-[#E3C3A4] dark:border-[#3c2317] rounded-xl px-4 py-3 text-[#2C1E16] dark:text-white focus:outline-none focus:ring-2 focus:ring-[#C68E58]/50 transition-all"
+              className="w-full bg-white dark:bg-[#231511] border border-[#E3C3A4]/60 dark:border-[#3c2317] rounded-xl px-4 py-3 text-[#4A3022] dark:text-white focus:outline-none focus:ring-2 focus:ring-[#C68E58]/50 transition-all"
               placeholder="Example: Nespresso"
             />
           </div>
@@ -125,7 +124,7 @@ export function BrandModal({ isOpen, onClose, editingBrand, defaultCategory, uni
                     required
                     value={formData.newCategoryName}
                     onChange={(e) => setFormData({ ...formData, newCategoryName: e.target.value })}
-                    className="strict-persian-input w-full bg-[#FCF9F5] dark:bg-[#231511] border border-[#C68E58] rounded-xl px-4 py-3 text-[#2C1E16] dark:text-white focus:outline-none focus:ring-2 focus:ring-[#C68E58]/50 transition-all"
+                    className="strict-persian-input w-full bg-white dark:bg-[#231511] border border-[#C68E58] rounded-xl px-4 py-3 text-[#4A3022] dark:text-white focus:outline-none focus:ring-2 focus:ring-[#C68E58]/50 transition-all"
                     placeholder="نام گروه جدید..." 
                     autoFocus
                   />
@@ -133,7 +132,7 @@ export function BrandModal({ isOpen, onClose, editingBrand, defaultCategory, uni
                 <button
                   type="button"
                   onClick={() => setFormData({ ...formData, isNewCategory: false, newCategoryName: "" })}
-                  className="px-6 py-3 bg-gray-100 dark:bg-[#2A1B16] text-[#8C7A6B] rounded-xl text-sm font-bold hover:bg-gray-200 dark:hover:bg-[#3c2317] transition-colors shrink-0"
+                  className="px-6 py-3 bg-white border border-[#E3C3A4]/60 dark:bg-[#2A1B16] text-[#8C7A6B] rounded-xl text-sm font-bold hover:bg-[#F5EFE6] dark:hover:bg-[#3c2317] transition-colors shrink-0"
                 >
                   انصراف
                 </button>
@@ -148,7 +147,7 @@ export function BrandModal({ isOpen, onClose, editingBrand, defaultCategory, uni
                     className={`flex items-center justify-center gap-2 px-4 py-3 rounded-xl border text-sm font-bold transition-colors ${
                       formData.category === cat
                         ? "bg-[#C68E58]/10 border-[#C68E58] text-[#C68E58]"
-                        : "bg-[#FCF9F5] dark:bg-[#231511] border-[#E3C3A4]/50 dark:border-[#3c2317] text-[#8C7A6B] hover:border-[#C68E58]/50"
+                        : "bg-white dark:bg-[#231511] border-[#E3C3A4]/60 dark:border-[#3c2317] text-[#8C7A6B] hover:border-[#C68E58]/50"
                     }`}
                   >
                     {getCategoryIcon(cat)} {getCategoryShortName(cat)}
@@ -168,7 +167,7 @@ export function BrandModal({ isOpen, onClose, editingBrand, defaultCategory, uni
           <div>
             <label className="block text-sm font-bold text-[#4A3022] dark:text-[#EAE0D5] mb-2 text-right">لوگوی برند</label>
             <div className="flex items-center gap-4">
-              <div className="w-20 h-20 rounded-xl bg-[#FCF9F5] dark:bg-[#231511] border border-dashed border-[#C68E58]/50 flex items-center justify-center overflow-hidden shrink-0">
+              <div className="w-20 h-20 rounded-xl bg-white dark:bg-[#231511] border border-dashed border-[#C68E58]/50 flex items-center justify-center overflow-hidden shrink-0">
                 {formData.imagePreview ? (
                   <img src={formData.imagePreview} alt="Preview" className="w-full h-full object-contain p-2" />
                 ) : (
@@ -185,7 +184,7 @@ export function BrandModal({ isOpen, onClose, editingBrand, defaultCategory, uni
                 />
                 <label 
                   htmlFor="brand-image"
-                  className="cursor-pointer inline-flex items-center justify-center px-4 py-2 bg-white dark:bg-[#2A1B16] border border-[#E3C3A4] dark:border-[#3c2317] rounded-lg text-sm font-bold text-[#C68E58] hover:bg-[#FCF9F5] dark:hover:bg-[#3A221C] transition-colors w-full"
+                  className="cursor-pointer inline-flex items-center justify-center px-4 py-2 bg-white dark:bg-[#2A1B16] border border-[#E3C3A4]/60 dark:border-[#3c2317] rounded-lg text-sm font-bold text-[#C68E58] hover:bg-[#FCF9F5] dark:hover:bg-[#3A221C] transition-colors w-full"
                 >
                   انتخاب تصویر جدید
                 </label>
@@ -196,7 +195,7 @@ export function BrandModal({ isOpen, onClose, editingBrand, defaultCategory, uni
 
           <button
             type="submit"
-            className="w-full bg-[#C68E58] hover:bg-[#A87242] text-white font-bold py-3.5 rounded-xl transition-colors mt-2 sticky bottom-0 shadow-[0_4px_15px_rgba(198,142,88,0.25)] dark:shadow-none"
+            className="w-full bg-[#C68E58] hover:bg-[#A87242] dark:bg-[#7D4F35] dark:hover:bg-[#633E29] text-white font-bold py-3.5 rounded-xl transition-colors mt-2 sticky bottom-0 shadow-[0_4px_15px_rgba(198,142,88,0.25)] dark:shadow-none"
           >
             {editingBrand ? "ذخیره تغییرات" : "ایجاد برند"}
           </button>

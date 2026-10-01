@@ -63,7 +63,6 @@ export default function AdminCategoriesPage() {
       };
       setCategories([...categories, newCat]);
       
-      // Auto-expand the parent if a new subcategory was added
       if (data.parentId && !expandedCats.includes(data.parentId)) {
         setExpandedCats(prev => [...prev, data.parentId!]);
       }
@@ -76,22 +75,22 @@ export default function AdminCategoriesPage() {
       
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-6 mb-8">
         <div>
-          <h1 className="text-3xl font-black text-[#2C1E16] dark:text-white tracking-tight">مدیریت دسته‌بندی‌ها</h1>
+          <h1 className="text-3xl font-black text-[#4A3022] dark:text-[#EAE0D5] tracking-tight">مدیریت دسته‌بندی‌ها</h1>
           <p className="text-[#8C7A6B] dark:text-[#A1A1A1] font-medium mt-2">ساختاردهی، ویرایش و افزودن گروه‌های کالایی</p>
         </div>
         
         <button 
           onClick={() => handleOpenModal()}
-          className="w-full sm:w-auto flex items-center justify-center gap-2 bg-[#C68E58] hover:bg-[#A87242] dark:bg-[#C68E58] dark:hover:bg-[#A87242] text-white px-6 py-3 rounded-2xl text-sm font-bold shadow-[0_4px_15px_rgba(198,142,88,0.25)] dark:shadow-none transition-all active:scale-95 hover:-translate-y-0.5"
+          className="w-full sm:w-auto flex items-center justify-center gap-2 bg-[#C68E58] hover:bg-[#A87242] dark:bg-[#7D4F35] dark:hover:bg-[#633E29] text-white px-6 py-3 rounded-2xl text-sm font-bold shadow-[0_4px_15px_rgba(198,142,88,0.25)] dark:shadow-none transition-all active:scale-95 hover:-translate-y-0.5"
         >
           <Plus className="w-5 h-5" /> افزودن دسته جدید
         </button>
       </div>
 
-      <div className="bg-white dark:bg-[#1A0F0C] rounded-[2rem] border border-[#F5EFE6] dark:border-[#3c2317] overflow-hidden shadow-[0_2px_15px_rgba(198,142,88,0.03)] dark:shadow-none p-6">
+      <div className="bg-[#FCF9F5] dark:bg-[#1A0F0C] rounded-[2rem] border border-[#E3C3A4]/60 dark:border-[#3c2317] overflow-hidden shadow-[0_4px_20px_rgba(198,142,88,0.03)] dark:shadow-none p-6">
         <div>
           {mainCategories.map((mainCat) => (
-             <div key={mainCat.id} className="border border-[#F5EFE6] dark:border-[#3c2317] rounded-2xl mb-4 overflow-hidden">
+             <div key={mainCat.id} className="border border-[#E3C3A4]/60 dark:border-[#3c2317] rounded-2xl mb-4 overflow-hidden">
                 <CategoryNode 
                   category={mainCat}
                   allCategories={categories}

@@ -66,7 +66,8 @@ export default function AdminOrdersPage() {
         setSortBy={setSortBy}
       />
 
-      <div className="bg-white dark:bg-[#1A0F0C] rounded-[2rem] border border-[#F5EFE6] dark:border-[#3c2317] overflow-hidden shadow-[0_2px_15px_rgba(198,142,88,0.03)] dark:shadow-none">
+      {/* 🚀 Updated Container styling */}
+      <div className="bg-[#FCF9F5] dark:bg-[#1A0F0C] rounded-[1.5rem] border border-[#E3C3A4]/60 dark:border-[#3c2317] overflow-hidden shadow-[0_4px_20px_rgba(198,142,88,0.03)] dark:shadow-none">
         <OrdersTable 
           orders={filteredAndSortedOrders} 
           onViewDetails={(order) => setSelectedOrder(order)} 

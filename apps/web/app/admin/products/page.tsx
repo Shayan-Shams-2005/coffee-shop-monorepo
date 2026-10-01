@@ -111,7 +111,7 @@ function ProductsPageContent() {
   );
 
   return (
-    <div className="max-w-[1400px] mx-auto w-full px-4 sm:px-6 py-8 md:py-12 animate-in fade-in duration-500" dir="rtl">
+    <div className="max-w-[1400px] mx-auto w-full px-4 sm:px-6 py-8 md:py-12 animate-in fade-in duration-500 text-[#4A3022] dark:text-[#EAE0D5]" dir="rtl">
       <ProductsHeader />
 
       <div className="flex flex-col lg:flex-row gap-6 lg:gap-8">
@@ -130,7 +130,7 @@ function ProductsPageContent() {
           >
             <button
               onClick={() => setIsMobileFilterOpen(true)}
-              className="lg:hidden flex items-center justify-center gap-2 px-4 py-2 bg-white dark:bg-[#1A110F] border border-[#E3C3A4] dark:border-[#3A221C] text-[#C68E58] dark:text-[#EAE0D5] rounded-xl text-xs font-bold transition-colors"
+              className="lg:hidden flex items-center justify-center gap-2 px-4 py-2 bg-[#FCF9F5] hover:bg-white dark:bg-[#1A110F] dark:hover:bg-[#231511] border border-[#E3C3A4]/60 hover:border-[#C68E58] dark:border-[#3A221C] text-[#C68E58] dark:text-[#EAE0D5] rounded-xl text-xs font-bold transition-colors"
             >
               <Filter className="w-4 h-4" /> فیلترها
             </button>
@@ -157,7 +157,7 @@ function ProductsPageContent() {
 
 export default function AdminProductsPage() {
   return (
-    <Suspense fallback={<div className="w-full h-64 flex items-center justify-center text-[#8C7A6B] font-bold">در حال بارگذاری...</div>}>
+    <Suspense fallback={<div className="w-full h-64 flex items-center justify-center text-[#4A3022] dark:text-[#8C7A6B] font-bold">در حال بارگذاری...</div>}>
       <ProductsPageContent />
     </Suspense>
   );

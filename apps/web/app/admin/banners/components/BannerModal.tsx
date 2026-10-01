@@ -60,13 +60,13 @@ export function BannerModal({ isOpen, onClose, activeSection, editingBanner, onS
     <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
       <div className="absolute inset-0 bg-black/50 dark:bg-black/70 backdrop-blur-sm" onClick={onClose} />
       
-      <div className="relative bg-white dark:bg-[#1A1412] w-full max-w-lg rounded-3xl shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200" dir="rtl">
-        <div className="flex items-center justify-between p-6 border-b border-[#F5EFE6] dark:border-[#3c2317]">
-          <h2 className="text-lg font-black text-[#2C1E16] dark:text-white flex items-center gap-2">
+      <div className="relative bg-[#FCF9F5] dark:bg-[#1A1412] w-full max-w-lg rounded-3xl shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200" dir="rtl">
+        <div className="flex items-center justify-between p-6 border-b border-[#E3C3A4]/60 dark:border-[#3c2317] bg-white dark:bg-[#1A0F0C]">
+          <h2 className="text-lg font-black text-[#4A3022] dark:text-white flex items-center gap-2">
             {editingBanner ? <Edit className="w-5 h-5 text-[#C68E58]" /> : <Plus className="w-5 h-5 text-[#C68E58]" />}
             {editingBanner ? "ویرایش بنر" : "افزودن بنر جدید"}
           </h2>
-          <button onClick={onClose} className="text-gray-400 hover:text-gray-700 dark:hover:text-white transition-colors p-1">
+          <button onClick={onClose} className="text-[#8C7A6B] hover:text-[#4A3022] dark:text-[#A1A1A1] dark:hover:text-white transition-colors p-1 bg-[#FCF9F5] dark:bg-[#2A1B16] rounded-full">
             <X className="w-5 h-5" />
           </button>
         </div>
@@ -76,10 +76,10 @@ export function BannerModal({ isOpen, onClose, activeSection, editingBanner, onS
           {/* Image Upload Area */}
           <div>
             <label className="block text-sm font-bold text-[#4A3022] dark:text-[#EAE0D5] mb-3 text-right">فایل بنر (JPG, PNG, GIF)</label>
-            <div className={`relative border-2 border-dashed rounded-2xl overflow-hidden flex flex-col items-center justify-center transition-all ${
+            <div className={`relative border-2 border-dashed rounded-2xl overflow-hidden flex flex-col items-center justify-center transition-all bg-white dark:bg-[#231511] ${
               formData.imageUrl && !imageError
                 ? "border-transparent h-40" 
-                : "border-[#E3C3A4] dark:border-[#3c2317] hover:border-[#C68E58] hover:bg-[#FCF9F5] dark:hover:bg-[#231511] h-40"
+                : "border-[#E3C3A4]/80 dark:border-[#3c2317] hover:border-[#C68E58] hover:bg-[#F5EFE6]/50 dark:hover:bg-[#2A1B16] h-40"
             }`}>
               {formData.imageUrl && !imageError ? (
                 <div className="relative w-full h-full group bg-black/5">
@@ -116,7 +116,7 @@ export function BannerModal({ isOpen, onClose, activeSection, editingBanner, onS
               style={{ textAlign: 'right', direction: 'rtl' }}
               value={formData.alt}
               onChange={(e) => setFormData({ ...formData, alt: e.target.value })}
-              className="w-full bg-[#FCF9F5] dark:bg-[#231511] border border-[#E3C3A4] dark:border-[#3c2317] rounded-xl px-4 py-3 text-[#2C1E16] dark:text-white focus:outline-none focus:ring-2 focus:ring-[#C68E58]/50 transition-all"
+              className="w-full bg-white dark:bg-[#231511] border border-[#E3C3A4]/60 dark:border-[#3c2317] rounded-xl px-4 py-3 text-[#4A3022] dark:text-white focus:outline-none focus:ring-2 focus:ring-[#C68E58]/50 transition-all"
               placeholder="توضیح کوتاه برای سئو (مثال: بنر تخفیف تابستانه)..."
             />
           </div>
@@ -129,7 +129,7 @@ export function BannerModal({ isOpen, onClose, activeSection, editingBanner, onS
               style={{ textAlign: 'left', direction: 'ltr' }}
               value={formData.link}
               onChange={(e) => setFormData({ ...formData, link: e.target.value })}
-              className="w-full bg-[#FCF9F5] dark:bg-[#231511] border border-[#E3C3A4] dark:border-[#3c2317] rounded-xl px-4 py-3 text-[#2C1E16] dark:text-white focus:outline-none focus:ring-2 focus:ring-[#C68E58]/50 transition-all text-left dir-ltr"
+              className="w-full bg-white dark:bg-[#231511] border border-[#E3C3A4]/60 dark:border-[#3c2317] rounded-xl px-4 py-3 text-[#4A3022] dark:text-white focus:outline-none focus:ring-2 focus:ring-[#C68E58]/50 transition-all text-left dir-ltr"
               placeholder="https://example.com/offers"
             />
             <p className="text-[11px] text-[#8C7A6B] mt-2 text-right">لینک صفحه‌ای که کاربر با کلیک روی بنر به آن هدایت می‌شود.</p>
@@ -137,7 +137,7 @@ export function BannerModal({ isOpen, onClose, activeSection, editingBanner, onS
 
           <button
             type="submit"
-            className="w-full bg-[#C68E58] hover:bg-[#A87242] text-white font-bold py-3.5 rounded-xl transition-colors mt-4 shadow-[0_4px_15px_rgba(198,142,88,0.25)] dark:shadow-none"
+            className="w-full bg-[#C68E58] hover:bg-[#A87242] dark:bg-[#7D4F35] dark:hover:bg-[#633E29] text-white font-bold py-3.5 rounded-xl transition-colors mt-4 shadow-[0_4px_15px_rgba(198,142,88,0.25)] dark:shadow-none"
           >
             {editingBanner ? "ذخیره تغییرات" : "ایجاد و انتشار بنر"}
           </button>

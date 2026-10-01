@@ -7,19 +7,13 @@ import { Notification, NotificationType, initialNotifications } from "./types";
 import { NotificationHeader } from "./components/NotificationHeader";
 import { NotificationFilters } from "./components/NotificationFilters";
 import { NotificationCard } from "./components/NotificationCard";
-import { ReplyModal } from "./components/ReplyModal";
 
 export default function AdminNotificationsPage() {
   const [notifications, setNotifications] = useState<Notification[]>(initialNotifications);
   
-  // Filters State
   const [searchQuery, setSearchQuery] = useState("");
   const [filterType, setFilterType] = useState<NotificationType | "all">("all");
   const [filterStatus, setFilterStatus] = useState<"all" | "read" | "unread">("all");
-
-  // Reply Modal State
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [activeReply, setActiveReply] = useState<Notification | null>(null);
 
   const filteredNotifications = useMemo(() => {
     let result = [...notifications];
@@ -56,28 +50,19 @@ export default function AdminNotificationsPage() {
     }
   };
 
-  const handleOpenReplyModal = (notif: Notification) => {
-    setActiveReply(notif);
-    setIsModalOpen(true);
+  const handleSendReply = (id: string, replyMessage: string) => {
+    const now = new Date().toISOString();
+    setNotifications(prev => prev.map(n => 
+      n.id === id 
+        ? { ...n, isRead: true, adminReply: replyMessage, repliedAt: now } 
+        : n
+    ));
+    alert(`پاسخ شما با موفقیت ثبت و ارسال شد.`);
   };
 
-  const handleCloseModal = () => {
-    setIsModalOpen(false);
-    setActiveReply(null);
-  };
-
-  const handleSendReply = (replyMessage: string) => {
-    if (activeReply) {
-      const now = new Date().toISOString();
-      
-      setNotifications(prev => prev.map(n => 
-        n.id === activeReply.id 
-          ? { ...n, isRead: true, adminReply: replyMessage, repliedAt: now } 
-          : n
-      ));
-      
-      alert(`پاسخ شما با موفقیت برای ${activeReply.userName} ثبت و ارسال شد.`);
-      handleCloseModal();
+  const handleDeleteReply = (id: string) => {
+    if(confirm("آیا از حذف این پاسخ اطمینان دارید؟")) {
+      setNotifications(prev => prev.map(n => n.id === id ? { ...n, adminReply: undefined, repliedAt: undefined } : n));
     }
   };
 
@@ -96,8 +81,8 @@ export default function AdminNotificationsPage() {
 
       <div className="space-y-4">
         {filteredNotifications.length === 0 ? (
-          <div className="text-center py-16 bg-white dark:bg-[#1A0F0C] rounded-[1.5rem] border border-[#F5EFE6] dark:border-[#3c2317] flex flex-col items-center">
-            <Bell className="w-16 h-16 text-gray-300 dark:text-[#3c2317] mb-4" />
+          <div className="text-center py-16 bg-[#FCF9F5] dark:bg-[#1A0F0C] rounded-[1.5rem] border border-[#E3C3A4]/60 dark:border-[#3c2317] flex flex-col items-center">
+            <Bell className="w-16 h-16 text-[#E3C3A4] dark:text-[#3c2317] mb-4 opacity-50" />
             <p className="font-bold text-[#8C7A6B] dark:text-[#A1A1A1]">پیامی برای نمایش وجود ندارد.</p>
           </div>
         ) : (
@@ -107,18 +92,12 @@ export default function AdminNotificationsPage() {
               notif={notif}
               onDelete={deleteNotification}
               onMarkAsRead={markAsRead}
-              onReply={handleOpenReplyModal}
+              onSubmitReply={handleSendReply}
+              onDeleteReply={handleDeleteReply}
             />
           ))
         )}
       </div>
-
-      <ReplyModal 
-        isOpen={isModalOpen}
-        activeReply={activeReply}
-        onClose={handleCloseModal}
-        onSubmit={handleSendReply}
-      />
     </div>
   );
 }

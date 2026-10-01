@@ -60,7 +60,8 @@ export default function AdminCouponsPage() {
       
       {/* Header */}
       <div className="mb-8">
-        <h1 className="text-3xl font-black text-[#2C1E16] dark:text-white tracking-tight flex items-center gap-3">
+        {/* 🚀 Changed title text color to warm brown */}
+        <h1 className="text-3xl font-black text-[#4A3022] dark:text-[#EAE0D5] tracking-tight flex items-center gap-3">
           <TicketPercent className="w-8 h-8 text-[#C68E58]" />
           کدهای تخفیف
         </h1>

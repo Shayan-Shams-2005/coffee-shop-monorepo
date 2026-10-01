@@ -12,10 +12,10 @@ interface ProductTableProps {
 
 export function ProductTable({ products, onDelete, onResetFilters }: ProductTableProps) {
   return (
-    <div className="bg-white dark:bg-[#1A0F0C] rounded-[2rem] border border-[#F5EFE6] dark:border-[#3c2317] overflow-hidden shadow-[0_2px_15px_rgba(198,142,88,0.03)] dark:shadow-none">
+    <div className="bg-[#FCF9F5] dark:bg-[#1A0F0C] rounded-[2rem] border border-[#E3C3A4]/60 dark:border-[#3c2317] overflow-hidden shadow-[0_4px_20px_rgba(198,142,88,0.03)] dark:shadow-none">
       <div className="overflow-x-auto">
         <table className="w-full text-right text-sm">
-          <thead className="bg-[#FCF9F5] dark:bg-[#231511] text-[#8C7A6B] font-bold border-b border-[#F5EFE6] dark:border-[#3c2317]">
+          <thead className="bg-[#E3C3A4]/15 dark:bg-[#231511] text-[#8C7A6B] dark:text-[#A1A1A1] font-bold border-b border-[#E3C3A4]/60 dark:border-[#3c2317]">
             <tr>
               <th className="p-5 whitespace-nowrap">محصول</th>
               <th className="p-5 whitespace-nowrap">دسته‌بندی</th>
@@ -26,24 +26,24 @@ export function ProductTable({ products, onDelete, onResetFilters }: ProductTabl
               <th className="p-5 whitespace-nowrap text-center">عملیات</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-[#F5EFE6] dark:divide-[#3c2317]">
+          <tbody className="divide-y divide-[#E3C3A4]/40 dark:divide-[#3c2317]">
             {products.length > 0 ? (
               products.map((product) => (
-                <tr key={product.id} className="hover:bg-[#FCF9F5]/70 dark:hover:bg-[#2A1B16]/50 transition-colors group">
+                <tr key={product.id} className="hover:bg-[#C68E58]/5 dark:hover:bg-[#231511]/60 transition-colors group">
                   <td className="p-5">
                     <div className="flex items-center gap-4">
-                      <div className="w-14 h-14 rounded-2xl bg-[#FCF9F5] dark:bg-[#231511] border border-gray-100 dark:border-[#3c2317] relative p-1 flex-shrink-0 flex items-center justify-center group-hover:border-[#C68E58]/30 transition-colors">
-                        <PackageSearch className="w-6 h-6 text-gray-300 dark:text-[#6A5A4F]" />
+                      <div className="w-14 h-14 rounded-2xl bg-[#F5EFE6]/50 dark:bg-[#231511] border border-[#E3C3A4]/50 dark:border-[#3c2317] relative p-1 flex-shrink-0 flex items-center justify-center group-hover:border-[#C68E58]/40 transition-colors">
+                        <PackageSearch className="w-6 h-6 text-[#C68E58]/60 dark:text-[#6A5A4F]" />
                       </div>
                       <div className="flex flex-col gap-1">
-                        <span className="font-bold text-[#2C1E16] dark:text-white line-clamp-2">{product.name}</span>
+                        <span className="font-bold text-[#4A3022] dark:text-[#EAE0D5] line-clamp-2">{product.name}</span>
                         <span className="text-xs font-bold text-[#8C7A6B] flex items-center gap-1">
                           <Tag className="w-3 h-3" /> {product.brand}
                         </span>
                       </div>
                     </div>
                   </td>
-                  <td className="p-5 font-medium text-[#4A3022] dark:text-[#EAE0D5] whitespace-nowrap truncate max-w-[180px]">
+                  <td className="p-5 font-medium text-[#4A3022] dark:text-[#D4C4B7] whitespace-nowrap truncate max-w-[180px]">
                     {product.category}
                   </td>
                   <td className="p-5 whitespace-nowrap dir-ltr text-left pl-8">
@@ -57,7 +57,7 @@ export function ProductTable({ products, onDelete, onResetFilters }: ProductTabl
                         </span>
                       </div>
                     ) : (
-                      <span className="font-black text-[#2C1E16] dark:text-[#D4A373] text-[15px]">
+                      <span className="font-black text-[#4A3022] dark:text-[#C68E58] text-[15px]">
                         {product.price.toLocaleString("fa-IR")}
                       </span>
                     )}
@@ -65,7 +65,7 @@ export function ProductTable({ products, onDelete, onResetFilters }: ProductTabl
                   <td className="p-5 whitespace-nowrap text-center">
                     {product.hasOffer ? (
                       product.offerEndDate ? (
-                        <div className="inline-flex items-center gap-1.5 text-rose-500 bg-rose-50 dark:bg-rose-500/10 border border-rose-200 dark:border-rose-500/20 px-3 py-1.5 rounded-full text-[13px] font-bold">
+                        <div className="inline-flex items-center gap-1.5 text-rose-600 bg-rose-50 dark:text-rose-400 dark:bg-rose-500/10 border border-rose-200 dark:border-rose-500/20 px-3 py-1.5 rounded-full text-[13px] font-bold">
                           <Timer className="w-4 h-4" /> 
                           <span dir="rtl">{formatPersianDate(product.offerEndDate)}</span>
                         </div>
@@ -78,7 +78,7 @@ export function ProductTable({ products, onDelete, onResetFilters }: ProductTabl
                       <span className="text-[#8C7A6B] font-black text-lg">-</span>
                     )}
                   </td>
-                  <td className="p-5 font-black text-[#2C1E16] dark:text-[#D4A373] text-center whitespace-nowrap">
+                  <td className="p-5 font-black text-[#4A3022] dark:text-[#C68E58] text-center whitespace-nowrap">
                     {toFarsiNumber(product.salesVolume)}
                   </td>
                   <td className="p-5 whitespace-nowrap">
@@ -91,11 +91,12 @@ export function ProductTable({ products, onDelete, onResetFilters }: ProductTabl
                     )}
                   </td>
                   <td className="p-5">
-                    <div className="flex items-center justify-center gap-2 opacity-80 group-hover:opacity-100 transition-opacity">
-                      <Link href={`/admin/products/edit`} className="p-2.5 text-gray-400 hover:text-[#C68E58] hover:bg-[#FCF9F5] dark:text-[#6A5A4F] dark:hover:text-[#C68E58] dark:hover:bg-[#231511] rounded-xl transition-all inline-flex border border-transparent dark:hover:border-[#3c2317]">
+                    {/* 🚀 Changed Button Colors Here! */}
+                    <div className="flex items-center justify-center gap-2 transition-opacity">
+                      <Link href={`/admin/products/edit`} className="p-2.5 text-[#C68E58] hover:text-[#D4A373] hover:bg-[#F5EFE6] dark:text-[#C68E58] dark:hover:text-[#E3C3A4] dark:hover:bg-[#231511] rounded-xl transition-all inline-flex border border-transparent dark:hover:border-[#3c2317]">
                         <Edit className="w-4 h-4" />
                       </Link>
-                      <button onClick={() => onDelete(product.id)} className="p-2.5 text-gray-400 hover:text-rose-500 hover:bg-rose-50 dark:text-[#6A5A4F] dark:hover:text-rose-400 dark:hover:bg-rose-500/10 rounded-xl transition-all border border-transparent dark:hover:border-rose-500/20">
+                      <button onClick={() => onDelete(product.id)} className="p-2.5 text-rose-500 hover:text-rose-400 hover:bg-rose-50 dark:text-rose-500 dark:hover:text-rose-400 dark:hover:bg-rose-500/10 rounded-xl transition-all border border-transparent dark:hover:border-rose-500/20">
                         <Trash2 className="w-4 h-4" />
                       </button>
                     </div>

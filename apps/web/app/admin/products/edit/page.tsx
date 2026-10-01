@@ -2,7 +2,7 @@
 "use client";
 
 import { useState } from "react";
-import { ProductFormData } from "./types"; // مسیرها را با پروژه خود تطبیق دهید
+import { ProductFormData } from "./types";
 import { ProductGeneralPricing } from "./components/ProductGeneralPricing";
 import { ProductVariantSpecs } from "./components/ProductVariantSpecs";
 import { ProductMediaSidebar } from "./components/ProductMediaSideBar";
@@ -16,7 +16,6 @@ export default function AdminProductEditPage() {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    // در اینجا درخواست API برای ذخیره سازی ارسال خواهد شد
     alert("تغییرات محصول با موفقیت ذخیره شد.");
   };
 
@@ -24,7 +23,7 @@ export default function AdminProductEditPage() {
     <>
       <form 
         onSubmit={handleSubmit} 
-        className="max-w-6xl mx-auto w-full px-4 sm:px-6 py-8 md:py-12 space-y-8 animate-in fade-in duration-500 pb-20"
+        className="max-w-6xl mx-auto w-full px-4 sm:px-6 py-8 md:py-12 space-y-8 animate-in fade-in duration-500 pb-20 text-[#4A3022] dark:text-[#EAE0D5]"
         dir="rtl"
       >
         <EditProductHeader productTitle={formData.title} />

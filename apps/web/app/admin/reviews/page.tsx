@@ -11,7 +11,6 @@ import { ReviewCard } from "./components/ReviewCard";
 export default function AdminReviewsPage() {
   const [reviews, setReviews] = useState<Review[]>(initialReviews);
   
-  // Filter States
   const [searchQuery, setSearchQuery] = useState("");
   const [filterStatus, setFilterStatus] = useState<ReviewStatus | "all" | "reported">("pending");
 
@@ -33,13 +32,11 @@ export default function AdminReviewsPage() {
       result = result.filter(r => r.status === filterStatus);
     }
 
-    // Sort by date (newest first)
     result.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
 
     return result;
   }, [reviews, searchQuery, filterStatus]);
 
-  // Actions
   const handleApprove = (id: string) => {
     setReviews(prev => prev.map(r => r.id === id ? { ...r, status: "approved" } : r));
   };
@@ -77,8 +74,8 @@ export default function AdminReviewsPage() {
 
       <div className="space-y-4">
         {filteredReviews.length === 0 ? (
-          <div className="text-center py-16 bg-white dark:bg-[#1A0F0C] rounded-[1.5rem] border border-[#F5EFE6] dark:border-[#3c2317] flex flex-col items-center">
-            <MessageSquare className="w-16 h-16 text-gray-300 dark:text-[#3c2317] mb-4" />
+          <div className="text-center py-16 bg-[#FCF9F5] dark:bg-[#1A0F0C] rounded-[1.5rem] border border-[#E3C3A4]/60 dark:border-[#3c2317] flex flex-col items-center">
+            <MessageSquare className="w-16 h-16 text-[#E3C3A4] dark:text-[#3c2317] mb-4 opacity-50" />
             <p className="font-bold text-[#8C7A6B] dark:text-[#A1A1A1]">نظری برای نمایش وجود ندارد.</p>
           </div>
         ) : (
