@@ -23,9 +23,10 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="fa" dir="rtl" className={vazirmatn.variable}>
+    // 🚀 FIXED: suppressHydrationWarning added to html to block extension interference at the root
+    <html lang="fa" dir="rtl" className={vazirmatn.variable} suppressHydrationWarning>
       <body
-        // 🚀 FIXED: Added global backgrounds, text colors, and smooth transitions!
+        suppressHydrationWarning
         className="font-sans min-h-screen flex flex-col antialiased bg-[#FCF9F5] text-[#2C1E16] dark:bg-[#1A1412] dark:text-[#E3C3A4] transition-colors duration-300"
       >
         {/* هدر سایت */}

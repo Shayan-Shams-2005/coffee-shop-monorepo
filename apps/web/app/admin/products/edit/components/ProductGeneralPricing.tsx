@@ -18,147 +18,182 @@ const TITLE_MAX_LENGTH = 150;
 const DESC_MAX_LENGTH = 2000;
 
 export function ProductGeneralPricing({ formData, setFormData }: Props) {
-  const [isDiscountActive, setIsDiscountActive] = useState(false);
-  const [discountPercent, setDiscountPercent] = useState(0);
+  return (
+    <div className="space-y-6 lg:space-y-8">
+      <GeneralInfoSection formData={formData} setFormData={setFormData} />
+      <PricingSection formData={formData} setFormData={setFormData} />
+    </div>
+  );
+}
 
-  useEffect(() => {
-    if (isDiscountActive && formData.basePrice > 0 && formData.salePrice > 0 && formData.salePrice <= formData.basePrice) {
-      const diff = formData.basePrice - formData.salePrice;
-      setDiscountPercent(Math.round((diff / formData.basePrice) * 100));
-    } else {
-      setDiscountPercent(0);
-    }
-  }, [formData.basePrice, formData.salePrice, isDiscountActive]);
+// ============================================================================
+// 1. GENERAL INFO SECTION (Title & Description)
+// ============================================================================
 
+function GeneralInfoSection({ formData, setFormData }: Props) {
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     setFormData((prev) => ({ ...prev, [e.target.name]: e.target.value }));
   };
+
+  return (
+    <div className="bg-[#FCF9F5] dark:bg-[#1A0F0C] p-6 sm:p-8 rounded-[2rem] border border-[#E3C3A4]/60 dark:border-[#3c2317] shadow-[0_4px_20px_rgba(198,142,88,0.03)] dark:shadow-none transition-all space-y-6">
+      <h2 className="font-bold text-[#4A3022] dark:text-[#EAE0D5] text-lg flex items-center gap-3 border-b border-[#E3C3A4]/60 dark:border-[#3c2317] pb-4 transition-colors">
+        <div className="w-1.5 h-6 bg-[#C68E58] rounded-full"></div> اطلاعات کلی
+      </h2>
+      
+      <div className="space-y-5">
+        {/* Title Input */}
+        <div>
+          <div className="flex justify-between items-center mb-2.5">
+            <label className="text-sm font-bold text-[#4A3022] dark:text-[#EAE0D5]">عنوان محصول</label>
+            <span className="text-xs font-bold text-[#8C7A6B]" dir="ltr">
+              {(formData.title?.length || 0).toLocaleString("fa-IR")} / {TITLE_MAX_LENGTH.toLocaleString("fa-IR")}
+            </span>
+          </div>
+          <input 
+            type="text" 
+            name="title" 
+            value={formData.title} 
+            onChange={handleChange} 
+            maxLength={TITLE_MAX_LENGTH}
+            className="w-full h-14 bg-white dark:bg-[#231511] border border-[#E3C3A4]/60 dark:border-[#3c2317] rounded-2xl px-5 text-[#4A3022] dark:text-[#EAE0D5] focus:border-[#C68E58] dark:focus:border-[#C68E58] focus:ring-4 focus:ring-[#C68E58]/10 outline-none transition-all" 
+          />
+        </div>
+
+        {/* Description Input */}
+        <div>
+          <div className="flex justify-between items-center mb-2.5">
+            <label className="text-sm font-bold text-[#4A3022] dark:text-[#EAE0D5]">توضیحات</label>
+            <span className="text-xs font-bold text-[#8C7A6B]" dir="ltr">
+              {(formData.description?.length || 0).toLocaleString("fa-IR")} / {DESC_MAX_LENGTH.toLocaleString("fa-IR")}
+            </span>
+          </div>
+          <textarea 
+            name="description" 
+            value={formData.description} 
+            onChange={handleChange} 
+            maxLength={DESC_MAX_LENGTH}
+            rows={5} 
+            className="w-full bg-white dark:bg-[#231511] border border-[#E3C3A4]/60 dark:border-[#3c2317] rounded-2xl p-5 text-[#4A3022] dark:text-[#EAE0D5] focus:border-[#C68E58] dark:focus:border-[#C68E58] focus:ring-4 focus:ring-[#C68E58]/10 outline-none resize-none transition-all" 
+          />
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ============================================================================
+// 2. PRICING SECTION (Base Price, Sale Price, Timer)
+// ============================================================================
+
+function PricingSection({ formData, setFormData }: Props) {
+  const [isDiscountActive, setIsDiscountActive] = useState(false);
+
+  useEffect(() => {
+    if (formData.salePrice > 0 && formData.salePrice < formData.basePrice) {
+      setIsDiscountActive(true);
+    }
+  }, [formData.salePrice, formData.basePrice]);
+
+  const discountPercent = (isDiscountActive && formData.basePrice > 0 && formData.salePrice > 0 && formData.salePrice <= formData.basePrice)
+    ? Math.round(((formData.basePrice - formData.salePrice) / formData.basePrice) * 100)
+    : 0;
 
   const handlePriceChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     const englishValue = value.replace(/[۰-۹]/g, (w) => "0123456789"["۰۱۲۳۴۵۶۷۸۹".indexOf(w)] || w);
     const numValue = parseInt(englishValue.replace(/\D/g, ""), 10) || 0;
+    
     setFormData((prev) => ({ ...prev, [name]: numValue }));
   };
 
   return (
-    <div className="space-y-6 lg:space-y-8">
-      <div className="bg-[#FCF9F5] dark:bg-[#1A0F0C] p-6 sm:p-8 rounded-[2rem] border border-[#E3C3A4]/60 dark:border-[#3c2317] shadow-[0_4px_20px_rgba(198,142,88,0.03)] dark:shadow-none transition-all space-y-6">
-        <h2 className="font-bold text-[#4A3022] dark:text-[#EAE0D5] text-lg flex items-center gap-3 border-b border-[#E3C3A4]/60 dark:border-[#3c2317] pb-4 transition-colors">
-          <div className="w-1.5 h-6 bg-[#C68E58] rounded-full"></div> اطلاعات کلی
+    <div className="bg-[#FCF9F5] dark:bg-[#1A0F0C] p-6 sm:p-8 rounded-[2rem] border border-[#E3C3A4]/60 dark:border-[#3c2317] shadow-[0_4px_20px_rgba(198,142,88,0.03)] dark:shadow-none transition-all space-y-6">
+      
+      {/* Header & Toggle */}
+      <div className="flex justify-between items-center border-b border-[#E3C3A4]/60 dark:border-[#3c2317] pb-4 transition-colors">
+        <h2 className="font-bold text-[#4A3022] dark:text-[#EAE0D5] text-lg flex items-center gap-3">
+          <div className="w-1.5 h-6 bg-[#C68E58] rounded-full"></div> قیمت‌گذاری و تخفیف
         </h2>
-        <div className="space-y-5">
-          <div>
-            <div className="flex justify-between items-center mb-2.5">
-              <label className="text-sm font-bold text-[#4A3022] dark:text-[#EAE0D5]">عنوان محصول</label>
-              <span className="text-xs font-bold text-[#8C7A6B]" dir="ltr">
-                {(formData.title?.length || 0).toLocaleString("fa-IR")} / {TITLE_MAX_LENGTH.toLocaleString("fa-IR")}
-              </span>
-            </div>
-            <input 
-              type="text" 
-              name="title" 
-              value={formData.title} 
-              onChange={handleChange} 
-              maxLength={TITLE_MAX_LENGTH}
-              className="w-full h-14 bg-white dark:bg-[#231511] border border-[#E3C3A4]/60 dark:border-[#3c2317] rounded-2xl px-5 text-[#4A3022] dark:text-[#EAE0D5] focus:border-[#C68E58] dark:focus:border-[#C68E58] focus:ring-4 focus:ring-[#C68E58]/10 outline-none transition-all" 
-            />
-          </div>
-          <div>
-            <div className="flex justify-between items-center mb-2.5">
-              <label className="text-sm font-bold text-[#4A3022] dark:text-[#EAE0D5]">توضیحات</label>
-              <span className="text-xs font-bold text-[#8C7A6B]" dir="ltr">
-                {(formData.description?.length || 0).toLocaleString("fa-IR")} / {DESC_MAX_LENGTH.toLocaleString("fa-IR")}
-              </span>
-            </div>
-            <textarea 
-              name="description" 
-              value={formData.description} 
-              onChange={handleChange} 
-              maxLength={DESC_MAX_LENGTH}
-              rows={5} 
-              className="w-full bg-white dark:bg-[#231511] border border-[#E3C3A4]/60 dark:border-[#3c2317] rounded-2xl p-5 text-[#4A3022] dark:text-[#EAE0D5] focus:border-[#C68E58] dark:focus:border-[#C68E58] focus:ring-4 focus:ring-[#C68E58]/10 outline-none resize-none transition-all" 
-            />
-          </div>
-        </div>
+        <button
+          type="button"
+          onClick={() => {
+            setIsDiscountActive(!isDiscountActive);
+            // 🚀 THE FIX: Cast undefined as any to satisfy TypeScript when clearing the date
+            if (isDiscountActive) setFormData(prev => ({ ...prev, salePrice: 0, offerEndDate: undefined as any }));
+          }}
+          className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-bold transition-all border ${
+            isDiscountActive 
+              ? "bg-rose-50 text-rose-600 border-rose-200 dark:bg-rose-500/10 dark:text-rose-400 dark:border-rose-500/20" 
+              : "bg-white text-[#8C7A6B] border-[#E3C3A4]/60 hover:border-[#C68E58]/50 dark:bg-[#231511] dark:hover:border-[#3c2317]"
+          }`}
+        >
+          <Percent className="w-4 h-4" /> {isDiscountActive ? "تخفیف فعال است" : "فعال‌‌سازی تخفیف"}
+        </button>
       </div>
 
-      <div className="bg-[#FCF9F5] dark:bg-[#1A0F0C] p-6 sm:p-8 rounded-[2rem] border border-[#E3C3A4]/60 dark:border-[#3c2317] shadow-[0_4px_20px_rgba(198,142,88,0.03)] dark:shadow-none transition-all space-y-6">
-        <div className="flex justify-between items-center border-b border-[#E3C3A4]/60 dark:border-[#3c2317] pb-4 transition-colors">
-          <h2 className="font-bold text-[#4A3022] dark:text-[#EAE0D5] text-lg flex items-center gap-3">
-            <div className="w-1.5 h-6 bg-[#C68E58] rounded-full"></div> قیمت‌گذاری و تخفیف
-          </h2>
-          <button
-            type="button"
-            onClick={() => setIsDiscountActive(!isDiscountActive)}
-            className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-bold transition-all border ${
-              isDiscountActive 
-                ? "bg-rose-50 text-rose-600 border-rose-200 dark:bg-rose-500/10 dark:text-rose-400 dark:border-rose-500/20" 
-                : "bg-white text-[#8C7A6B] border-[#E3C3A4]/60 hover:border-[#C68E58]/50 dark:bg-[#231511] dark:hover:border-[#3c2317]"
-            }`}
-          >
-            <Percent className="w-4 h-4" /> {isDiscountActive ? "تخفیف فعال است" : "فعال‌سازی تخفیف"}
-          </button>
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+        
+        {/* Base Price */}
+        <div>
+          <label className="block text-sm font-bold text-[#4A3022] dark:text-[#EAE0D5] mb-2.5">قیمت اصلی (تومان)</label>
+          <input 
+            type="text" 
+            name="basePrice" 
+            dir="ltr" 
+            style={{ textAlign: "left" }}
+            value={formData.basePrice ? formData.basePrice.toLocaleString("fa-IR") : ""} 
+            onChange={handlePriceChange} 
+            className="w-full h-14 bg-white dark:bg-[#231511] border border-[#E3C3A4]/60 dark:border-[#3c2317] rounded-2xl px-5 !text-left font-black text-[#4A3022] dark:text-[#EAE0D5] focus:border-[#C68E58] dark:focus:border-[#C68E58] focus:ring-4 focus:ring-[#C68E58]/10 outline-none transition-all" 
+            placeholder="۰"
+          />
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-          <div>
-            <label className="block text-sm font-bold text-[#4A3022] dark:text-[#EAE0D5] mb-2.5">قیمت اصلی (تومان)</label>
-            <input 
-              type="text" 
-              name="basePrice" 
-              dir="ltr" 
-              style={{ textAlign: "left" }}
-              value={formData.basePrice ? formData.basePrice.toLocaleString("fa-IR") : ""} 
-              onChange={handlePriceChange} 
-              className="w-full h-14 bg-white dark:bg-[#231511] border border-[#E3C3A4]/60 dark:border-[#3c2317] rounded-2xl px-5 !text-left font-black text-[#4A3022] dark:text-[#EAE0D5] focus:border-[#C68E58] dark:focus:border-[#C68E58] focus:ring-4 focus:ring-[#C68E58]/10 outline-none transition-all" 
-              placeholder="۰"
-            />
-          </div>
+        {/* Sale Price */}
+        <div className={`transition-opacity ${!isDiscountActive ? "opacity-50 pointer-events-none" : ""}`}>
+          <label className="text-sm font-bold text-[#4A3022] dark:text-[#EAE0D5] mb-2.5 flex justify-between items-center">
+            قیمت با تخفیف (تومان)
+            {isDiscountActive && discountPercent > 0 && (
+              <span className="text-rose-600 bg-rose-50 border border-rose-100 dark:border-rose-500/20 dark:bg-rose-500/10 dark:text-rose-400 px-2 py-0.5 rounded-lg text-xs font-black">
+                {discountPercent.toLocaleString("fa-IR")}٪
+              </span>
+            )}
+          </label>
+          <input 
+            type="text" 
+            name="salePrice" 
+            dir="ltr" 
+            style={{ textAlign: "left" }}
+            disabled={!isDiscountActive} 
+            value={formData.salePrice ? formData.salePrice.toLocaleString("fa-IR") : ""} 
+            onChange={handlePriceChange} 
+            className="w-full h-14 bg-white dark:bg-[#231511] border border-[#E3C3A4]/60 dark:border-[#3c2317] rounded-2xl px-5 !text-left font-black text-rose-500 dark:text-rose-400 focus:border-rose-400 dark:focus:border-rose-500 focus:ring-4 focus:ring-rose-500/10 outline-none transition-all" 
+            placeholder="۰"
+          />
+        </div>
 
-          <div className={`transition-opacity ${!isDiscountActive ? "opacity-50 pointer-events-none" : ""}`}>
-            <label className="text-sm font-bold text-[#4A3022] dark:text-[#EAE0D5] mb-2.5 flex justify-between items-center">
-              قیمت با تخفیف (تومان)
-              {isDiscountActive && discountPercent > 0 && (
-                <span className="text-rose-600 bg-rose-50 border border-rose-100 dark:border-rose-500/20 dark:bg-rose-500/10 dark:text-rose-400 px-2 py-0.5 rounded-lg text-xs font-black">
-                  {discountPercent.toLocaleString("fa-IR")}٪
-                </span>
-              )}
-            </label>
-            <input 
-              type="text" 
-              name="salePrice" 
-              dir="ltr" 
-              style={{ textAlign: "left" }}
-              disabled={!isDiscountActive} 
-              value={formData.salePrice ? formData.salePrice.toLocaleString("fa-IR") : ""} 
-              onChange={handlePriceChange} 
-              className="w-full h-14 bg-white dark:bg-[#231511] border border-[#E3C3A4]/60 dark:border-[#3c2317] rounded-2xl px-5 !text-left font-black text-rose-500 dark:text-rose-400 focus:border-rose-400 dark:focus:border-rose-500 focus:ring-4 focus:ring-rose-500/10 outline-none transition-all" 
-              placeholder="۰"
+        {/* Date Picker */}
+        <div className={`sm:col-span-2 transition-opacity ${!isDiscountActive ? "opacity-50 pointer-events-none" : ""}`}>
+          <label className="text-sm font-bold text-[#4A3022] dark:text-[#EAE0D5] mb-2.5 flex items-center gap-2">
+            <Clock className="w-4 h-4 text-gray-400" /> مهلت پایان تخفیف
+          </label>
+          <div className="relative">
+            <DatePicker
+              value={formData.offerEndDate}
+              onChange={(date) => setFormData(prev => ({ ...prev, offerEndDate: date as unknown as Date }))}
+              disabled={!isDiscountActive}
+              calendar={persian}
+              locale={persian_fa}
+              className="custom-calendar"
+              format="YYYY/MM/DD - HH:mm:ss"
+              plugins={[<TimePicker position="bottom" key="time-picker" />]}
+              containerClassName="w-full"
+              inputClass="w-full h-14 bg-white dark:bg-[#231511] border border-[#E3C3A4]/60 dark:border-[#3c2317] rounded-2xl px-5 !text-left font-medium text-[#4A3022] dark:text-[#EAE0D5] focus:border-[#C68E58] dark:focus:border-[#C68E58] focus:ring-4 focus:ring-[#C68E58]/10 outline-none transition-all placeholder-gray-400 dir-ltr"
+              placeholder="انتخاب تاریخ و ساعت..."
             />
-          </div>
-
-          <div className={`sm:col-span-2 transition-opacity ${!isDiscountActive ? "opacity-50 pointer-events-none" : ""}`}>
-            <label className="text-sm font-bold text-[#4A3022] dark:text-[#EAE0D5] mb-2.5 flex items-center gap-2">
-              <Clock className="w-4 h-4 text-gray-400" /> مهلت پایان تخفیف
-            </label>
-            <div className="relative">
-              <DatePicker
-                value={formData.offerEndDate}
-                onChange={(date) => setFormData(prev => ({ ...prev, offerEndDate: date as unknown as Date }))}
-                disabled={!isDiscountActive}
-                calendar={persian}
-                locale={persian_fa}
-                className="custom-calendar"
-                format="YYYY/MM/DD - HH:mm:ss"
-                plugins={[<TimePicker position="bottom" key="time-picker" />]}
-                containerClassName="w-full"
-                inputClass="w-full h-14 bg-white dark:bg-[#231511] border border-[#E3C3A4]/60 dark:border-[#3c2317] rounded-2xl px-5 !text-left font-medium text-[#4A3022] dark:text-[#EAE0D5] focus:border-[#C68E58] dark:focus:border-[#C68E58] focus:ring-4 focus:ring-[#C68E58]/10 outline-none transition-all placeholder-gray-400 dir-ltr"
-                placeholder="انتخاب تاریخ و ساعت..."
-              />
-            </div>
           </div>
         </div>
+
       </div>
     </div>
   );
