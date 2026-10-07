@@ -1,5 +1,8 @@
 // app/admin/products/api.ts
 
+// 🚀 Import the AuthApi for the refresh logic. Adjust this path if your login folder is elsewhere!
+import { AuthApi } from "../../login/api"; 
+
 // 1. Sanitize the base URL once to prevent double-slash issues globally
 const API_BASE_URL = (process.env.NEXT_PUBLIC_API_URL || "http://localhost:5103").replace(/\/$/, "");
 
@@ -29,6 +32,31 @@ const createDummyImageFile = (): File => {
   return new File([tinyPng], "placeholder.png", { type: "image/png" });
 };
 
+// ============================================================================
+// 🚀 SMART JWT FETCHER (Handles Cookies & Auto-Refresh)
+// ============================================================================
+const fetchWithAuth = async (url: string, options: RequestInit = {}) => {
+  options.credentials = "include"; // CRITICAL: Always send HttpOnly cookies
+  
+  let res = await fetch(url, options);
+
+  // If the AccessToken expired, intercept the 401, refresh it, and try again
+  if (res.status === 401) {
+    try {
+      await AuthApi.refreshToken();
+      res = await fetch(url, options); // Retry original request
+    } catch (error) {
+      // If refresh fails (e.g., RefreshToken expired), throw a specific error
+      throw new Error("SESSION_EXPIRED");
+    }
+  }
+  return res;
+};
+
+// ============================================================================
+// APIs
+// ============================================================================
+
 export const ProductApi = {
   getImageUrl: (url: string | null | undefined): string => {
     if (!url) return "";
@@ -42,19 +70,19 @@ export const ProductApi = {
   },
 
   getAll: async () => {
-    const res = await fetch(`${API_BASE_URL}/api/Product/GetAll`, { cache: 'no-store' });
+    const res = await fetchWithAuth(`${API_BASE_URL}/api/Product/GetAll`, { cache: 'no-store' });
     if (!res.ok) throw new Error("Failed to fetch products");
     return res.json();
   },
 
   getById: async (id: number) => {
-    const res = await fetch(`${API_BASE_URL}/api/Product/GetById/${id}`, { cache: 'no-store' });
+    const res = await fetchWithAuth(`${API_BASE_URL}/api/Product/GetById/${id}`, { cache: 'no-store' });
     if (!res.ok) throw new Error(`Failed to fetch product ${id}`);
     return res.json();
   },
 
   create: async (formData: FormData) => {
-    const res = await fetch(`${API_BASE_URL}/api/Product/Create`, {
+    const res = await fetchWithAuth(`${API_BASE_URL}/api/Product/Create`, {
       method: "POST",
       body: formData, 
     });
@@ -66,7 +94,7 @@ export const ProductApi = {
   },
 
   update: async (id: number, data: ProductUpdateData) => {
-    const res = await fetch(`${API_BASE_URL}/api/Product/Update/${id}`, {
+    const res = await fetchWithAuth(`${API_BASE_URL}/api/Product/Update/${id}`, {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(data),
@@ -76,7 +104,7 @@ export const ProductApi = {
   },
 
   delete: async (id: number) => {
-    const res = await fetch(`${API_BASE_URL}/api/Product/Delete/${id}`, {
+    const res = await fetchWithAuth(`${API_BASE_URL}/api/Product/Delete/${id}`, {
       method: "DELETE",
     });
     if (!res.ok) throw new Error(`Deletion failed for product ${id}`);
@@ -88,7 +116,7 @@ export const ProductApi = {
     formData.append("file", file); 
     formData.append("isMain", isMain.toString());
 
-    const res = await fetch(`${API_BASE_URL}/api/Product/AddImage/${productId}/images`, {
+    const res = await fetchWithAuth(`${API_BASE_URL}/api/Product/AddImage/${productId}/images`, {
       method: "POST",
       body: formData,
     });
@@ -100,7 +128,7 @@ export const ProductApi = {
 
 export const CategoryApi = {
   getAll: async () => {
-    const res = await fetch(`${API_BASE_URL}/api/Category/GetAll`, { cache: 'no-store' });
+    const res = await fetchWithAuth(`${API_BASE_URL}/api/Category/GetAll`, { cache: 'no-store' });
     if (!res.ok) throw new Error("Failed to fetch categories");
     return res.json();
   },
@@ -110,7 +138,7 @@ export const CategoryApi = {
     formData.append("CategoryName", name); 
     formData.append("File", createDummyImageFile());
 
-    const res = await fetch(`${API_BASE_URL}/api/Category/Create`, {
+    const res = await fetchWithAuth(`${API_BASE_URL}/api/Category/Create`, {
       method: "POST",
       body: formData,
     });
@@ -122,7 +150,7 @@ export const CategoryApi = {
 
 export const BrandApi = {
   getAll: async () => {
-    const res = await fetch(`${API_BASE_URL}/api/Brand/GetAll`, { cache: 'no-store' });
+    const res = await fetchWithAuth(`${API_BASE_URL}/api/Brand/GetAll`, { cache: 'no-store' });
     if (!res.ok) throw new Error("Failed to fetch brands");
     return res.json();
   },
@@ -132,7 +160,7 @@ export const BrandApi = {
     formData.append("BrandName", name);
     formData.append("File", createDummyImageFile());
 
-    const res = await fetch(`${API_BASE_URL}/api/Brand/Create`, {
+    const res = await fetchWithAuth(`${API_BASE_URL}/api/Brand/Create`, {
       method: "POST",
       body: formData,
     });

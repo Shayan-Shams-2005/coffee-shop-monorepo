@@ -8,16 +8,18 @@ import { Button } from "@repo/ui/button";
 
 import { useAuthStore } from "../../src/store/useAuthStore";
 import { OtpTimer } from "../../components/auth/OtpTimer";
+import { AuthApi } from "./api"; 
 
 export default function LoginPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
-
   const redirectUrl = searchParams.get("redirect") || "/";
 
   const login = useAuthStore((state) => state.login);
 
   const [step, setStep] = useState<"phone" | "otp">("phone");
+  const [authMode, setAuthMode] = useState<"login" | "register">("login");
+  
   const [phoneNumber, setPhoneNumber] = useState("");
   const [otpCode, setOtpCode] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -26,7 +28,7 @@ export default function LoginPage() {
 
   const isValidIranianPhoneNumber = (phone: string) => /^09\d{9}$/.test(phone);
 
-  const handlePhoneSubmit = (e: React.FormEvent) => {
+  const handlePhoneSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
 
@@ -36,14 +38,27 @@ export default function LoginPage() {
     }
 
     setIsLoading(true);
-    setTimeout(() => {
-      setIsLoading(false);
-      setIsUserExists(phoneNumber.endsWith("1"));
+    
+    try {
+      await AuthApi.requestLoginOtp(phoneNumber);
+      setIsUserExists(true);
+      setAuthMode("login");
       setStep("otp");
-    }, 1000);
+    } catch (loginError) {
+      try {
+        await AuthApi.requestRegisterOtp(phoneNumber);
+        setIsUserExists(false);
+        setAuthMode("register");
+        setStep("otp");
+      } catch (regError) {
+        setError("خطا در برقراری ارتباط با سرور. لطفاً مجدداً تلاش کنید.");
+      }
+    } finally {
+      setIsLoading(false);
+    }
   };
 
-  const handleOtpSubmit = (e: React.FormEvent) => {
+  const handleOtpSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
 
@@ -53,23 +68,38 @@ export default function LoginPage() {
     }
 
     setIsLoading(true);
-    setTimeout(() => {
-      setIsLoading(false);
-      if (otpCode === "111111") {
-        login(phoneNumber);
-        router.push(redirectUrl);
+    
+    try {
+      if (authMode === "login") {
+        await AuthApi.verifyLoginOtp(phoneNumber, otpCode);
       } else {
-        setError("کد تایید وارد شده اشتباه است.");
+        await AuthApi.verifyRegisterOtp(phoneNumber, otpCode);
       }
-    }, 1000);
+
+      login(phoneNumber);
+      router.push(redirectUrl);
+      
+    } catch (err: any) {
+      setError(err.message || "خطایی رخ داده است.");
+    } finally {
+      setIsLoading(false);
+    }
   };
 
-  const handleResendCode = () => {
+  const handleResendCode = async () => {
     setIsLoading(true);
-    setTimeout(() => {
+    setError("");
+    try {
+      if (authMode === "login") {
+        await AuthApi.requestLoginOtp(phoneNumber);
+      } else {
+        await AuthApi.requestRegisterOtp(phoneNumber);
+      }
+    } catch (err) {
+      setError("خطا در ارسال مجدد کد.");
+    } finally {
       setIsLoading(false);
-      setError("");
-    }, 1000);
+    }
   };
 
   return (
@@ -114,7 +144,6 @@ export default function LoginPage() {
                 onChange={(e) =>
                   setPhoneNumber(e.target.value.replace(/\D/g, ""))
                 }
-                // 🚀 FIXED: Dark mode uses transparent background with a subtle border
                 className="w-full h-14 bg-gray-50 border border-gray-100 rounded-2xl px-4 text-center font-bold text-lg text-gray-900 focus:outline-none focus:border-[#C68E58] focus:ring-1 focus:ring-[#C68E58] transition-all placeholder:text-gray-400 placeholder:font-normal dark:bg-transparent dark:border-[#3c2317] dark:text-[#EAE0D5] dark:focus:border-[#6A422D] dark:focus:ring-[#6A422D] dark:placeholder:text-[#6A5A4F]"
               />
             </div>
@@ -122,7 +151,6 @@ export default function LoginPage() {
             <Button
               type="submit"
               disabled={isLoading || phoneNumber.length < 11}
-              // 🚀 FIXED: Solid primary colors for both light (#C68E58) and dark (#6A422D) modes
               className="w-full h-14 rounded-2xl bg-[#C68E58] hover:bg-[#A87242] text-white font-bold text-lg flex items-center justify-center gap-2 transition-all disabled:opacity-50 shadow-md active:scale-95 dark:bg-[#6A422D] dark:text-[#F3E8E0] dark:hover:bg-[#5A3826] dark:shadow-none"
             >
               {isLoading ? (
@@ -191,7 +219,6 @@ export default function LoginPage() {
                 maxLength={6}
                 value={otpCode}
                 onChange={(e) => setOtpCode(e.target.value.replace(/\D/g, ""))}
-                // 🚀 FIXED: Dark mode uses transparent background with a subtle border
                 className="w-full h-14 bg-gray-50 border border-gray-100 rounded-2xl px-4 text-center font-black text-2xl tracking-[0.5em] text-[#2C1E16] focus:outline-none focus:border-[#C68E58] focus:ring-1 focus:ring-[#C68E58] transition-all placeholder:font-normal placeholder:tracking-normal placeholder:text-gray-300 dark:bg-transparent dark:border-[#3c2317] dark:text-[#EAE0D5] dark:focus:border-[#6A422D] dark:focus:ring-[#6A422D] dark:placeholder:text-[#6A5A4F]"
               />
             </div>
@@ -199,7 +226,6 @@ export default function LoginPage() {
             <Button
               type="submit"
               disabled={isLoading || otpCode.length !== 6}
-              // 🚀 FIXED: Solid primary colors for both light (#C68E58) and dark (#6A422D) modes
               className="w-full h-14 rounded-2xl bg-[#C68E58] hover:bg-[#A87242] text-white font-bold text-lg flex items-center justify-center gap-2 transition-all disabled:opacity-50 shadow-md active:scale-95 dark:bg-[#6A422D] dark:text-[#F3E8E0] dark:hover:bg-[#5A3826] dark:shadow-none"
             >
               {isLoading ? (
@@ -216,10 +242,6 @@ export default function LoginPage() {
                 onResend={handleResendCode}
               />
             </div>
-
-            <p className="text-xs text-center text-gray-400 dark:text-[#6A5A4F] mt-2 transition-colors">
-              کد آزمایشی: 111111
-            </p>
           </form>
         )}
       </div>
