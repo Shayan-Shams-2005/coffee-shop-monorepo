@@ -1,6 +1,4 @@
-// app/admin/products/api.ts
-
-// 🚀 Import the AuthApi for the refresh logic. Adjust this path if your login folder is elsewhere!
+// app/admin/products/edit/api.ts
 import { AuthApi } from "../../login/api"; 
 
 // 1. Sanitize the base URL once to prevent double-slash issues globally
@@ -9,17 +7,15 @@ const API_BASE_URL = (process.env.NEXT_PUBLIC_API_URL || "http://localhost:5103"
 // 2. Define standard interfaces for type safety matching your C# backend
 export interface ProductUpdateData {
   ProductName: string;
-  Price: number;
+  OriginalPrice: number;
+  SalePrice: number | null; // Safely allows null for products without discounts
   Description: string;
   StockQuantity: number;
   CategoryId: number;
   BrandId: number;
   HasOffer: boolean;
-  NewPrice: number | null;
+  NewPrice?: number | null;
   OfferEndDate: string | null;
-  KeyFeatures: { key: string; value: string }[];
-  Specs: { key: string; value: string }[];
-  OptionGroups: any[]; 
 }
 
 // 3. Extract the dummy file generation to keep the code DRY
@@ -61,11 +57,25 @@ export const ProductApi = {
   getImageUrl: (url: string | null | undefined): string => {
     if (!url) return "";
     
-    const cleaned = url.replace(/\\/g, '/');
-    if (/^(https?:\/\/|data:image)/.test(cleaned)) {
+    // Convert Windows backslashes to web forward slashes
+    let cleaned = url.replace(/\\/g, '/');
+    
+    // 1. Safe pass-through for absolute web links, base64, or frontend blobs
+    if (/^(https?:\/\/|data:image|blob:)/i.test(cleaned)) {
       return cleaned;
     }
     
+    // 2. Strip out 'file:///' if the browser or backend accidentally applied it
+    cleaned = cleaned.replace(/^file:\/\/\//i, '');
+    
+    // 3. MAGIC FILTER: Chop off local absolute paths (e.g., D:/Project/.../uploads/img.png)
+    // Keeps only the relative path starting from /uploads or /images
+    const uploadFolderMatch = cleaned.match(/(\/uploads\/|\/images\/).*/i);
+    if (uploadFolderMatch) {
+       cleaned = uploadFolderMatch[0];
+    }
+    
+    // 4. Return the safe URL mapped to your C# API
     return cleaned.startsWith("/") ? `${API_BASE_URL}${cleaned}` : `${API_BASE_URL}/${cleaned}`;
   },
 
@@ -99,7 +109,10 @@ export const ProductApi = {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(data),
     });
-    if (!res.ok) throw new Error(`Update failed for product ${id}`);
+    if (!res.ok) {
+        const errorText = await res.text();
+        throw new Error(`Update failed: ${errorText}`);
+    }
     return res.status === 204 ? true : res.json();
   },
 
@@ -116,6 +129,7 @@ export const ProductApi = {
     formData.append("file", file); 
     formData.append("isMain", isMain.toString());
 
+    // Matches Swagger: POST /api/Product/AddImage/{id}/images
     const res = await fetchWithAuth(`${API_BASE_URL}/api/Product/AddImage/${productId}/images`, {
       method: "POST",
       body: formData,
@@ -123,6 +137,68 @@ export const ProductApi = {
     
     if (!res.ok) throw new Error("Failed to upload image.");
     return res.status === 204 ? true : res.json(); 
+  },
+
+  setSpecifications: async (id: number, specs: any[]) => {
+    // Matches Swagger: PUT /api/Product/SetSpecifications/{id}/specifications
+    const res = await fetchWithAuth(`${API_BASE_URL}/api/Product/SetSpecifications/${id}/specifications`, {
+      method: "PUT", 
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(specs),
+    });
+    if (!res.ok) throw new Error("Failed to set specifications");
+    return true;
+  },
+
+  setAttributes: async (id: number, attributesPayload: any) => {
+    // Matches Swagger: PUT /api/Product/SetAttributes/{id}/attributes
+    const res = await fetchWithAuth(`${API_BASE_URL}/api/Product/SetAttributes/${id}/attributes`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(attributesPayload),
+    });
+    if (!res.ok) {
+        const errorText = await res.text();
+        throw new Error(`Failed to set attributes: ${errorText}`);
+    }
+    return res.status === 204 ? true : res.json();
+  }
+};
+
+export const ProductVariantApi = {
+  create: async (productId: number, variantData: any) => {
+    const res = await fetchWithAuth(`${API_BASE_URL}/api/ProductVariant/Create/${productId}`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(variantData),
+    });
+    if (!res.ok) {
+      const errorText = await res.text();
+      throw new Error(`Failed to create variant: ${errorText}`);
+    }
+    return res.json();
+  },
+
+  update: async (productId: number, variantId: number, variantData: any) => {
+    const res = await fetchWithAuth(`${API_BASE_URL}/api/ProductVariant/Update/${productId}/${variantId}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(variantData),
+    });
+    if (!res.ok) {
+      const errorText = await res.text();
+      throw new Error(`Failed to update variant: ${errorText}`);
+    }
+    return res.status === 204 ? true : res.json();
+  },
+
+  // 🚀 ADDED THIS TO BYPASS C# VALIDATION:
+  delete: async (productId: number, variantId: number) => {
+    const res = await fetchWithAuth(`${API_BASE_URL}/api/ProductVariant/Delete/${productId}/${variantId}`, {
+      method: "DELETE",
+    });
+    if (!res.ok) throw new Error("Failed to delete variant");
+    return res.status === 204;
   }
 };
 

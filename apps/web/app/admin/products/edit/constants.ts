@@ -8,15 +8,13 @@ export const INITIAL_PRODUCT_DATA: ProductFormData = {
   brand: "",
   basePrice: 0,
   salePrice: 0,
-  stock: 0, // 🚀 FIX: Added the missing 'stock' property
-  offerEndDate: new Date(), 
+  stock: 0, 
+  offerEndDate: undefined, // Better to start as undefined rather than today's date
   mainImage: "",
+  mainImageFile: null, // 🚀 FIX: Added missing property
   gallery: [],
-  keyFeatures: [
-    { key: "", value: "" },
-  ],
-  specs: [
-    { key: "", value: "" },
-  ],
+  galleryFiles: [],    // 🚀 FIX: Added missing property
+  keyFeatures: [],     // Usually better to start empty
+  specs: [],           // Usually better to start empty
   optionGroups: [],
 };

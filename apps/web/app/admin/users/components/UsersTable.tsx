@@ -1,10 +1,9 @@
-// app/admin/users/components/UsersTable.tsx
 import { Edit, ShieldAlert, CheckCircle2, User as UserIcon } from "lucide-react";
-import { User, toFarsiNumber, formatPrice, formatDate } from "../types";
+import { UserDto, toFarsiNumber, formatDate } from "../types";
 
 interface UsersTableProps {
-  users: User[];
-  onEdit: (user: User) => void;
+  users: UserDto[];
+  onEdit: (user: UserDto) => void;
 }
 
 export function UsersTable({ users, onEdit }: UsersTableProps) {
@@ -26,30 +25,31 @@ export function UsersTable({ users, onEdit }: UsersTableProps) {
             <th className="p-5 whitespace-nowrap">نقش</th>
             <th className="p-5 whitespace-nowrap">وضعیت</th>
             <th className="p-5 whitespace-nowrap text-center">تاریخ عضویت</th>
-            <th className="p-5 whitespace-nowrap text-center">سفارشات</th>
-            <th className="p-5 whitespace-nowrap text-center">مجموع خرید</th>
             <th className="p-5 whitespace-nowrap text-center">عملیات</th>
           </tr>
         </thead>
         <tbody className="divide-y divide-[#E3C3A4]/40 dark:divide-[#3c2317]">
           {users.map((user) => (
-            <tr 
-              key={user.id} 
-              className="hover:bg-[#C68E58]/5 dark:hover:bg-[#2A1B16]/50 transition-colors group"
-            >
+            <tr key={user.userId} className="hover:bg-[#C68E58]/5 dark:hover:bg-[#2A1B16]/50 transition-colors group">
               <td className="p-5">
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-xl bg-white dark:bg-[#231511] border border-[#E3C3A4]/60 dark:border-[#3c2317] flex items-center justify-center text-[#C68E58] shrink-0">
-                    <UserIcon className="w-5 h-5" />
+                  <div className="w-10 h-10 rounded-xl bg-white dark:bg-[#231511] border border-[#E3C3A4]/60 dark:border-[#3c2317] flex items-center justify-center text-[#C68E58] shrink-0 overflow-hidden">
+                    {user.profileUrl ? (
+                       <img src={user.profileUrl} alt="profile" className="w-full h-full object-cover" />
+                    ) : (
+                       <UserIcon className="w-5 h-5" />
+                    )}
                   </div>
                   <div className="flex flex-col">
-                    <span className="font-bold text-[#4A3022] dark:text-white">{user.fullName}</span>
-                    <span className="text-xs font-bold text-[#8C7A6B] mt-1 dir-ltr text-right">{toFarsiNumber(user.phone)}</span>
+                    <span className="font-bold text-[#4A3022] dark:text-white">
+                      {user.firstName || user.lastName ? `${user.firstName || ""} ${user.lastName || ""}` : "کاربر جدید"}
+                    </span>
+                    <span className="text-xs font-bold text-[#8C7A6B] mt-1 dir-ltr text-right">{toFarsiNumber(user.phoneNumber)}</span>
                   </div>
                 </div>
               </td>
               <td className="p-5">
-                {user.role === 'admin' ? (
+                {user.role === 1 ? (
                   <span className="inline-flex items-center gap-1.5 px-3 py-1 text-xs font-bold rounded-lg bg-purple-50 text-purple-600 border border-purple-200 dark:bg-purple-500/10 dark:text-purple-400 dark:border-purple-500/20">
                     مدیر سایت
                   </span>
@@ -60,7 +60,7 @@ export function UsersTable({ users, onEdit }: UsersTableProps) {
                 )}
               </td>
               <td className="p-5">
-                {user.status === 'active' ? (
+                {!user.isDeleted ? (
                   <span className="inline-flex items-center gap-1.5 px-3 py-1 text-xs font-bold rounded-lg bg-emerald-50 text-emerald-600 border border-emerald-200 dark:bg-emerald-500/10 dark:text-emerald-400 dark:border-emerald-500/20">
                     <CheckCircle2 className="w-3.5 h-3.5" /> فعال
                   </span>
@@ -71,13 +71,7 @@ export function UsersTable({ users, onEdit }: UsersTableProps) {
                 )}
               </td>
               <td className="p-5 text-center text-[#8C7A6B] dark:text-[#A1A1A1] text-sm font-bold">
-                {toFarsiNumber(formatDate(user.joinDate))}
-              </td>
-              <td className="p-5 text-center font-black text-[#C68E58]">
-                {toFarsiNumber(user.ordersCount)}
-              </td>
-              <td className="p-5 text-center font-black text-[#4A3022] dark:text-[#EAE0D5]">
-                {user.totalSpent > 0 ? formatPrice(user.totalSpent) : '-'}
+                {toFarsiNumber(formatDate(user.createdAt))}
               </td>
               <td className="p-5 text-center">
                 <button

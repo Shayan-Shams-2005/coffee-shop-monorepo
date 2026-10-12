@@ -1,5 +1,5 @@
 // app/profile/userApi.ts
-import { AuthApi } from "../login/api"; // ⚠️ Adjust this import path based on your folder structure
+import { AuthApi } from "../../login/api"; // ⚠️ Adjust this import path based on your folder structure
 
 const API_BASE_URL = (process.env.NEXT_PUBLIC_API_URL || "http://localhost:5103").replace(/\/$/, "");
 

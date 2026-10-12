@@ -1,16 +1,15 @@
-// components/profile/ProfileInfoTab.tsx
 "use client";
 
 import { useState, useEffect, useRef } from "react";
 import { Loader2, Camera, User as UserIcon } from "lucide-react";
 import { Button } from "@repo/ui/button";
 
-import { UserApi } from "../../app/profile/userApi"; 
-import { useAuthStore } from "../../src/store/useAuthStore"; 
-import { AuthApi } from "../../app/login/api"; // ⚠️ Adjust path
+import { UserApi } from "./userApi"; 
+import { useAuthStore } from "../../../src/store/useAuthStore"; 
+import { AuthApi } from "../../app/login/api"; 
 
 export function ProfileInfoTab() {
-  const logout = useAuthStore((state) => state.logout); // 🚀 Pull logout from Zustand
+  const logout = useAuthStore((state) => state.logout); 
 
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
@@ -37,10 +36,9 @@ export function ProfileInfoTab() {
           setPreviewImage(UserApi.getImageUrl(data.profileUrl));
         }
       } catch (err: any) {
-        // 🚀 OPTIMAL JWT: If refresh failed, clear local state and force login
         if (err.message === "SESSION_EXPIRED") {
-          await AuthApi.logout(); // Tell backend to clear cookies
-          logout(); // Clear Zustand state (this will auto-redirect due to page.tsx protection)
+          await AuthApi.logout(); 
+          logout(); 
         } else {
           setError("خطا در دریافت اطلاعات کاربری. لطفاً صفحه را رفرش کنید.");
         }
@@ -123,7 +121,6 @@ export function ProfileInfoTab() {
       )}
 
       <form onSubmit={handleSubmit} className="space-y-8" dir="rtl">
-        {/* Profile Image Upload Section */}
         <div className="flex flex-col items-center sm:items-start gap-4">
           <label className="text-sm font-bold text-[#8C7A6B] dark:text-[#A1A1A1]">تصویر پروفایل</label>
           <div className="flex items-center gap-6">

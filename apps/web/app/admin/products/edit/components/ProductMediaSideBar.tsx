@@ -4,7 +4,6 @@
 import { ProductFormData } from "../types";
 import { ImageSection } from "./sidebar/ImageSection";
 import { CategoryBrandSection } from "./sidebar/CategoryBrandSection";
-import { StockSection } from "./sidebar/StockSection";
 
 interface Props {
   formData: ProductFormData;
@@ -16,7 +15,6 @@ export function ProductMediaSidebar({ formData, setFormData }: Props) {
     <>
       <ImageSection formData={formData} setFormData={setFormData} />
       <CategoryBrandSection formData={formData} setFormData={setFormData} />
-      <StockSection formData={formData} setFormData={setFormData} />
     </>
   );
 }

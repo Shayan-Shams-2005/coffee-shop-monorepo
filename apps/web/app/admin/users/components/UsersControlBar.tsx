@@ -1,16 +1,15 @@
-// app/admin/users/components/UsersControlBar.tsx
 "use client";
 
 import { Search, Filter, ChevronDown } from "lucide-react";
-import { UserRole, UserStatus } from "../types";
+import { UserRoleFilter, UserStatusFilter } from "../types";
 
 interface UsersControlBarProps {
   searchQuery: string;
   setSearchQuery: (val: string) => void;
-  filterRole: UserRole | "all";
-  setFilterRole: (val: UserRole | "all") => void;
-  filterStatus: UserStatus | "all";
-  setFilterStatus: (val: UserStatus | "all") => void;
+  filterRole: UserRoleFilter;
+  setFilterRole: (val: UserRoleFilter) => void;
+  filterStatus: UserStatusFilter;
+  setFilterStatus: (val: UserStatusFilter) => void;
 }
 
 export function UsersControlBar({
@@ -29,7 +28,7 @@ export function UsersControlBar({
           style={{ textAlign: 'right', direction: 'rtl' }}
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
-          placeholder="جستجو در نام، شماره تماس یا ایمیل..."
+          placeholder="جستجو در نام، شماره تماس..."
           className="w-full bg-white dark:bg-[#231511] border border-[#E3C3A4]/60 dark:border-[#3c2317] rounded-xl pr-12 pl-4 py-3 text-[#4A3022] dark:text-white focus:outline-none focus:border-[#C68E58] transition-all text-sm font-bold"
         />
       </div>
@@ -42,7 +41,7 @@ export function UsersControlBar({
           </div>
           <select
             value={filterRole}
-            onChange={(e) => setFilterRole(e.target.value as any)}
+            onChange={(e) => setFilterRole(e.target.value as UserRoleFilter)}
             className="w-full appearance-none bg-white dark:bg-[#231511] border border-[#E3C3A4]/60 dark:border-[#3c2317] rounded-xl pr-10 pl-10 py-3 text-[#4A3022] dark:text-white focus:outline-none focus:border-[#C68E58] transition-all text-sm font-bold cursor-pointer"
           >
             <option value="all">همه نقش‌ها</option>
@@ -58,7 +57,7 @@ export function UsersControlBar({
         <div className="relative w-full sm:w-48">
           <select
             value={filterStatus}
-            onChange={(e) => setFilterStatus(e.target.value as any)}
+            onChange={(e) => setFilterStatus(e.target.value as UserStatusFilter)}
             className="w-full appearance-none bg-white dark:bg-[#231511] border border-[#E3C3A4]/60 dark:border-[#3c2317] rounded-xl px-4 pl-10 py-3 text-[#4A3022] dark:text-white focus:outline-none focus:border-[#C68E58] transition-all text-sm font-bold cursor-pointer"
           >
             <option value="all">همه وضعیت‌ها</option>

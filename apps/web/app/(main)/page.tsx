@@ -1,18 +1,18 @@
-import { Hero } from "../components/home/Hero";
-import { QuickLinks } from "../components/home/QuickLinks";
-import { SpecialOffers } from "../components/home/special-offers/SpecialOffers";
-import { AdBanners } from "../components/home/AdBanners";
-import { CategoryGrid } from "../components/home/CategoryGrid";
-import { NewestProducts } from "../components/home/newest-products/NewestProducts";
-import { Bestsellers } from "../components/home/best-sellers/BestSellers";
-import { PopularBrands } from "../components/home/PopularBrands";
+import { Hero } from "../../components/home/Hero";
+import { QuickLinks } from "../../components/home/QuickLinks";
+import { SpecialOffers } from "../../components/home/special-offers/SpecialOffers";
+import { AdBanners } from "../../components/home/AdBanners";
+import { CategoryGrid } from "../../components/home/CategoryGrid";
+import { NewestProducts } from "../../components/home/newest-products/NewestProducts";
+import { Bestsellers } from "../../components/home/best-sellers/BestSellers";
+import { PopularBrands } from "../../components/home/PopularBrands";
 
 // 🚀 ایمپورت دیتای استاتیک
 import {
   promoBanners4,
   promoBanners2,
   promoBanners3,
-} from "../lib/mock/home-data";
+} from "../../lib/mock/home-data";
 
 export default function Home() {
   return (

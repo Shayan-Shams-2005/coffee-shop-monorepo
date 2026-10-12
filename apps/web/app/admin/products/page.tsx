@@ -45,22 +45,27 @@ function ProductsPageContent() {
         const mappedProducts = rawArray.map((p: any, index: number) => {
           let rawImageStr = "";
 
-          // Grab the imageUrl from the images array based on database structure
           if (Array.isArray(p.images) && p.images.length > 0) {
-            const mainImg = p.images.find((img: any) => img.isMain === true) || p.images[0];
-            rawImageStr = mainImg.imageUrl || "";
+            const mainImg = p.images.find((img: any) => img.isMain === true || img.IsMain === true) || p.images[0];
+            rawImageStr = mainImg.imageUrl || mainImg.ImageUrl || "";
           }
 
+          // 🚀 FIX: Safely map all possible C# price variables 
+          const priceVal = Number(p.initialPrice || p.InitialPrice || p.originalPrice || p.OriginalPrice || p.price || p.Price || p.basePrice || 0);
+          const salePriceVal = Number(p.salePrice || p.SalePrice || p.newPrice || p.NewPrice || 0);
+
           return {
+            ...p, // 🚀 FIX: Spreading 'p' ensures attributes, specifications, and salesVolume are passed to the table
             id: p.productId || p.id || index, 
-            name: p.productName || "محصول بدون نام",
-            category: p.categoryName || (p.categoryId ? p.categoryId.toString() : "نامشخص"),
-            brand: p.brandName || (p.brandId ? p.brandId.toString() : "نامشخص"),
-            price: p.price || 0,
-            stock: p.stockQuantity || 0,
-            hasOffer: false, 
-            newPrice: null,  
-            // 🚀 Using the central API helper instead of a local function
+            name: p.productName || p.ProductName || p.name || "محصول بدون نام",
+            category: p.categoryName || p.CategoryName || (p.categoryId ? p.categoryId.toString() : "نامشخص"),
+            brand: p.brandName || p.BrandName || (p.brandId ? p.brandId.toString() : "نامشخص"),
+            price: priceVal,
+            newPrice: salePriceVal > 0 ? salePriceVal : null,
+            hasOffer: p.hasOffer ?? p.HasOffer ?? (salePriceVal > 0),
+            stock: p.stockQuantity ?? p.StockQuantity ?? p.stock ?? p.Stock ?? 0,
+            salesVolume: p.soldQuantity ?? p.SoldQuantity ?? p.salesVolume ?? p.SalesVolume ?? 0,
+            offerEndDate: p.offerEndDate || p.OfferEndDate || null,
             image: ProductApi.getImageUrl(rawImageStr), 
           };
         });
