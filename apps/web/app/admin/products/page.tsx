@@ -9,11 +9,11 @@ import { FilterSideBar } from "../../../components/filters/FilterSideBar";
 import { SortBar } from "../../../components/sort/SortBar";
 
 import { SortType, Product } from "./types"; 
-import { sanitizeNameForFilter, ADMIN_SORT_OPTIONS, MAX_ALLOWED_PRICE } from "./constants"; 
+import { sanitizeNameForFilter, ADMIN_SORT_OPTIONS } from "./constants"; 
 import { ProductsHeader } from "./components/ProductsHeader";
 import { ProductTable } from "./components/ProductTable";
 import { MobileFilterDrawer } from "./components/MobileFilterDrawer";
-import { ProductApi } from "./api"; 
+import { ProductApi, CategoryApi, BrandApi } from "./api"; 
 
 function ProductsPageContent() {
   const searchParams = useSearchParams();
@@ -23,10 +23,14 @@ function ProductsPageContent() {
   const initialBrand = sanitizeNameForFilter(searchParams.get("brand"));
 
   const [products, setProducts] = useState<Product[]>([]);
+  const [availableCategories, setAvailableCategories] = useState<string[]>([]);
+  const [availableBrands, setAvailableBrands] = useState<string[]>([]);
+  
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   const [searchQuery, setSearchQuery] = useState("");
+  // مقدار اولیه از URL گرفته می‌شود (ممکن است آیدی باشد یا نام)
   const [selectedBrands, setSelectedBrands] = useState<string[]>(initialBrand ? [initialBrand] : []);
   const [selectedCategories, setSelectedCategories] = useState<string[]>(initialCategory ? [initialCategory] : []);
   const [minPrice, setMinPrice] = useState<string>("");
@@ -35,13 +39,49 @@ function ProductsPageContent() {
   const [isMobileFilterOpen, setIsMobileFilterOpen] = useState(false);
 
   useEffect(() => {
-    const fetchProducts = async () => {
+    const fetchData = async () => {
       try {
         setIsLoading(true);
-        const data = await ProductApi.getAll();
+        const [productsData, categoriesData, brandsData] = await Promise.all([
+          ProductApi.getAll(),
+          CategoryApi.getAll().catch(() => []), 
+          BrandApi.getAll().catch(() => [])
+        ]);
         
-        const rawArray = Array.isArray(data) ? data : (data.items || []);
+        // 1. Process Categories
+        const catList = Array.isArray(categoriesData) ? categoriesData : (categoriesData.items || []);
+        setAvailableCategories(catList.map((c: any) => c.categoryName || c.name || ""));
 
+        // 🚀 FIX: تبدیل آیدی دسته‌بندی به نام دسته‌بندی (اگر از URL آیدی ارسال شده باشد)
+        if (initialCategory) {
+          const foundCat = catList.find((c: any) => c.categoryId?.toString() === initialCategory || c.id?.toString() === initialCategory || c.categoryName === initialCategory);
+          if (foundCat) {
+            const catName = foundCat.categoryName || foundCat.name;
+            setSelectedCategories(prev => {
+              const filtered = prev.filter(p => p !== initialCategory);
+              return filtered.includes(catName) ? filtered : [...filtered, catName];
+            });
+          }
+        }
+
+        // 2. Process Brands
+        const brandList = Array.isArray(brandsData) ? brandsData : (brandsData.items || []);
+        setAvailableBrands(brandList.map((b: any) => b.brandName || b.name || ""));
+
+        // 🚀 FIX: تبدیل آیدی برند به نام برند (اگر از URL آیدی 4 ارسال شده باشد، آن را به "عربیکا" تبدیل می‌کند)
+        if (initialBrand) {
+          const foundBrand = brandList.find((b: any) => b.brandId?.toString() === initialBrand || b.id?.toString() === initialBrand || b.brandName === initialBrand);
+          if (foundBrand) {
+            const brandName = foundBrand.brandName || foundBrand.name;
+            setSelectedBrands(prev => {
+              const filtered = prev.filter(p => p !== initialBrand); // حذف آیدی 4 از لیست فیلترها
+              return filtered.includes(brandName) ? filtered : [...filtered, brandName]; // اضافه کردن "عربیکا"
+            });
+          }
+        }
+
+        // 3. Process Products
+        const rawArray = Array.isArray(productsData) ? productsData : (productsData.items || []);
         const mappedProducts = rawArray.map((p: any, index: number) => {
           let rawImageStr = "";
 
@@ -50,12 +90,11 @@ function ProductsPageContent() {
             rawImageStr = mainImg.imageUrl || mainImg.ImageUrl || "";
           }
 
-          // 🚀 FIX: Safely map all possible C# price variables 
           const priceVal = Number(p.initialPrice || p.InitialPrice || p.originalPrice || p.OriginalPrice || p.price || p.Price || p.basePrice || 0);
           const salePriceVal = Number(p.salePrice || p.SalePrice || p.newPrice || p.NewPrice || 0);
 
           return {
-            ...p, // 🚀 FIX: Spreading 'p' ensures attributes, specifications, and salesVolume are passed to the table
+            ...p,
             id: p.productId || p.id || index, 
             name: p.productName || p.ProductName || p.name || "محصول بدون نام",
             category: p.categoryName || p.CategoryName || (p.categoryId ? p.categoryId.toString() : "نامشخص"),
@@ -78,16 +117,8 @@ function ProductsPageContent() {
         setIsLoading(false);
       }
     };
-    fetchProducts();
-  }, []);
-
-  useEffect(() => {
-    if (initialBrand) setSelectedBrands((prev) => prev.includes(initialBrand) ? prev : [...prev, initialBrand]);
-  }, [initialBrand]);
-
-  useEffect(() => {
-    if (initialCategory) setSelectedCategories((prev) => prev.includes(initialCategory) ? prev : [...prev, initialCategory]);
-  }, [initialCategory]);
+    fetchData();
+  }, []); // وابسته به هیچ مقداری نیست تا فقط یکبار لود شود
 
   const toggleBrand = (brand: string) => {
     setSelectedBrands((prev) => prev.includes(brand) ? prev.filter((b) => b !== brand) : [...prev, brand]);
@@ -118,6 +149,12 @@ function ProductsPageContent() {
     }
   };
 
+  const dynamicMaxPrice = useMemo(() => {
+    if (!products || products.length === 0) return 5000000;
+    const max = Math.max(...products.map(p => (p.hasOffer && p.newPrice) ? p.newPrice : (p.price || 0)));
+    return max > 0 ? max : 5000000; 
+  }, [products]);
+
   const filteredAndSortedProducts = useMemo(() => {
     let result = products || [];
 
@@ -138,17 +175,26 @@ function ProductsPageContent() {
     }
     
     if (minPrice) {
-      result = result.filter((p) => (p.price || 0) >= parseInt(minPrice));
+      result = result.filter((p) => {
+        const effectivePrice = (p.hasOffer && p.newPrice) ? p.newPrice : (p.price || 0);
+        return effectivePrice >= parseInt(minPrice);
+      });
     }
     
     if (maxPrice) {
-      result = result.filter((p) => (p.price || 0) <= parseInt(maxPrice));
+      result = result.filter((p) => {
+        const effectivePrice = (p.hasOffer && p.newPrice) ? p.newPrice : (p.price || 0);
+        return effectivePrice <= parseInt(maxPrice);
+      });
     }
 
     return [...result].sort((a, b) => {
+      const priceA = (a.hasOffer && a.newPrice) ? a.newPrice : (a.price || 0);
+      const priceB = (b.hasOffer && b.newPrice) ? b.newPrice : (b.price || 0);
+
       switch (activeSort) {
-        case "cheapest": return (a.price || 0) - (b.price || 0);
-        case "expensive": return (b.price || 0) - (a.price || 0);
+        case "cheapest": return priceA - priceB;
+        case "expensive": return priceB - priceA;
         case "newest": return (b.id || 0) - (a.id || 0);
         default: return 0;
       }
@@ -157,6 +203,8 @@ function ProductsPageContent() {
 
   const FilterComponent = (
     <FilterSideBar
+      availableCategories={availableCategories.filter(Boolean)} 
+      availableBrands={availableBrands.filter(Boolean)}         
       searchQuery={searchQuery}
       setSearchQuery={setSearchQuery}
       selectedCategories={selectedCategories}
@@ -167,7 +215,7 @@ function ProductsPageContent() {
       setMinPrice={setMinPrice}
       maxPrice={maxPrice}
       setMaxPrice={setMaxPrice}
-      MAX_ALLOWED_PRICE={MAX_ALLOWED_PRICE}
+      MAX_ALLOWED_PRICE={dynamicMaxPrice} 
       isCategoryOpen={!!initialCategory}
       isBrandOpen={!!initialBrand}
     />
@@ -199,7 +247,7 @@ function ProductsPageContent() {
 
           {isLoading ? (
             <div className="flex justify-center items-center h-64 text-[#8C7A6B] font-bold">
-              در حال دریافت اطلاعات محصولات...
+              در حال دریافت اطلاعات...
             </div>
           ) : error ? (
             <div className="flex justify-center items-center h-64 text-rose-500 font-bold">

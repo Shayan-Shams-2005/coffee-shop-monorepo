@@ -30,24 +30,19 @@ export function BrandItem({ brand, onEdit, onDelete }: BrandItemProps) {
           <h3 className="font-bold text-base text-[#4A3022] dark:text-white">
             {brand.name}
           </h3>
-          <span className="text-xs font-medium text-[#8C7A6B] dir-ltr text-right">
-            {brand.enName}
-          </span>
         </div>
       </div>
       
       <div className="flex items-center gap-4 transition-all">
         <Link 
-          href={`/admin/products?brand=${encodeURIComponent(brand.name)}`} 
+          href={`/admin/products?brand=${encodeURIComponent(brand.id)}`} 
           className="flex items-center gap-2 text-xs font-bold transition-all active:scale-95 text-[#4A3022] dark:text-[#EAE0D5] bg-white dark:bg-[#2A1B16] px-3 py-1.5 rounded-lg border border-[#E3C3A4]/60 dark:border-[#3c2317] hover:bg-[#F5EFE6] dark:hover:bg-[#3A221C] hover:text-[#C68E58] dark:hover:text-[#FFD7BA]"
         >
-          {/* 🚀 Always colored package icon */}
           <Package className="w-3.5 h-3.5 text-[#C68E58]" />
           {toFarsiNumber(brand.productCount)} کالا
         </Link>
         
         <div className="flex items-center gap-1">
-          {/* 🚀 Changed Button Colors: Main color is bright, Hover is brighter */}
           <button 
             onClick={() => onEdit(brand)} 
             className="p-1.5 text-[#C68E58] hover:text-[#D4A373] hover:bg-[#F5EFE6] dark:text-[#C68E58] dark:hover:text-[#E3C3A4] transition-colors rounded-xl dark:hover:bg-[#3A221C]"

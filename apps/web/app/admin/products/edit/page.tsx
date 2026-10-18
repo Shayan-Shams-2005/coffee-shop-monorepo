@@ -151,7 +151,6 @@ function ProductEditContent() {
         submitData.append("OriginalPrice", (formData.basePrice || 0).toString());
         submitData.append("SalePrice", isGlobalDiscountActive ? formData.salePrice.toString() : "0");
         submitData.append("Description", formData.description);
-        // 🚀 FIX: Strictly use the manual stock input
         submitData.append("StockQuantity", (formData.stock || 0).toString());
         submitData.append("CategoryId", categoryId.toString());
         submitData.append("BrandId", brandId.toString());
@@ -173,7 +172,6 @@ function ProductEditContent() {
           OriginalPrice: formData.basePrice || 0,
           SalePrice: isGlobalDiscountActive ? formData.salePrice : null,
           Description: formData.description || "",
-          // 🚀 FIX: Strictly use the manual stock input
           StockQuantity: formData.stock || 0,
           CategoryId: categoryId,
           BrandId: brandId,
@@ -199,14 +197,29 @@ function ProductEditContent() {
 
       if (specsPayload.length > 0) {
         await ProductApi.setSpecifications(currentProductId, specsPayload);
+      } else {
+        await ProductApi.setSpecifications(currentProductId, []);
       }
 
       // ==========================================
-      // STEP 3: MAGIC TRANSLATION (PREEMPTIVE DELETE)
+      // STEP 3: PREEMPTIVE CLEANUP OF OLD VARIANTS
       // ==========================================
-      let attributeValuesMap = new Map<string, number>(); 
+      if (productId) {
+         const existingProduct = await ProductApi.getById(currentProductId);
+         if (Array.isArray(existingProduct.variants)) {
+             for (const v of existingProduct.variants) {
+                 const vId = v.productVariantId || v.id;
+                 if (vId) await ProductVariantApi.delete(currentProductId, vId);
+             }
+         }
+         // 🚀 FIX: Removed the empty setAttributes([]) call that was crashing the C# API!
+      }
 
+      // ==========================================
+      // STEP 4: CREATE NEW VARIANTS
+      // ==========================================
       if (formData.optionGroups && formData.optionGroups.length > 0) {
+        let attributeValuesMap = new Map<string, number>(); 
         const attributesPayload = formData.optionGroups.map(g => ({
           name: (g.title || "").trim(),
           values: Array.from(new Set(g.options.map(o => (o.name || "").trim()).filter(Boolean)))
@@ -214,19 +227,6 @@ function ProductEditContent() {
 
         if (attributesPayload.length > 0) {
           
-          if (productId) {
-             const existingProduct = await ProductApi.getById(currentProductId);
-             if (Array.isArray(existingProduct.variants)) {
-                 for (const v of existingProduct.variants) {
-                     const vId = v.productVariantId || v.id;
-                     if (vId) await ProductVariantApi.delete(currentProductId, vId);
-                 }
-             }
-             formData.optionGroups.forEach(g => {
-                 g.options.forEach(o => o.variantId = undefined);
-             });
-          }
-
           await ProductApi.setAttributes(currentProductId, { attributes: attributesPayload });
           
           const freshProductData = await ProductApi.getById(currentProductId);
@@ -239,38 +239,25 @@ function ProductEditContent() {
                }
              });
           }
-        }
-      }
 
-      // ==========================================
-      // STEP 4: CREATE VARIANTS USING THE IDS
-      // ==========================================
-      if (formData.optionGroups && formData.optionGroups.length > 0) {
-        let variantCounter = 1; 
+          // Generate new variants mapped to the fresh attribute IDs
+          let variantCounter = 1; 
+          for (const group of formData.optionGroups) {
+            for (const option of group.options) {
+              if (!option.name) continue; 
+              
+              const mappedId = attributeValuesMap.get(`${(group.title || "").trim()}:${(option.name || "").trim()}`);
+              if (!mappedId) continue; 
 
-        for (const group of formData.optionGroups) {
-          for (const option of group.options) {
-            if (!option.name) continue; 
-            
-            const mappedId = attributeValuesMap.get(`${(group.title || "").trim()}:${(option.name || "").trim()}`);
-            
-            if (!mappedId) {
-                console.warn(`Could not find DB ID for ${group.title}:${option.name}`);
-                continue; 
-            }
-
-            const variantDto = {
-              Sku: `PRD-${currentProductId}-${Math.floor(Math.random() * 100000)}-${variantCounter++}`,
-              OriginalPrice: option.price || formData.basePrice || 0,
-              SalePrice: (option.hasOffer && option.salePrice > 0) ? option.salePrice : null,
-              StockQuantity: option.stock || 0,
-              AttributeValueIds: [mappedId] 
-            };
-            
-            if (option.variantId && productId) {
-               await ProductVariantApi.update(currentProductId, option.variantId, variantDto);
-            } else {
-               await ProductVariantApi.create(currentProductId, variantDto);
+              const variantDto = {
+                Sku: `PRD-${currentProductId}-${Math.floor(Math.random() * 100000)}-${variantCounter++}`,
+                OriginalPrice: option.price || formData.basePrice || 0,
+                SalePrice: (option.hasOffer && option.salePrice > 0) ? option.salePrice : null,
+                StockQuantity: option.stock || 0,
+                AttributeValueIds: [mappedId] 
+              };
+              
+              await ProductVariantApi.create(currentProductId, variantDto);
             }
           }
         }

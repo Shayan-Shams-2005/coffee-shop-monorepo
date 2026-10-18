@@ -108,6 +108,7 @@ export function ImageSection({ formData, setFormData }: Props) {
     });
   };
 
+  // 🚀 EXTENDED DRAG & DROP LOGIC (-1 = Main Image)
   const handleDragStart = (e: React.DragEvent, index: number) => {
     setDraggedIdx(index);
     e.dataTransfer.effectAllowed = "move";
@@ -118,28 +119,70 @@ export function ImageSection({ formData, setFormData }: Props) {
     if (dragOverIdx !== index) setDragOverIdx(index);
   };
   
-  const handleDrop = (e: React.DragEvent, index: number) => {
+  const handleDrop = (e: React.DragEvent, targetIdx: number) => {
     e.preventDefault();
-    if (draggedIdx === null || draggedIdx === index) {
+    if (draggedIdx === null || draggedIdx === targetIdx) {
       setDragOverIdx(null);
       return;
     }
+    
     setFormData((prev: any) => {
       const newGallery = [...(prev.gallery || [])];
       const newGalleryFiles = [...(prev.galleryFiles || [])];
       
-      const [draggedItem] = newGallery.splice(draggedIdx, 1);
-      if (draggedItem) newGallery.splice(index, 0, draggedItem);
+      // 1. Reordering entirely inside the gallery (Old Logic)
+      if (draggedIdx >= 0 && targetIdx >= 0) {
+        const [draggedItem] = newGallery.splice(draggedIdx, 1);
+        if (draggedItem) newGallery.splice(targetIdx, 0, draggedItem);
 
-      if (newGalleryFiles.length > draggedIdx) {
-        const [draggedFileItem] = newGalleryFiles.splice(draggedIdx, 1);
-        if (draggedFileItem) newGalleryFiles.splice(index, 0, draggedFileItem);
+        if (newGalleryFiles.length > draggedIdx) {
+          const [draggedFileItem] = newGalleryFiles.splice(draggedIdx, 1);
+          if (draggedFileItem) newGalleryFiles.splice(targetIdx, 0, draggedFileItem);
+        }
+        return { ...prev, gallery: newGallery, galleryFiles: newGalleryFiles };
       }
 
-      setDraggedIdx(null);
-      setDragOverIdx(null);
-      return { ...prev, gallery: newGallery, galleryFiles: newGalleryFiles };
+      // 2. Dragging a Side Image to the Main Image box
+      if (draggedIdx >= 0 && targetIdx === -1) {
+        const draggedSrc = newGallery[draggedIdx];
+        const draggedFile = newGalleryFiles[draggedIdx];
+        const oldMainSrc = prev.mainImage;
+        const oldMainFile = prev.mainImageFile;
+
+        // If the main image wasn't empty, put it in the side image's old spot
+        if (oldMainSrc && oldMainSrc.trim() !== "") {
+          newGallery[draggedIdx] = oldMainSrc;
+          newGalleryFiles[draggedIdx] = oldMainFile;
+        } else {
+          // If the main image was empty, just remove the side image from the array
+          newGallery.splice(draggedIdx, 1);
+          newGalleryFiles.splice(draggedIdx, 1);
+        }
+
+        return { ...prev, mainImage: draggedSrc, mainImageFile: draggedFile, gallery: newGallery, galleryFiles: newGalleryFiles };
+      }
+
+      // 3. Dragging the Main Image into a Side Image box
+      if (draggedIdx === -1 && targetIdx >= 0) {
+        if (!prev.mainImage || prev.mainImage.trim() === "") return prev;
+
+        const targetSrc = newGallery[targetIdx];
+        const targetFile = newGalleryFiles[targetIdx];
+        const oldMainSrc = prev.mainImage;
+        const oldMainFile = prev.mainImageFile;
+
+        // Swap the side image to become the new main image
+        newGallery[targetIdx] = oldMainSrc;
+        newGalleryFiles[targetIdx] = oldMainFile;
+
+        return { ...prev, mainImage: targetSrc, mainImageFile: targetFile, gallery: newGallery, galleryFiles: newGalleryFiles };
+      }
+
+      return prev;
     });
+
+    setDraggedIdx(null);
+    setDragOverIdx(null);
   };
   
   const handleDragEnd = () => {
@@ -165,7 +208,18 @@ export function ImageSection({ formData, setFormData }: Props) {
         <div className="space-y-5" dir="rtl">
           <div>
             <label className="block text-sm font-bold text-[#4A3022] dark:text-[#EAE0D5] mb-2.5">تصویر اصلی</label>
-            <div className="w-full h-48 bg-white dark:bg-[#231511] border-2 border-dashed border-[#E3C3A4]/80 dark:border-[#3c2317] rounded-[2rem] flex flex-col items-center justify-center transition-all relative overflow-hidden group">
+            
+            {/* 🚀 Main Image Drop Zone (Index: -1) */}
+            <div 
+              draggable={hasMainImage}
+              onDragStart={(e) => handleDragStart(e, -1)} 
+              onDragOver={(e) => handleDragOver(e, -1)} 
+              onDrop={(e) => handleDrop(e, -1)} 
+              onDragEnd={handleDragEnd}
+              className={`w-full h-48 bg-white dark:bg-[#231511] rounded-[2rem] flex flex-col items-center justify-center transition-all relative overflow-hidden group ${
+                dragOverIdx === -1 ? "border-2 border-dashed border-[#C68E58] scale-[0.98] opacity-80" : "border-2 border-dashed border-[#E3C3A4]/80 dark:border-[#3c2317]"
+              } ${draggedIdx === -1 ? "opacity-40" : ""} ${hasMainImage ? "cursor-grab active:cursor-grabbing" : ""}`}
+            >
               {hasMainImage ? (
                 <>
                   <img src={formData.mainImage} alt="" onError={() => setMainImageBroken(true)} className="w-full h-full object-contain p-2" />

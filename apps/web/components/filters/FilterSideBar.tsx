@@ -2,32 +2,15 @@
 "use client";
 
 import { Search, Filter } from "lucide-react";
-// در صورت نیاز مسیر ایمپورت‌ها را بر اساس پوشه‌بندی خود تنظیم کنید
-import { brandsData } from "../../config/brands"; 
-import { megaMenuCategories } from "../../config/menu"; 
 import { FilterAccordion } from "./FilterAccordion";
 import { FilterCheckboxList } from "./FilterCheckboxList";
 import { FilterPrice } from "./FilterPrice";
 
-// این تابع تمام دسته‌های اصلی و زیردسته‌ها را از منو استخراج کرده و به یک لیست تبدیل می‌کند
-const getCompleteCategories = () => {
-  const names = new Set<string>();
-  megaMenuCategories.forEach(main => {
-    names.add(main.title); // دسته‌های اصلی
-    main.sections.forEach(sec => {
-      names.add(sec.title); // بخش‌ها
-      sec.items.forEach(item => names.add(item)); // آیتم‌های نهایی (مثل پیشنهاد شده برای اسپرسو)
-    });
-  });
-  return Array.from(names);
-};
-
-const COMPLETE_CATEGORIES = getCompleteCategories();
-
-// استخراج فقط نام برندها برای کامپوننت فیلتر
-const ALL_BRANDS_NAMES = brandsData.map(brand => brand.name);
-
 interface OffersSidebarProps {
+  // 🚀 Added dynamic list props
+  availableCategories: string[];
+  availableBrands: string[];
+  
   searchQuery: string;
   setSearchQuery: (query: string) => void;
   selectedCategories: string[];
@@ -39,13 +22,11 @@ interface OffersSidebarProps {
   maxPrice: string;
   setMaxPrice: (price: string) => void;
   MAX_ALLOWED_PRICE: number;
-  // 🚀 New Props added here
   isCategoryOpen?: boolean;
   isBrandOpen?: boolean;
 }
 
 export function FilterSideBar(props: OffersSidebarProps) {
-  // بررسی می‌کنیم که آیا دسته‌ای از طریق URL یا کلیک انتخاب شده است یا خیر
   const hasSelectedCategory = props.selectedCategories.length > 0 || props.isCategoryOpen;
   const hasSelectedBrand = props.selectedBrands.length > 0 || props.isBrandOpen;
 
@@ -84,11 +65,10 @@ export function FilterSideBar(props: OffersSidebarProps) {
 
           {/* Categories */}
           <FilterAccordion title="دسته‌بندی محصولات" defaultOpen={hasSelectedCategory}>
-            {/* FIXED: Added dir="ltr" to container to move scrollbar right, and wrapped content in dir="rtl" */}
             <div className="max-h-60 overflow-y-auto pr-3 custom-scrollbar" dir="ltr">
               <div dir="rtl">
                 <FilterCheckboxList
-                  items={COMPLETE_CATEGORIES}
+                  items={props.availableCategories} // 🚀 Using dynamic data
                   selectedItems={props.selectedCategories}
                   onToggle={props.toggleCategory}
                 />
@@ -98,11 +78,10 @@ export function FilterSideBar(props: OffersSidebarProps) {
 
           {/* Brands */}
           <FilterAccordion title="برندها" defaultOpen={hasSelectedBrand}>
-            {/* FIXED: Added dir="ltr" to container to move scrollbar right, and wrapped content in dir="rtl" */}
             <div className="max-h-60 overflow-y-auto pr-3 custom-scrollbar" dir="ltr">
               <div dir="rtl">
                 <FilterCheckboxList
-                  items={ALL_BRANDS_NAMES}
+                  items={props.availableBrands} // 🚀 Using dynamic data
                   selectedItems={props.selectedBrands}
                   onToggle={props.toggleBrand}
                 />

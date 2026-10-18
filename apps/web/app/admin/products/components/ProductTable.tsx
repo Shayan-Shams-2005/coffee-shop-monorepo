@@ -52,13 +52,14 @@ export function ProductTable({ products, onDelete, onResetFilters }: ProductTabl
 // ----------------------------------------------------------------------
 
 function TableRow({ product, onDelete }: { product: Product, onDelete: (id: number) => void }) {
-  const [selectedVariant, setSelectedVariant] = useState<any>(null);
-  const [isSpecsExpanded, setIsSpecsExpanded] = useState(false); // 🚀 NEW: Controls expanding the key features
-
   // 🚀 BULLETPROOF C# DTO MAPPING
   const pData = product as any;
   const variants = pData.variants || pData.Variants || [];
   
+  // Automatically select the first variant if the product has variants
+  const [selectedVariant, setSelectedVariant] = useState<any>(variants.length > 0 ? variants[0] : null);
+  const [isSpecsExpanded, setIsSpecsExpanded] = useState(false);
+
   const id = pData.id ?? pData.productId ?? pData.ProductId;
   const name = pData.name || pData.productName || pData.ProductName || "بدون نام";
   const brand = pData.brand || pData.brandName || pData.BrandName || "-";
@@ -104,12 +105,10 @@ function TableRow({ product, onDelete }: { product: Product, onDelete: (id: numb
   const attributes = pData.attributes || pData.Attributes || [];
   const allSpecifications = pData.specifications || pData.Specifications || [];
   
-  // 🚀 FIX: Strictly filter to show ONLY Key Features (IsMain === true)
+  // Strictly filter to show ONLY Key Features (IsMain === true)
   const keyFeatures = allSpecifications.filter((s: any) => s.isMain === true || s.IsMain === true || s.isKeyFeature === true || s.IsKeyFeature === true);
   
-  // If no key features are explicitly marked, fallback to top specs to prevent an empty layout (optional safety net)
   const displayFeatures = keyFeatures.length > 0 ? keyFeatures : allSpecifications;
-
   const visibleFeatures = isSpecsExpanded ? displayFeatures : displayFeatures.slice(0, 2);
   const hiddenFeaturesCount = displayFeatures.length - 2;
 
@@ -145,8 +144,8 @@ function TableRow({ product, onDelete }: { product: Product, onDelete: (id: numb
             </span>
 
             <div className="flex flex-col gap-2 mt-1">
-              {/* INTERACTIVE VARIANT PILLS */}
-              {attributes.length > 0 && attributes.map((attr: any, idx: number) => (
+              {/* 🚀 FIX: Only render Interactive Variant Pills if the product actually has variants */}
+              {variants.length > 0 && attributes.length > 0 && attributes.map((attr: any, idx: number) => (
                 <div key={`attr-${idx}`} className="flex items-center gap-2 flex-wrap">
                   <span className="text-[10px] text-[#8C7A6B] font-bold">{attr.name || attr.Name}:</span>
                   {(attr.values || attr.Values)?.map((v:any, vIdx: number) => {
@@ -183,7 +182,7 @@ function TableRow({ product, onDelete }: { product: Product, onDelete: (id: numb
                 </div>
               ))}
               
-              {/* 🚀 EXPANDABLE KEY FEATURES SECTION */}
+              {/* EXPANDABLE KEY FEATURES SECTION */}
               {displayFeatures.length > 0 && (
                 <div className="flex flex-wrap gap-1.5 mt-0.5">
                   {visibleFeatures.map((spec: any, idx: number) => (
