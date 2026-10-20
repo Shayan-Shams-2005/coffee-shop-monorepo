@@ -8,10 +8,14 @@ const nextConfig: NextConfig = {
     remotePatterns: [
       {
         protocol: 'https',
-        hostname: 'shams1384.s3.ir-thr-at1.arvanstorage.ir',
+        hostname: 's3.ir-thr-at1.arvanstorage.ir',
+      },
+      {
+        protocol: 'http',
+        hostname: 'localhost',
       },
     ],
   },
 };
 
-export default nextConfig; 
+export default nextConfig;

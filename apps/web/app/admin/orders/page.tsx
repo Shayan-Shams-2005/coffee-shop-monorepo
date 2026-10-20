@@ -1,23 +1,63 @@
 // app/admin/orders/page.tsx
 "use client";
 
-import { useState, useMemo } from "react";
-import { Order, OrderStatus, initialOrders } from "./types";
+import { useState, useMemo, useEffect } from "react";
+import { useRouter } from "next/navigation";
+import { Order, OrderStatus, mapBackendStatusToFrontend } from "./types";
 import { OrdersHeader } from "./components/OrdersHeader";
 import { OrdersControlBar } from "./components/OrdersControlBar";
 import { OrdersTable } from "./components/OrdersTable";
 import { OrderDetailsModal } from "./components/OrderDetailsModal";
+import { OrderAdminApi } from "./api";
 
 export default function AdminOrdersPage() {
-  const [orders, setOrders] = useState<Order[]>(initialOrders);
+  const router = useRouter();
+  const [orders, setOrders] = useState<Order[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   
-  // Filtering and Sorting State
   const [searchQuery, setSearchQuery] = useState("");
   const [filterStatus, setFilterStatus] = useState<OrderStatus | "all">("all");
   const [sortBy, setSortBy] = useState<"date_desc" | "date_asc" | "price_desc" | "price_asc">("date_desc");
   
-  // Modal State
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
+
+  const fetchOrders = async () => {
+    try {
+      setIsLoading(true);
+      const data = await OrderAdminApi.getAll();
+      
+      const mappedOrders: Order[] = data.map((o: any) => ({
+        id: `ORD-${o.orderId}`,
+        numericId: o.orderId,
+        customerName: o.recipientName || "نامشخص",
+        phone: o.phoneNumber || "-",
+        date: o.createdAt || new Date().toISOString(),
+        totalAmount: o.totalAmount || 0,
+        status: mapBackendStatusToFrontend(o.status),
+        address: `${o.province || ''}، ${o.city || ''}، ${o.addressLine || ''}`.replace(/^[،\s]+|[،\s]+$/g, ''),
+        items: (o.items || []).map((i: any) => ({
+          id: i.orderItemId || Math.random(),
+          name: i.productName + (i.variantSku ? ` (${i.variantSku})` : ''),
+          quantity: i.quantity || 1,
+          price: i.unitPrice || 0
+        }))
+      }));
+
+      setOrders(mappedOrders);
+    } catch (err: any) {
+      console.error(err);
+      if (err.message === "SESSION_EXPIRED") {
+        alert("نشست شما منقضی شده است. لطفاً مجدداً وارد شوید.");
+        router.push("/login");
+      }
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchOrders();
+  }, []);
 
   const filteredAndSortedOrders = useMemo(() => {
     let result = [...orders];
@@ -46,13 +86,6 @@ export default function AdminOrdersPage() {
     return result;
   }, [orders, searchQuery, filterStatus, sortBy]);
 
-  const handleCancelOrder = (orderId: string) => {
-    setOrders(prev => prev.map(o => o.id === orderId ? { ...o, status: "cancelled" } : o));
-    if (selectedOrder?.id === orderId) {
-      setSelectedOrder(prev => prev ? { ...prev, status: "cancelled" } : null);
-    }
-  };
-
   return (
     <div className="max-w-[1400px] mx-auto w-full px-4 sm:px-6 py-8 md:py-12 animate-in fade-in duration-500" dir="rtl">
       <OrdersHeader />
@@ -66,18 +99,26 @@ export default function AdminOrdersPage() {
         setSortBy={setSortBy}
       />
 
-      {/* 🚀 Updated Container styling */}
-      <div className="bg-[#FCF9F5] dark:bg-[#1A0F0C] rounded-[1.5rem] border border-[#E3C3A4]/60 dark:border-[#3c2317] overflow-hidden shadow-[0_4px_20px_rgba(198,142,88,0.03)] dark:shadow-none">
-        <OrdersTable 
-          orders={filteredAndSortedOrders} 
-          onViewDetails={(order) => setSelectedOrder(order)} 
-        />
+      <div className="bg-[#FCF9F5] dark:bg-[#1A0F0C] rounded-[1.5rem] border border-[#E3C3A4]/60 dark:border-[#3c2317] overflow-hidden shadow-[0_4px_20px_rgba(198,142,88,0.03)] dark:shadow-none min-h-[300px]">
+        {isLoading ? (
+          <div className="flex justify-center items-center h-64 text-[#8C7A6B] font-bold">
+            در حال دریافت اطلاعات سفارشات...
+          </div>
+        ) : (
+          <OrdersTable 
+            orders={filteredAndSortedOrders} 
+            onViewDetails={(order) => setSelectedOrder(order)} 
+          />
+        )}
       </div>
 
       <OrderDetailsModal 
         order={selectedOrder} 
         onClose={() => setSelectedOrder(null)} 
-        onCancelOrder={handleCancelOrder} 
+        onSuccess={() => {
+          setSelectedOrder(null);
+          fetchOrders(); // Refresh table after update/cancel
+        }} 
       />
     </div>
   );

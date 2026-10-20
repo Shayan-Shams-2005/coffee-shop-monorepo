@@ -1,21 +1,79 @@
 // app/admin/categories/page.tsx
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { Plus } from "lucide-react";
-import { Category, initialCategories } from "./types";
+import { useRouter } from "next/navigation";
+import { Category } from "./types";
 import { CategoryNode } from "./components/CategoryNode";
 import { CategoryModal } from "./components/CategoryModal";
+import { CategoryApi } from "./api"; 
+// 🚀 FIX: ایمپورت کردن ای‌پی‌آی محصولات برای محاسبه تعداد کالاها
+import { ProductApi } from "../products/api";
 
 export default function AdminCategoriesPage() {
-  const [categories, setCategories] = useState<Category[]>(initialCategories);
-  const [expandedCats, setExpandedCats] = useState<number[]>([1]); 
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [expandedCats, setExpandedCats] = useState<number[]>([]); 
+  const [isLoading, setIsLoading] = useState(true);
+  const router = useRouter(); 
   
-  // Modal States
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingCategory, setEditingCategory] = useState<Category | null>(null);
 
   const mainCategories = useMemo(() => categories.filter(c => c.parentId === null), [categories]);
+
+  useEffect(() => {
+    fetchCategories();
+  }, []);
+
+  const fetchCategories = async () => {
+    try {
+      setIsLoading(true);
+      
+      // 🚀 FIX: دریافت همزمان دسته‌بندی‌ها و محصولات برای شمارش دقیق
+      const [categoriesData, productsData] = await Promise.all([
+        CategoryApi.getAll(),
+        ProductApi.getAll().catch(() => []) // اگر محصولات لود نشد، خطایی ندهد و آرایه خالی در نظر بگیرد
+      ]);
+
+      // 🚀 FIX: محاسبه تعداد کالاها برای هر دسته‌بندی
+      const productCounts: Record<string, number> = {};
+      const rawProducts = Array.isArray(productsData) ? productsData : (productsData.items || []);
+      
+      rawProducts.forEach((p: any) => {
+        const catId = p.categoryId || p.CategoryId;
+        if (catId) {
+          productCounts[catId] = (productCounts[catId] || 0) + 1;
+        }
+      });
+      
+      const mappedCats: Category[] = categoriesData.map((c: any) => {
+        const catId = c.categoryId || c.id;
+        return {
+          id: catId,
+          name: c.categoryName || c.name,
+          parentId: c.parentId || null, 
+          image: CategoryApi.getImageUrl(c.mainImageUrl || c.imageUrl || ""),
+          // 🚀 FIX: جایگذاری تعداد محاسبه شده (در غیر این صورت ۰)
+          productCount: productCounts[catId] || c.productCount || 0,
+        };
+      });
+      
+      setCategories(mappedCats);
+      
+      if (mappedCats.length > 0) {
+        setExpandedCats(mappedCats.filter(c => c.parentId === null).map(c => c.id));
+      }
+    } catch (err: any) {
+      console.error(err);
+      if (err.message === "SESSION_EXPIRED") {
+        alert("نشست شما منقضی شده است. لطفاً مجدداً وارد شوید.");
+        router.push("/login");
+      }
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   const toggleExpand = (id: number) => {
     setExpandedCats(prev => 
@@ -28,46 +86,59 @@ export default function AdminCategoriesPage() {
     setIsModalOpen(true);
   };
 
-  const handleDelete = (id: number) => {
-    const getAllChildrenIds = (parentId: number): number[] => {
-      const children = categories.filter(c => c.parentId === parentId);
-      let ids = children.map(c => c.id);
-      children.forEach(c => {
-        ids = [...ids, ...getAllChildrenIds(c.id)];
-      });
-      return ids;
-    };
-
-    if (confirm("آیا از حذف این دسته‌بندی و تمام زیرمجموعه‌های آن اطمینان دارید؟")) {
-      const idsToDelete = [id, ...getAllChildrenIds(id)];
-      setCategories(prev => prev.filter(c => !idsToDelete.includes(c.id)));
+  const handleDelete = async (id: number) => {
+    if (confirm("آیا از حذف این دسته‌بندی اطمینان دارید؟")) {
+      try {
+        await CategoryApi.delete(id);
+        await fetchCategories(); 
+      } catch (err: any) {
+        console.error("خطای حذف از سمت سرور:", err);
+        if (err.message === "SESSION_EXPIRED") {
+          alert("نشست شما منقضی شده است. لطفاً مجدداً وارد شوید.");
+          router.push("/login");
+        } else {
+          alert(`خطا در حذف دسته‌بندی:\n${err.message}`);
+        }
+      }
     }
   };
 
-  const handleModalSubmit = (data: { name: string; parentId: number | null; imagePreview: string }) => {
-    if (editingCategory) {
-      setCategories(prev => prev.map(c => c.id === editingCategory.id ? {
-        ...c,
-        name: data.name,
-        parentId: data.parentId,
-        image: data.imagePreview || c.image
-      } : c));
-    } else {
-      const newCatId = categories.length > 0 ? Math.max(...categories.map(c => c.id)) + 1 : 1;
-      const newCat: Category = {
-        id: newCatId,
-        name: data.name,
-        parentId: data.parentId,
-        image: data.imagePreview || null,
-        productCount: 0,
-      };
-      setCategories([...categories, newCat]);
+  const handleModalSubmit = async (data: { name: string; parentId: number | null; imagePreview: string; file: File | null }) => {
+    try {
+      const formData = new FormData();
+      formData.append("CategoryName", data.name);
       
+      if (data.file) {
+        formData.append("File", data.file);
+      } else {
+        alert("آپلود تصویر برای ایجاد/ویرایش دسته‌بندی الزامی است.");
+        return; 
+      }
+
+      if (editingCategory) {
+        await CategoryApi.update(editingCategory.id, formData);
+      } else {
+        await CategoryApi.create(formData);
+      }
+
+      await fetchCategories(); 
+      setIsModalOpen(false);
+
       if (data.parentId && !expandedCats.includes(data.parentId)) {
         setExpandedCats(prev => [...prev, data.parentId!]);
       }
+      
+      alert("دسته‌بندی با موفقیت ذخیره شد!");
+    } catch (err: any) {
+      console.error(err);
+      if (err.message === "SESSION_EXPIRED") {
+        alert("نشست شما منقضی شده است. لطفاً مجدداً وارد شوید.");
+        router.push("/login");
+      } else {
+        alert(`خطا در ارتباط با سرور: ${err.message || "لطفا اتصال بک‌اند را بررسی کنید"}`);
+      }
+      throw err; 
     }
-    setIsModalOpen(false);
   };
 
   return (
@@ -88,25 +159,31 @@ export default function AdminCategoriesPage() {
       </div>
 
       <div className="bg-[#FCF9F5] dark:bg-[#1A0F0C] rounded-[2rem] border border-[#E3C3A4]/60 dark:border-[#3c2317] overflow-hidden shadow-[0_4px_20px_rgba(198,142,88,0.03)] dark:shadow-none p-6">
-        <div>
-          {mainCategories.map((mainCat) => (
-             <div key={mainCat.id} className="border border-[#E3C3A4]/60 dark:border-[#3c2317] rounded-2xl mb-4 overflow-hidden">
-                <CategoryNode 
-                  category={mainCat}
-                  allCategories={categories}
-                  expandedCats={expandedCats}
-                  onToggleExpand={toggleExpand}
-                  onEdit={handleOpenModal}
-                  onDelete={handleDelete}
-                />
-             </div>
-          ))}
-          {mainCategories.length === 0 && (
-            <div className="text-center py-10 text-[#8C7A6B] dark:text-[#6A5A4F] font-bold">
-              هنوز هیچ دسته‌بندی ثبت نشده است.
-            </div>
-          )}
-        </div>
+        {isLoading ? (
+          <div className="flex justify-center items-center h-32 text-[#8C7A6B] font-bold">
+            در حال دریافت اطلاعات از سرور...
+          </div>
+        ) : (
+          <div>
+            {mainCategories.map((mainCat) => (
+              <div key={mainCat.id} className="border border-[#E3C3A4]/60 dark:border-[#3c2317] rounded-2xl mb-4 overflow-hidden">
+                  <CategoryNode 
+                    category={mainCat}
+                    allCategories={categories}
+                    expandedCats={expandedCats}
+                    onToggleExpand={toggleExpand}
+                    onEdit={handleOpenModal}
+                    onDelete={handleDelete}
+                  />
+              </div>
+            ))}
+            {mainCategories.length === 0 && (
+              <div className="text-center py-10 text-[#8C7A6B] dark:text-[#6A5A4F] font-bold">
+                هنوز هیچ دسته‌بندی در دیتابیس ثبت نشده است.
+              </div>
+            )}
+          </div>
+        )}
       </div>
 
       <CategoryModal 

@@ -21,6 +21,7 @@ export function ReviewsControlBar({ searchQuery, setSearchQuery, filterStatus, s
         </div>
         <input
           type="text"
+          suppressHydrationWarning // 🚀 FIX: جلوگیری از کرش کردن صفحه به خاطر افزونه‌های مرورگر
           style={{ textAlign: 'right', direction: 'rtl' }}
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}

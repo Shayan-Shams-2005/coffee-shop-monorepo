@@ -26,6 +26,7 @@ export function OrdersControlBar({
         </div>
         <input
           type="text"
+          suppressHydrationWarning // 🚀 FIX: جلوگیری از ارور Hydration ناشی از اکستنشن‌های مرورگر
           style={{ textAlign: 'right', direction: 'rtl' }}
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
@@ -35,6 +36,7 @@ export function OrdersControlBar({
       </div>
 
       <div className="flex flex-col sm:flex-row w-full lg:w-auto gap-4">
+        {/* Role Filter */}
         <div className="relative w-full sm:w-48">
           <div className="absolute inset-y-0 right-3 flex items-center pointer-events-none">
             <Filter className="w-4 h-4 text-[#8C7A6B]" />
@@ -56,6 +58,7 @@ export function OrdersControlBar({
           </div>
         </div>
 
+        {/* Status Filter */}
         <div className="relative w-full sm:w-48">
           <div className="absolute inset-y-0 right-3 flex items-center pointer-events-none">
             <ArrowUpDown className="w-4 h-4 text-[#8C7A6B]" />
