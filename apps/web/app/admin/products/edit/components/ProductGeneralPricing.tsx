@@ -144,23 +144,29 @@ function PricingAndVariantsSection({ formData, setFormData }: Props) {
     setFormData(prev => ({ ...prev, optionGroups: prev.optionGroups.map((g, i) => i === index ? { ...g, title } : g) }));
   };
   
+  // 🚀 UPDATED: Inherit from previous option
   const addOptionToGroup = (groupIndex: number) => {
     setFormData(prev => ({ 
       ...prev, 
-      optionGroups: prev.optionGroups.map((g, i) => 
-        (i === groupIndex && g.options.length < MAX_OPTIONS_PER_GROUP) 
-          ? { 
-              ...g, 
-              options: [...g.options, { 
-                name: "", 
-                price: prev.basePrice || 0, 
-                stock: prev.stock || 0, 
-                hasOffer: isDiscountActive, 
-                salePrice: isDiscountActive ? prev.salePrice : 0,
-                offerEndDate: isDiscountActive ? prev.offerEndDate : undefined
-              }] 
-            } : g
-      ) 
+      optionGroups: prev.optionGroups.map((g, i) => {
+        if (i === groupIndex && g.options.length < MAX_OPTIONS_PER_GROUP) {
+          // Look at the last option in this specific group
+          const lastOption = g.options.length > 0 ? g.options[g.options.length - 1] : null;
+          
+          return { 
+            ...g, 
+            options: [...g.options, { 
+              name: "", 
+              price: lastOption ? (lastOption.price || 0) : (prev.basePrice || 0), 
+              stock: lastOption ? (lastOption.stock || 0) : (prev.stock || 0), 
+              hasOffer: lastOption ? lastOption.hasOffer : isDiscountActive, 
+              salePrice: lastOption ? (lastOption.salePrice || 0) : (isDiscountActive ? prev.salePrice : 0),
+              offerEndDate: lastOption ? lastOption.offerEndDate : (isDiscountActive ? prev.offerEndDate : undefined)
+            }] 
+          };
+        }
+        return g;
+      }) 
     }));
   };
 

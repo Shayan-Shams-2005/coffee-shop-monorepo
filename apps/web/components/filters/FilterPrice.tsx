@@ -5,13 +5,16 @@ interface FilterPriceProps {
   setMinPrice: (val: string) => void;
   maxPrice: string;
   setMaxPrice: (val: string) => void;
+  MIN_ALLOWED_PRICE?: number; // 🚀 FIX: Added min allowed price support
   MAX_ALLOWED_PRICE: number;
 }
 
-const toFarsiNumber = (num: number | string | undefined) => {
-  if (num === undefined || num === null) return "";
+const toFarsiNumber = (num: number | string | undefined | null) => {
+  if (num === undefined || num === null || Number.isNaN(Number(num))) return "۰";
+  const str = num.toString();
+  if (str === "NaN" || str === "") return "۰";
   const farsiDigits = ["۰", "۱", "۲", "۳", "۴", "۵", "۶", "۷", "۸", "۹"];
-  return num.toString().replace(/\d/g, (x) => farsiDigits[parseInt(x)] || x);
+  return str.replace(/\d/g, (x) => farsiDigits[parseInt(x)] || x);
 };
 
 export function FilterPrice({
@@ -19,6 +22,7 @@ export function FilterPrice({
   setMinPrice,
   maxPrice,
   setMaxPrice,
+  MIN_ALLOWED_PRICE = 0,
   MAX_ALLOWED_PRICE,
 }: FilterPriceProps) {
   const handlePriceChange = (setter: (val: string) => void, value: string) => {
@@ -28,7 +32,7 @@ export function FilterPrice({
     
     let numericValue = englishValue.replace(/\D/g, "");
     
-    // 🚀 FIX: افزایش محدودیت طول عدد به ۱۶ رقم
+    // Limit to 16 digits to prevent crazy overflows
     if (numericValue.length > 16) {
       numericValue = numericValue.slice(0, 16);
     }
@@ -36,12 +40,14 @@ export function FilterPrice({
     setter(numericValue);
   };
 
-  const currentMin = Number(minPrice || 0);
+  const currentMin = minPrice === "" ? MIN_ALLOWED_PRICE : Number(minPrice);
   const currentMax = maxPrice === "" ? MAX_ALLOWED_PRICE : Number(maxPrice);
   const step = 10000;
 
-  const visualMin = Math.max(0, Math.min(currentMin, MAX_ALLOWED_PRICE));
+  // 🚀 FIX: Strictly lock the visual slider thumbs between the MIN and MAX allowed prices
+  const visualMin = Math.max(MIN_ALLOWED_PRICE, Math.min(currentMin, MAX_ALLOWED_PRICE));
   const visualMax = Math.max(visualMin, Math.min(currentMax, MAX_ALLOWED_PRICE));
+  const rangeDiff = Math.max(MAX_ALLOWED_PRICE - MIN_ALLOWED_PRICE, 1); // Prevent division by zero
 
   const thumbStyles = 
     "absolute w-full -top-1.5 appearance-none bg-transparent pointer-events-none cursor-pointer " +
@@ -52,7 +58,7 @@ export function FilterPrice({
     <div className="flex flex-col gap-6 px-1 py-1">
       <div className="flex flex-col gap-5">
         
-        {/* فیلد حداقل قیمت */}
+        {/* Min Price Input */}
         <div className="flex items-center border-b border-[#E3C3A4] dark:border-[#3A221C] pb-2 relative transition-colors">
           <span className="text-[13px] font-bold text-[#3D2616] dark:text-[#EAE0D5] transition-colors shrink-0">
             از
@@ -60,7 +66,7 @@ export function FilterPrice({
           <input
             type="text"
             dir="ltr" 
-            placeholder="۰"
+            placeholder={toFarsiNumber(MIN_ALLOWED_PRICE.toLocaleString("en-US"))}
             value={minPrice ? toFarsiNumber(Number(minPrice).toLocaleString("en-US")) : ""}
             onChange={(e) => handlePriceChange(setMinPrice, e.target.value)}
             style={{ textAlign: "left", direction: "ltr" }}
@@ -71,7 +77,7 @@ export function FilterPrice({
           </span>
         </div>
         
-        {/* فیلد حداکثر قیمت */}
+        {/* Max Price Input */}
         <div className="flex items-center border-b border-[#E3C3A4] dark:border-[#3A221C] pb-2 relative transition-colors">
           <span className="text-[13px] font-bold text-[#3D2616] dark:text-[#EAE0D5] transition-colors shrink-0">
             تا
@@ -99,14 +105,14 @@ export function FilterPrice({
           <div
             className="absolute h-full bg-[#C68E58] dark:bg-[#6A422D] rounded-full transition-colors"
             style={{
-              left: `${(visualMin / MAX_ALLOWED_PRICE) * 100}%`,
-              right: `${100 - (visualMax / MAX_ALLOWED_PRICE) * 100}%`,
+              left: `${((visualMin - MIN_ALLOWED_PRICE) / rangeDiff) * 100}%`,
+              right: `${100 - ((visualMax - MIN_ALLOWED_PRICE) / rangeDiff) * 100}%`,
             }}
           ></div>
           
           <input
             type="range"
-            min="0"
+            min={MIN_ALLOWED_PRICE}
             max={MAX_ALLOWED_PRICE}
             step={step}
             value={visualMin}
@@ -119,7 +125,7 @@ export function FilterPrice({
           
           <input
             type="range"
-            min="0"
+            min={MIN_ALLOWED_PRICE}
             max={MAX_ALLOWED_PRICE}
             step={step}
             value={visualMax}

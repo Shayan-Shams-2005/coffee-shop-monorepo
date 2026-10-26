@@ -14,7 +14,7 @@ const LOCAL_INITIAL_DATA: ProductFormData = {
   title: "", description: "", category: "", brand: "",
   basePrice: 0, salePrice: 0, stock: 0,
   mainImage: "", mainImageFile: null, gallery: [], galleryFiles: [],
-  keyFeatures: [], specs: [], optionGroups: []
+  specs: [], optionGroups: []
 };
 
 const formatToISODate = (dateVal: any): string | null => {
@@ -48,12 +48,9 @@ function ProductEditContent() {
         }
 
         const loadedSpecs: any[] = [];
-        const loadedKeyFeatures: any[] = [];
         if (Array.isArray(data.specifications)) {
           data.specifications.forEach((spec: any) => {
-            const mapped = { id: spec.productSpecificationId || spec.id, key: spec.key || spec.name, value: spec.value };
-            if (spec.isMain || spec.isKeyFeature) loadedKeyFeatures.push(mapped);
-            else loadedSpecs.push(mapped);
+            loadedSpecs.push({ id: spec.productSpecificationId || spec.id, key: spec.key || spec.name, value: spec.value });
           });
         }
 
@@ -65,7 +62,7 @@ function ProductEditContent() {
              const attrVal = v.attributeValues?.[0]; 
              if (!attrVal) return;
              
-             let parentAttrName = "بدون گروه";
+             let parentAttrName = "No Group";
              let optionName = attrVal.value;
 
              if (Array.isArray(data.attributes)) {
@@ -78,15 +75,28 @@ function ProductEditContent() {
              }
              
              if (!groupMap.has(parentAttrName)) groupMap.set(parentAttrName, []);
+
+             let parsedVariantEndDate = undefined;
+             const rawDate = v.saleEndAt || v.saleEndDate || v.offerEndDate || v.discountEndDate;
+             if (rawDate) {
+                 parsedVariantEndDate = new Date(rawDate);
+             } else if (v.saleDurationMinutes) {
+                 parsedVariantEndDate = new Date(Date.now() + v.saleDurationMinutes * 60000);
+             }
+             
+             // 🚀 FIX: Strictly check that the backend sale price is actually LOWER than the original price
+             const origPrice = v.originalPrice || v.price || 0;
+             const rawSalePrice = v.salePrice || 0;
+             const isLegitDiscount = rawSalePrice > 0 && rawSalePrice < origPrice;
              
              groupMap.get(parentAttrName)!.push({
                 variantId: v.productVariantId || v.id,
                 name: optionName,
-                price: v.originalPrice || v.price || 0,
+                price: origPrice,
                 stock: v.stockQuantity || 0,
-                hasOffer: v.salePrice != null && v.salePrice > 0,
-                salePrice: v.salePrice || 0,
-                offerEndDate: v.offerEndDate ? new Date(v.offerEndDate) : undefined
+                hasOffer: isLegitDiscount, // Only turn on if mathematically true
+                salePrice: isLegitDiscount ? rawSalePrice : 0,
+                offerEndDate: isLegitDiscount ? parsedVariantEndDate : undefined
              });
            });
            
@@ -95,24 +105,29 @@ function ProductEditContent() {
            });
         }
 
+        // 🚀 FIX: Apply the same mathematical safety check to the main product base price
+        const baseRawDate = data.saleEndAt || data.offerEndDate;
+        const rawBasePrice = data.price || data.originalPrice || data.basePrice || 0;
+        const rawMainSalePrice = data.salePrice || data.newPrice || 0;
+        const isMainLegitDiscount = rawMainSalePrice > 0 && rawMainSalePrice < rawBasePrice;
+
         setFormData({
           ...LOCAL_INITIAL_DATA,
           title: data.productName || data.name || data.title || "",
           description: data.description || "",
           category: data.categoryId ? data.categoryId.toString() : "",
           brand: data.brandId ? data.brandId.toString() : "",
-          basePrice: data.price || data.originalPrice || data.basePrice || 0,
-          salePrice: data.salePrice || data.newPrice || 0,
-          offerEndDate: data.offerEndDate ? new Date(data.offerEndDate) : undefined,
+          basePrice: rawBasePrice,
+          salePrice: isMainLegitDiscount ? rawMainSalePrice : 0,
+          offerEndDate: (isMainLegitDiscount && baseRawDate) ? new Date(baseRawDate) : undefined,
           stock: data.stockQuantity || data.stock || 0,
           mainImage: mainImgPath,
           gallery: galleryPaths,
-          keyFeatures: loadedKeyFeatures,
           specs: loadedSpecs,
           optionGroups: mappedGroups,
         });
       })
-      .catch(() => alert("خطا در دریافت اطلاعات محصول."))
+      .catch(() => alert("Error fetching product information."))
       .finally(() => setIsLoading(false));
   }, [productId]);
 
@@ -125,41 +140,66 @@ function ProductEditContent() {
       const brandId = parseInt(formData.brand);
 
       if (!categoryId || isNaN(categoryId) || !brandId || isNaN(brandId)) {
-        alert("لطفاً دسته‌بندی و برند را به درستی از لیست انتخاب کنید.");
+        alert("Please select a valid category and brand.");
         setIsSaving(false); return;
       }
 
       if (!formData.title || formData.title.trim() === "") {
-        alert("لطفاً نام محصول را وارد کنید.");
+        alert("Please enter the product name.");
         setIsSaving(false); return;
       }
 
-      const isGlobalDiscountActive = formData.salePrice > 0 && formData.salePrice < formData.basePrice;
+      let parsedBasePrice = Number(formData.basePrice) || 0;
+
+      if (parsedBasePrice <= 0 && formData.optionGroups && formData.optionGroups.length > 0) {
+        const allVariantPrices = formData.optionGroups
+          .flatMap(g => g.options.map(o => Number(o.price) || 0))
+          .filter(p => p > 0);
+          
+        if (allVariantPrices.length > 0) {
+          parsedBasePrice = Math.min(...allVariantPrices);
+        }
+      }
+
+      const parsedSalePrice = Number(formData.salePrice) || 0;
+      const isGlobalDiscountActive = parsedSalePrice > 0 && parsedSalePrice < parsedBasePrice;
       let currentProductId = productId;
 
-      // ==========================================
-      // STEP 1: CREATE OR UPDATE BASE PRODUCT
-      // ==========================================
+      let mainSaleDurationMinutes = null;
+      if (isGlobalDiscountActive) {
+        const isoDate = formatToISODate(formData.offerEndDate);
+        if (isoDate) {
+           const diffMs = new Date(isoDate).getTime() - new Date().getTime();
+           mainSaleDurationMinutes = diffMs > 0 ? Math.floor(diffMs / 60000) : (30 * 24 * 60);
+        } else {
+           mainSaleDurationMinutes = 30 * 24 * 60; 
+        }
+      }
+
       if (!currentProductId) {
         if (!formData.mainImageFile) {
-          alert("لطفاً تصویر اصلی محصول را انتخاب کنید.");
+          alert("Please select a main product image.");
           setIsSaving(false); return;
         }
 
         const submitData = new FormData();
         submitData.append("ProductName", formData.title);
-        submitData.append("OriginalPrice", (formData.basePrice || 0).toString());
-        submitData.append("SalePrice", isGlobalDiscountActive ? formData.salePrice.toString() : "0");
+        submitData.append("OriginalPrice", parsedBasePrice.toString());
+        
+        if (isGlobalDiscountActive) {
+          submitData.append("SalePrice", parsedSalePrice.toString());
+          submitData.append("HasOffer", "true");
+          const isoDate = formatToISODate(formData.offerEndDate);
+          if (isoDate) submitData.append("OfferEndDate", isoDate);
+          if (mainSaleDurationMinutes) submitData.append("SaleDurationMinutes", mainSaleDurationMinutes.toString());
+        } else {
+          submitData.append("HasOffer", "false");
+        }
+
         submitData.append("Description", formData.description);
         submitData.append("StockQuantity", (formData.stock || 0).toString());
         submitData.append("CategoryId", categoryId.toString());
         submitData.append("BrandId", brandId.toString());
-        
-        if (isGlobalDiscountActive) {
-          submitData.append("HasOffer", "true");
-          const isoDate = formatToISODate(formData.offerEndDate);
-          if (isoDate) submitData.append("OfferEndDate", isoDate);
-        }
         
         submitData.append("Images", formData.mainImageFile);
         (formData.galleryFiles || []).forEach(file => submitData.append("Images", file));
@@ -169,14 +209,15 @@ function ProductEditContent() {
       } else {
         await ProductApi.update(currentProductId, {
           ProductName: formData.title,
-          OriginalPrice: formData.basePrice || 0,
-          SalePrice: isGlobalDiscountActive ? formData.salePrice : null,
+          OriginalPrice: parsedBasePrice,
+          SalePrice: isGlobalDiscountActive ? parsedSalePrice : null,
           Description: formData.description || "",
           StockQuantity: formData.stock || 0,
           CategoryId: categoryId,
           BrandId: brandId,
           HasOffer: isGlobalDiscountActive,
-          OfferEndDate: isGlobalDiscountActive ? formatToISODate(formData.offerEndDate) : null
+          OfferEndDate: isGlobalDiscountActive ? formatToISODate(formData.offerEndDate) : null,
+          SaleDurationMinutes: mainSaleDurationMinutes 
         });
 
         if (formData.mainImageFile instanceof File) await ProductApi.addImage(currentProductId, formData.mainImageFile, true);
@@ -185,15 +226,18 @@ function ProductEditContent() {
         }
       }
 
-      if (!currentProductId) throw new Error("خطا: شناسه محصول دریافت نشد.");
+      if (!currentProductId) throw new Error("Error: Could not retrieve product ID.");
 
-      // ==========================================
-      // STEP 2: SET SPECIFICATIONS
-      // ==========================================
-      const specsPayload = [
-        ...formData.keyFeatures.map((kf, i) => ({ Key: kf.key, Value: kf.value, DisplayOrder: i, IsMain: true })),
-        ...formData.specs.map((s, i) => ({ Key: s.key, Value: s.value, DisplayOrder: formData.keyFeatures.length + i, IsMain: false }))
-      ].filter(spec => spec.Key && spec.Value);
+      const validSpecs = formData.specs
+        .map((s, i) => ({ 
+          Key: (s.key || "").trim(), 
+          Value: (s.value || "").trim(), 
+          DisplayOrder: i, 
+          IsMain: i < 4 
+        }))
+        .filter(spec => spec.Key !== "" && spec.Value !== "");
+      
+      const specsPayload = validSpecs.slice(0, 30);
 
       if (specsPayload.length > 0) {
         await ProductApi.setSpecifications(currentProductId, specsPayload);
@@ -201,9 +245,6 @@ function ProductEditContent() {
         await ProductApi.setSpecifications(currentProductId, []);
       }
 
-      // ==========================================
-      // STEP 3: PREEMPTIVE CLEANUP OF OLD VARIANTS
-      // ==========================================
       if (productId) {
          const existingProduct = await ProductApi.getById(currentProductId);
          if (Array.isArray(existingProduct.variants)) {
@@ -212,12 +253,8 @@ function ProductEditContent() {
                  if (vId) await ProductVariantApi.delete(currentProductId, vId);
              }
          }
-         // 🚀 FIX: Removed the empty setAttributes([]) call that was crashing the C# API!
       }
 
-      // ==========================================
-      // STEP 4: CREATE NEW VARIANTS
-      // ==========================================
       if (formData.optionGroups && formData.optionGroups.length > 0) {
         let attributeValuesMap = new Map<string, number>(); 
         const attributesPayload = formData.optionGroups.map(g => ({
@@ -226,7 +263,6 @@ function ProductEditContent() {
         })).filter(a => a.name && a.values.length > 0);
 
         if (attributesPayload.length > 0) {
-          
           await ProductApi.setAttributes(currentProductId, { attributes: attributesPayload });
           
           const freshProductData = await ProductApi.getById(currentProductId);
@@ -240,35 +276,61 @@ function ProductEditContent() {
              });
           }
 
-          // Generate new variants mapped to the fresh attribute IDs
           let variantCounter = 1; 
+          const createdSignatures = new Set<string>(); 
+
           for (const group of formData.optionGroups) {
             for (const option of group.options) {
-              if (!option.name) continue; 
+              const optionName = (option.name || "").trim();
+              if (!optionName) continue; 
               
-              const mappedId = attributeValuesMap.get(`${(group.title || "").trim()}:${(option.name || "").trim()}`);
+              const mappedId = attributeValuesMap.get(`${(group.title || "").trim()}:${optionName}`);
               if (!mappedId) continue; 
+
+              if (createdSignatures.has(mappedId.toString())) continue;
+              createdSignatures.add(mappedId.toString());
+
+              const originalPrice = option.price || parsedBasePrice;
+              const hasActiveDiscount = option.hasOffer && option.salePrice > 0 && option.salePrice < originalPrice;
+              let saleDurationMinutes = null;
+
+              if (hasActiveDiscount) {
+                const endDate = option.offerEndDate || formData.offerEndDate;
+                const isoString = formatToISODate(endDate); 
+                
+                if (isoString) {
+                   const diffMs = new Date(isoString).getTime() - new Date().getTime();
+                   saleDurationMinutes = diffMs > 0 ? Math.floor(diffMs / 60000) : 30 * 24 * 60; 
+                } else {
+                   saleDurationMinutes = 30 * 24 * 60; 
+                }
+              }
 
               const variantDto = {
                 Sku: `PRD-${currentProductId}-${Math.floor(Math.random() * 100000)}-${variantCounter++}`,
-                OriginalPrice: option.price || formData.basePrice || 0,
-                SalePrice: (option.hasOffer && option.salePrice > 0) ? option.salePrice : null,
+                OriginalPrice: originalPrice,
+                SalePrice: hasActiveDiscount ? option.salePrice : null,
+                SaleDurationMinutes: saleDurationMinutes, 
                 StockQuantity: option.stock || 0,
                 AttributeValueIds: [mappedId] 
               };
               
-              await ProductVariantApi.create(currentProductId, variantDto);
+              try {
+                await ProductVariantApi.create(currentProductId, variantDto);
+              } catch (variantErr: any) {
+                console.warn(`Skipped creating variant ${optionName}:`, variantErr.message || variantErr);
+              }
             }
           }
         }
       }
 
-      alert(productId ? "محصول با موفقیت بروزرسانی شد." : "محصول جدید با موفقیت اضافه شد.");
+      alert(productId ? "Product successfully updated." : "New product successfully added.");
       router.push("/admin/products");
       
     } catch (error: any) {
       console.error("Full Submission Error:", error);
-      alert(`خطا: ${error.message || "Unknown Error"}`);
+      alert(`Error: ${error.message || "Unknown Error"}`);
     } finally {
       setIsSaving(false);
     }
@@ -278,7 +340,7 @@ function ProductEditContent() {
     return (
       <div className="w-full h-64 flex flex-col items-center justify-center gap-4 text-[#4A3022] dark:text-[#EAE0D5] font-bold">
         <div className="w-8 h-8 border-4 border-[#C68E58] border-t-transparent rounded-full animate-spin"></div>
-        در حال بارگذاری اطلاعات محصول...
+        Loading product information...
       </div>
     );
   }

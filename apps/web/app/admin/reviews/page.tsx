@@ -9,8 +9,6 @@ import { ReviewsHeader } from "./components/ReviewsHeader";
 import { ReviewsControlBar } from "./components/ReviewsControlBar";
 import { ReviewCard } from "./components/ReviewCard";
 import { ReviewAdminApi } from "./api";
-// Import ProductApi to get the list of products first
-import { ProductApi } from "../products/api";
 
 export default function AdminReviewsPage() {
   const router = useRouter();
@@ -19,54 +17,34 @@ export default function AdminReviewsPage() {
   
   const [searchQuery, setSearchQuery] = useState("");
   const [filterStatus, setFilterStatus] = useState<ReviewStatus | "all" | "reported">("pending");
-
-  const fetchReviews = async () => {
+const fetchReviews = async () => {
     try {
       setIsLoading(true);
       
-      // 1. Fetch all products
-      const productsData = await ProductApi.getAll();
-      const rawProducts = Array.isArray(productsData) ? productsData : (productsData.items || []);
+      const data = await ReviewAdminApi.getPending();
+      const rawReviews = Array.isArray(data) ? data : (data.items || []);
 
-      // 2. Fetch reviews for each product simultaneously
-      const reviewPromises = rawProducts.map(async (p: any) => {
-          const pId = p.productId || p.id;
-          if (!pId) return [];
-          
-          try {
-              const productReviews = await ReviewAdminApi.getByProductId(pId);
-              const reviewsArray = Array.isArray(productReviews) ? productReviews : (productReviews.items || []);
-              
-              // Inject product info into the review object if the backend doesn't provide it natively
-              return reviewsArray.map((r: any) => ({
-                  ...r,
-                  productId: pId,
-                  productName: r.productName || p.productName || p.name || "محصول نامشخص"
-              }));
-          } catch (e) {
-              console.warn(`Could not fetch reviews for product ${pId}`, e);
-              return [];
-          }
+// Map to your UI format
+      const mappedReviews: Review[] = rawReviews.map((r: any) => {
+        // 🚀 FIX: Added productReviewId based exactly on your console log!
+        const actualId = r.productReviewId || r.id || r.reviewId || r.Id || r.ReviewId; 
+        const prodId = r.productId || r.ProductId || 0;
+
+        return {
+          id: `REV-${actualId || Math.random()}`,
+          numericId: actualId, // This will now correctly be 1 (or whatever the productReviewId is)
+          productId: prodId,
+          // 🚀 FIX: Added reviewerName based on your console log
+          userName: r.reviewerName || r.userName || r.author || "کاربر سایت",
+          productName: r.productName || r.ProductName || "محصول نامشخص",
+          date: r.createdAt || r.date || r.CreatedAt || new Date().toISOString(),
+          rating: r.rating || r.Rating || 5,
+          text: r.comment || r.text || r.Comment || "",
+          status: "pending", 
+          isReported: r.isReported || r.IsReported || false,
+          adminReply: r.adminReply || r.AdminReply || undefined,
+        };
       });
-
-      // 3. Wait for all requests to finish and flatten the arrays into one master list
-      const allReviewsArrays = await Promise.all(reviewPromises);
-      const combinedReviews = allReviewsArrays.flat();
-      
-      // 4. Map to UI format
-      const mappedReviews: Review[] = combinedReviews.map((r: any) => ({
-        id: `REV-${r.reviewId || Math.random()}`,
-        numericId: r.reviewId,
-        productId: r.productId,
-        userName: r.userName || "کاربر سایت",
-        productName: r.productName,
-        date: r.createdAt || new Date().toISOString(),
-        rating: r.rating || 5,
-        text: r.comment || r.text || "",
-        status: r.isApproved ? "approved" : "pending",
-        isReported: r.isReported || false,
-        adminReply: r.adminReply || undefined,
-      }));
 
       setReviews(mappedReviews);
     } catch (err: any) {
@@ -109,62 +87,36 @@ export default function AdminReviewsPage() {
 
   const handleApprove = async (review: Review) => {
     try {
-      await ReviewAdminApi.update(review.productId, review.numericId, { 
-        isApproved: true, 
-        adminReply: review.adminReply 
-      });
-      setReviews(prev => prev.map(r => r.id === review.id ? { ...r, status: "approved" } : r));
+      await ReviewAdminApi.approve(review.numericId);
+      // Remove it from the pending list since it is approved
+      setReviews(prev => prev.filter(r => r.id !== review.id));
     } catch (err) {
       alert("خطا در تایید نظر");
     }
   };
 
   const handleDelete = async (review: Review) => {
-    if(!confirm("آیا از حذف این نظر اطمینان دارید؟")) return;
+    if(!confirm("آیا از حذف/رد این نظر اطمینان دارید؟")) return;
     try {
-      await ReviewAdminApi.delete(review.productId, review.numericId);
+      await ReviewAdminApi.reject(review.numericId);
+      // Remove it from the UI after rejection
       setReviews(prev => prev.filter(r => r.id !== review.id));
     } catch (err) {
       alert("خطا در حذف نظر");
     }
   };
 
+  // Mock functions for features your backend doesn't seem to have dedicated endpoints for yet
   const handleClearReport = async (review: Review) => {
-    try {
-      await ReviewAdminApi.update(review.productId, review.numericId, { 
-        isReported: false, 
-        isApproved: review.status === 'approved',
-        adminReply: review.adminReply 
-      });
-      setReviews(prev => prev.map(r => r.id === review.id ? { ...r, isReported: false } : r));
-    } catch (err) {
-      alert("خطا در رد گزارش");
-    }
+    alert("این قابلیت هنوز در سرور پیاده‌سازی نشده است.");
   };
 
   const handleSubmitReply = async (review: Review, text: string) => {
-    try {
-      await ReviewAdminApi.update(review.productId, review.numericId, { 
-        adminReply: text,
-        isApproved: review.status === 'approved'
-      });
-      setReviews(prev => prev.map(r => r.id === review.id ? { ...r, adminReply: text } : r));
-    } catch (err) {
-      alert("خطا در ثبت پاسخ");
-    }
+    alert("قابلیت ثبت پاسخ هنوز در سرور پیاده‌سازی نشده است.");
   };
 
   const handleDeleteReply = async (review: Review) => {
-    if(!confirm("آیا از حذف این پاسخ اطمینان دارید؟")) return;
-    try {
-      await ReviewAdminApi.update(review.productId, review.numericId, { 
-        adminReply: null,
-        isApproved: review.status === 'approved'
-      });
-      setReviews(prev => prev.map(r => r.id === review.id ? { ...r, adminReply: undefined } : r));
-    } catch (err) {
-      alert("خطا در حذف پاسخ");
-    }
+    alert("قابلیت حذف پاسخ هنوز در سرور پیاده‌سازی نشده است.");
   };
 
   return (

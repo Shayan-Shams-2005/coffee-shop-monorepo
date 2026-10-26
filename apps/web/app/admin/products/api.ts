@@ -8,7 +8,7 @@ const API_BASE_URL = (process.env.NEXT_PUBLIC_API_URL || "http://localhost:5103"
 export interface ProductUpdateData {
   ProductName: string;
   OriginalPrice: number;
-  SalePrice: number | null; // Safely allows null for products without discounts
+  SalePrice: number | null; 
   Description: string;
   StockQuantity: number;
   CategoryId: number;
@@ -16,6 +16,7 @@ export interface ProductUpdateData {
   HasOffer: boolean;
   NewPrice?: number | null;
   OfferEndDate: string | null;
+  SaleDurationMinutes?: number | null; // 🚀 Added to match backend payload requirements
 }
 
 // 3. Extract the dummy file generation to keep the code DRY
@@ -42,7 +43,6 @@ const fetchWithAuth = async (url: string, options: RequestInit = {}) => {
       await AuthApi.refreshToken();
       res = await fetch(url, options); // Retry original request
     } catch (error) {
-      // If refresh fails (e.g., RefreshToken expired), throw a specific error
       throw new Error("SESSION_EXPIRED");
     }
   }
@@ -57,25 +57,25 @@ export const ProductApi = {
   getImageUrl: (url: string | null | undefined): string => {
     if (!url) return "";
     
-    // Convert Windows backslashes to web forward slashes
     let cleaned = url.replace(/\\/g, '/');
     
-    // 1. Safe pass-through for absolute web links, base64, or frontend blobs
     if (/^(https?:\/\/|data:image|blob:)/i.test(cleaned)) {
       return cleaned;
     }
     
-    // 2. Strip out 'file:///' if the browser or backend accidentally applied it
+    // 🚀 FIX: Securely strip out file:/// and C:/ to prevent Security Errors
     cleaned = cleaned.replace(/^file:\/\/\//i, '');
+    cleaned = cleaned.replace(/^[a-zA-Z]:\//i, '/');
     
-    // 3. MAGIC FILTER: Chop off local absolute paths (e.g., D:/Project/.../uploads/img.png)
-    // Keeps only the relative path starting from /uploads or /images
-    const uploadFolderMatch = cleaned.match(/(\/uploads\/|\/images\/).*/i);
+    // 🚀 FIX: Added 'Products' to the allowed folders regex
+    const uploadFolderMatch = cleaned.match(/(\/uploads\/|\/images\/|\/Categories\/|\/Brands\/|\/Products\/).*/i);
     if (uploadFolderMatch) {
        cleaned = uploadFolderMatch[0];
+    } else {
+       const parts = cleaned.split('/');
+       cleaned = '/' + parts[parts.length - 1];
     }
     
-    // 4. Return the safe URL mapped to your C# API
     return cleaned.startsWith("/") ? `${API_BASE_URL}${cleaned}` : `${API_BASE_URL}/${cleaned}`;
   },
 
@@ -126,32 +126,37 @@ export const ProductApi = {
 
   addImage: async (productId: number, file: File, isMain: boolean = false) => {
     const formData = new FormData();
+    formData.append("File", file); 
     formData.append("file", file); 
     formData.append("isMain", isMain.toString());
 
-    // Matches Swagger: POST /api/Product/AddImage/{id}/images
-    const res = await fetchWithAuth(`${API_BASE_URL}/api/Product/AddImage/${productId}/images`, {
+    const res = await fetchWithAuth(`${API_BASE_URL}/api/Product/AddImage/${productId}/images?isMain=${isMain}`, {
       method: "POST",
       body: formData,
     });
     
-    if (!res.ok) throw new Error("Failed to upload image.");
+    if (!res.ok) {
+        const errorText = await res.text();
+        throw new Error(`آپلود عکس سرور با خطا مواجه شد: ${errorText || res.status}`);
+    }
     return res.status === 204 ? true : res.json(); 
   },
 
   setSpecifications: async (id: number, specs: any[]) => {
-    // Matches Swagger: PUT /api/Product/SetSpecifications/{id}/specifications
     const res = await fetchWithAuth(`${API_BASE_URL}/api/Product/SetSpecifications/${id}/specifications`, {
       method: "PUT", 
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(specs),
+      body: JSON.stringify(specs), 
     });
-    if (!res.ok) throw new Error("Failed to set specifications");
+    if (!res.ok) {
+        // 🚀 FIX: Get the exact validation error from C# and show it!
+        const errorText = await res.text();
+        throw new Error(`ارور ولیدیشن مشخصات:\n ${errorText}`);
+    }
     return true;
   },
 
   setAttributes: async (id: number, attributesPayload: any) => {
-    // Matches Swagger: PUT /api/Product/SetAttributes/{id}/attributes
     const res = await fetchWithAuth(`${API_BASE_URL}/api/Product/SetAttributes/${id}/attributes`, {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
@@ -192,7 +197,6 @@ export const ProductVariantApi = {
     return res.status === 204 ? true : res.json();
   },
 
-  // 🚀 ADDED THIS TO BYPASS C# VALIDATION:
   delete: async (productId: number, variantId: number) => {
     const res = await fetchWithAuth(`${API_BASE_URL}/api/ProductVariant/Delete/${productId}/${variantId}`, {
       method: "DELETE",

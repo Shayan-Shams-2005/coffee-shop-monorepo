@@ -1,3 +1,4 @@
+// components/product-page/ProductOverview.tsx
 "use client";
 
 import { useState } from "react";
@@ -49,12 +50,15 @@ export function ProductOverview({ product }: ProductOverviewProps) {
           <div className="w-2 h-8 bg-[#D4A373] dark:bg-[#C68E58] rounded-full transition-colors"></div>{" "}
           مشخصات فنی
         </h2>
+        
         <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-6">
+          
+          {/* Always Visible Specs (First 6) */}
           {product.specifications
-            .slice(0, showFullSpecs ? undefined : 6)
+            .slice(0, 6)
             .map((spec: any, idx: number) => (
               <div
-                key={idx}
+                key={`main-${idx}`}
                 className="flex flex-col sm:flex-row sm:items-center justify-between py-4 border-b border-[#F9F8F6] dark:border-[#3A221C] gap-2 transition-colors"
               >
                 <span className="text-sm font-medium text-[#8C7A6B] dark:text-[#A1A1A1] transition-colors">
@@ -65,12 +69,38 @@ export function ProductOverview({ product }: ProductOverviewProps) {
                 </span>
               </div>
             ))}
+
+          {/* Animated Wrapper for the Rest */}
+          <div 
+            className={`col-span-1 md:col-span-2 transition-all duration-700 ease-in-out overflow-hidden ${
+              showFullSpecs ? "max-h-[2000px] opacity-100" : "max-h-0 opacity-0"
+            }`}
+          >
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-6">
+              {product.specifications
+                .slice(6)
+                .map((spec: any, idx: number) => (
+                  <div
+                    key={`hidden-${idx}`}
+                    className="flex flex-col sm:flex-row sm:items-center justify-between py-4 border-b border-[#F9F8F6] dark:border-[#3A221C] gap-2 transition-colors"
+                  >
+                    <span className="text-sm font-medium text-[#8C7A6B] dark:text-[#A1A1A1] transition-colors">
+                      {spec.name}
+                    </span>
+                    <span className="text-sm font-bold text-[#2C1E16] dark:text-[#EAE0D5] bg-[#F9F8F6] dark:bg-[#231511] px-4 py-2 rounded-xl text-left transition-colors">
+                      {spec.value}
+                    </span>
+                  </div>
+                ))}
+            </div>
+          </div>
+
         </div>
+
         {product.specifications.length > 6 && (
           <div className="flex justify-center mt-8">
             <button
               onClick={() => setShowFullSpecs(!showFullSpecs)}
-              // 🚀 FIXED: Copied the exact styles from the "مطالعه توضیحات کامل" button[cite: 10]
               className="flex items-center gap-2 bg-[#F9F8F6] dark:bg-[#231511] hover:bg-[#F0EBE1] dark:hover:bg-[#2C1A14] text-[#4A3022] dark:text-[#EAE0D5] px-6 py-3 rounded-2xl text-sm font-bold transition-all border border-[#E8E2D9] dark:border-[#3c2317]"
             >
               {showFullSpecs ? "بستن مشخصات" : "مشاهده تمام مشخصات"}

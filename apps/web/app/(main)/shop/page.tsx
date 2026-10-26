@@ -1,21 +1,21 @@
+// app/(main)/shop/page.tsx
 "use client";
 
-import { useState, useMemo, useRef, useEffect } from "react";
+import { useState, useMemo, useRef, useEffect, Suspense } from "react";
 import Link from "next/link";
 import { Search, ChevronLeft, Filter, X } from "lucide-react";
 
-// 🚀 FIXED: Reverted back to importing MOCK_PRODUCTS directly!
-import { MOCK_PRODUCTS } from "../../lib/mock/shop-data";
+import { ShopProductCard } from "../../../components/product/ShopProductCard";
+import { FilterSideBar } from "../../../components/filters/FilterSideBar";
+import { SortBar, SortOption } from "../../../components/sort/SortBar";
 
-import { ShopProductCard } from "../../components/product/ShopProductCard";
+import { ShopPublicApi } from "./api"; 
+import { Product } from "../../admin/products/types"; 
 
-// 🚀 Imported the shared components
-import { FilterSideBar } from "../../components/filters/FilterSideBar";
-import { SortBar, SortOption } from "../../components/sort/SortBar";
-
-const toFarsiNumber = (num: number | string) => {
+const toFarsiNumber = (num: any) => {
+  if (num === null || num === undefined || Number.isNaN(Number(num))) return "۰";
   const farsiDigits = ["۰", "۱", "۲", "۳", "۴", "۵", "۶", "۷", "۸", "۹"];
-  return num.toString().replace(/\d/g, (x) => farsiDigits[parseInt(x)] || x);
+  return String(num).replace(/\d/g, (x: string) => farsiDigits[parseInt(x)] || x);
 };
 
 export type SortType =
@@ -26,7 +26,6 @@ export type SortType =
   | "cheapest"
   | "expensive";
 
-// Define the sort options specific to the Shop Page
 const SHOP_SORT_OPTIONS: SortOption[] = [
   { id: "bestoffer", label: "بیشترین تخفیف" },
   { id: "most_viewed", label: "پربازدیدترین" },
@@ -36,11 +35,15 @@ const SHOP_SORT_OPTIONS: SortOption[] = [
   { id: "expensive", label: "گران‌ترین" },
 ];
 
-export default function ShopPage() {
+function ShopPageContent() {
+  const [products, setProducts] = useState<Product[]>([]);
+  const [availableCategories, setAvailableCategories] = useState<string[]>([]);
+  const [availableBrands, setAvailableBrands] = useState<string[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedBrands, setSelectedBrands] = useState<string[]>([]);
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
-  const MAX_ALLOWED_PRICE = 5000000;
   const [minPrice, setMinPrice] = useState<string>("");
   const [maxPrice, setMaxPrice] = useState<string>("");
   const [activeSort, setActiveSort] = useState<SortType>("newest");
@@ -49,35 +52,83 @@ export default function ShopPage() {
   const productsTopRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    document.body.style.overflow = isMobileFilterOpen ? "hidden" : "auto";
-    return () => {
-      document.body.style.overflow = "auto";
+    const fetchData = async () => {
+      try {
+        setIsLoading(true);
+        const [productsData, categoriesData, brandsData] = await Promise.all([
+          ShopPublicApi.getProducts().catch(() => ({ items: [] })),
+          ShopPublicApi.getCategories().catch(() => ({ items: [] })), 
+          ShopPublicApi.getBrands().catch(() => ({ items: [] }))
+        ]);
+        
+        const catList = Array.isArray(categoriesData) ? categoriesData : (categoriesData?.items || []);
+        setAvailableCategories(catList.map((c: any) => c?.categoryName || c?.name || "").filter(Boolean));
+
+        const brandList = Array.isArray(brandsData) ? brandsData : (brandsData?.items || []);
+        setAvailableBrands(brandList.map((b: any) => b?.brandName || b?.name || "").filter(Boolean));
+
+        const rawArray = Array.isArray(productsData) ? productsData : (productsData?.items || []);
+        
+        const mappedProducts = rawArray.map((p: any, index: number) => {
+          if (!p) return null;
+
+          let rawImageStr = "";
+          if (Array.isArray(p.images) && p.images.length > 0) {
+            const mainImg = p.images.find((img: any) => img?.isMain === true || img?.IsMain === true) || p.images[0];
+            rawImageStr = mainImg?.imageUrl || mainImg?.ImageUrl || "";
+          }
+
+          const priceVal = Number(p.initialPrice || p.InitialPrice || p.originalPrice || p.OriginalPrice || p.price || p.Price || p.basePrice || 0);
+          const salePriceVal = Number(p.salePrice || p.SalePrice || p.newPrice || p.NewPrice || 0);
+
+          return {
+            ...p,
+            id: p.productId || p.id || index, 
+            name: p.productName || p.ProductName || p.name || "محصول بدون نام",
+            category: p.categoryName || p.CategoryName || (p.categoryId ? p.categoryId.toString() : "نامشخص"),
+            brand: p.brandName || p.BrandName || (p.brandId ? p.brandId.toString() : "نامشخص"),
+            price: priceVal,
+            newPrice: salePriceVal > 0 ? salePriceVal : null,
+            hasOffer: p.hasOffer ?? p.HasOffer ?? (salePriceVal > 0),
+            stock: p.stockQuantity ?? p.StockQuantity ?? p.stock ?? p.Stock ?? 0,
+            salesVolume: p.soldQuantity ?? p.SoldQuantity ?? p.salesVolume ?? p.SalesVolume ?? 0,
+            views: p.views || p.Views || 0,
+            offerEndDate: p.offerEndDate || p.OfferEndDate || null,
+            image: ShopPublicApi.getImageUrl(rawImageStr), 
+          };
+        }).filter(Boolean);
+
+        setProducts(mappedProducts);
+      } catch (err) {
+        console.error("Failed to fetch shop data", err);
+      } finally {
+        setIsLoading(false);
+      }
     };
+    fetchData();
+  }, []);
+
+  useEffect(() => {
+    document.body.style.overflow = isMobileFilterOpen ? "hidden" : "auto";
+    return () => { document.body.style.overflow = "auto"; };
   }, [isMobileFilterOpen]);
 
   const scrollToProducts = () => {
     if (productsTopRef.current) {
       const headerOffset = 150;
-      const elementPosition =
-        productsTopRef.current.getBoundingClientRect().top;
+      const elementPosition = productsTopRef.current.getBoundingClientRect().top;
       const offsetPosition = elementPosition + window.scrollY - headerOffset;
       window.scrollTo({ top: offsetPosition, behavior: "smooth" });
     }
   };
 
   const toggleBrand = (brand: string) => {
-    setSelectedBrands((prev) =>
-      prev.includes(brand) ? prev.filter((b) => b !== brand) : [...prev, brand],
-    );
+    setSelectedBrands((prev) => prev.includes(brand) ? prev.filter((b) => b !== brand) : [...prev, brand]);
     scrollToProducts();
   };
 
   const toggleCategory = (category: string) => {
-    setSelectedCategories((prev) =>
-      prev.includes(category)
-        ? prev.filter((c) => c !== category)
-        : [...prev, category],
-    );
+    setSelectedCategories((prev) => prev.includes(category) ? prev.filter((c) => c !== category) : [...prev, category]);
     scrollToProducts();
   };
 
@@ -95,73 +146,82 @@ export default function ShopPage() {
     scrollToProducts();
   };
 
-  const filteredAndSortedProducts = useMemo(() => {
-    let result = MOCK_PRODUCTS;
+  // 🚀 FIX: Calculates exact MIN and MAX prices for the slider limits
+  const dynamicPrices = useMemo(() => {
+    if (!products || products.length === 0) return { min: 0, max: 5000000 };
+    
+    const prices = products.map(p => (p.hasOffer && p.newPrice) ? p.newPrice : (p.price || 0));
+    const min = Math.min(...prices);
+    const max = Math.max(...prices);
+    
+    return {
+      min: min > 0 ? Math.floor(min / 10000) * 10000 : 0, 
+      max: max > 0 ? Math.ceil(max / 10000) * 10000 : 5000000 
+    };
+  }, [products]);
 
-    if (searchQuery.trim())
-      result = result.filter((p) => p.name.includes(searchQuery.trim()));
-    if (selectedBrands.length > 0)
-      result = result.filter(
-        (p) => p.brand && selectedBrands.includes(p.brand),
-      );
-    if (selectedCategories.length > 0)
-      result = result.filter(
-        (p) => p.category && selectedCategories.includes(p.category),
-      );
-    if (minPrice) result = result.filter((p) => p.price >= parseInt(minPrice));
-    if (maxPrice) result = result.filter((p) => p.price <= parseInt(maxPrice));
+  const filteredAndSortedProducts = useMemo(() => {
+    let result = products || [];
+
+    if (searchQuery.trim()) {
+      const q = searchQuery.trim().toLowerCase();
+      result = result.filter((p) => p.name?.toLowerCase().includes(q) || p.category?.toLowerCase().includes(q));
+    }
+    if (selectedBrands.length > 0) result = result.filter((p) => p.brand && selectedBrands.includes(p.brand));
+    if (selectedCategories.length > 0) result = result.filter((p) => p.category && selectedCategories.includes(p.category));
+    
+    if (minPrice) {
+      result = result.filter((p) => {
+        const effectivePrice = (p.hasOffer && p.newPrice) ? p.newPrice : (p.price || 0);
+        return effectivePrice >= parseInt(minPrice);
+      });
+    }
+    
+    if (maxPrice) {
+      result = result.filter((p) => {
+        const effectivePrice = (p.hasOffer && p.newPrice) ? p.newPrice : (p.price || 0);
+        return effectivePrice <= parseInt(maxPrice);
+      });
+    }
 
     return [...result].sort((a, b) => {
+      const priceA = (a.hasOffer && a.newPrice) ? a.newPrice : (a.price || 0);
+      const priceB = (b.hasOffer && b.newPrice) ? b.newPrice : (b.price || 0);
+
       switch (activeSort) {
-        case "bestoffer":
-          return (b.discount || 0) - (a.discount || 0);
-        case "cheapest":
-          return (a.price || 0) - (b.price || 0);
-        case "expensive":
-          return (b.price || 0) - (a.price || 0);
-        case "bestselling":
-          return (b.sales || 0) - (a.sales || 0);
-        case "most_viewed":
-          return (b.views || 0) - (a.views || 0);
-        case "newest":
-          return (
-            new Date(b.date || 0).getTime() - new Date(a.date || 0).getTime()
-          );
-        default:
-          return 0;
+        case "bestoffer": return (priceB < (b.price||0) ? ((b.price||0)-priceB) : 0) - (priceA < (a.price||0) ? ((a.price||0)-priceA) : 0);
+        case "cheapest": return priceA - priceB;
+        case "expensive": return priceB - priceA;
+        case "bestselling": return (b.salesVolume || 0) - (a.salesVolume || 0);
+        case "most_viewed": return ((b as any).views || 0) - ((a as any).views || 0);
+        case "newest": return new Date((b as any).createdAt || (b as any).date || 0).getTime() - new Date((a as any).createdAt || (a as any).date || 0).getTime(); 
+        default: return 0;
       }
     });
-  }, [
-    searchQuery,
-    selectedBrands,
-    selectedCategories,
-    minPrice,
-    maxPrice,
-    activeSort,
-  ]);
+  }, [products, searchQuery, selectedBrands, selectedCategories, minPrice, maxPrice, activeSort]);
+
+  if (isLoading) {
+    return (
+      <div className="bg-[#FCF9F5] dark:bg-[#1A1412] min-h-screen flex items-center justify-center">
+        <div className="w-8 h-8 border-4 border-[#C68E58] border-t-transparent rounded-full animate-spin"></div>
+      </div>
+    );
+  }
 
   return (
-    // 🚀 FIXED: Main background dark mode colors
     <div className="bg-[#FCF9F5] dark:bg-[#1A1412] min-h-screen pb-16 transition-colors duration-300">
       <div className="container mx-auto max-w-[1400px] px-4 py-8">
-        {/* Breadcrumb */}
         <nav className="flex items-center gap-2 text-xs text-[#8C7A6B] dark:text-[#ba8d71] mb-8 font-bold transition-colors">
-          <Link
-            href="/"
-            className="hover:text-[#C68E58] dark:hover:text-[#FFD7BA] transition-colors"
-          >
-            خانه
-          </Link>
+          <Link href="/" className="hover:text-[#C68E58] dark:hover:text-[#FFD7BA] transition-colors">خانه</Link>
           <ChevronLeft className="w-3 h-3 text-[#D1C8B8] dark:text-[#6A5A4F]" />
-          <span className="text-[#3D2616] dark:text-[#EAE0D5] transition-colors">
-            تمام محصولات
-          </span>
+          <span className="text-[#3D2616] dark:text-[#EAE0D5] transition-colors">تمام محصولات</span>
         </nav>
 
         <div className="flex flex-col lg:flex-row gap-6 lg:gap-8">
-          {/* ================= سایدبار فیلترها (دسکتاپ) ================= */}
           <div className="hidden lg:block w-[280px] shrink-0">
             <FilterSideBar
+              availableCategories={availableCategories.filter(Boolean)}
+              availableBrands={availableBrands.filter(Boolean)}
               searchQuery={searchQuery}
               setSearchQuery={setSearchQuery}
               selectedCategories={selectedCategories}
@@ -172,19 +232,18 @@ export default function ShopPage() {
               setMinPrice={setMinPrice}
               maxPrice={maxPrice}
               setMaxPrice={setMaxPrice}
-              MAX_ALLOWED_PRICE={MAX_ALLOWED_PRICE}
+              MIN_ALLOWED_PRICE={dynamicPrices.min} // 🚀 Pass Min limit
+              MAX_ALLOWED_PRICE={dynamicPrices.max} // 🚀 Pass Max limit
             />
           </div>
 
-          {/* ================= بخش اصلی ================= */}
           <main className="flex-1 w-full" ref={productsTopRef}>
             <SortBar
               activeSort={activeSort}
-              onSortChange={handleSortChange}
+              onSortChange={handleSortChange as any}
               productCount={filteredAndSortedProducts.length}
               options={SHOP_SORT_OPTIONS}
             >
-              {/* 🚀 FIXED: Mobile filter button dark mode */}
               <button
                 onClick={() => setIsMobileFilterOpen(true)}
                 className="lg:hidden flex-1 flex items-center justify-center gap-2 h-9 bg-white dark:bg-[#1A110F] border border-[#E3C3A4] dark:border-[#3A221C] text-[#C68E58] dark:text-[#EAE0D5] hover:bg-[#FCF9F5] dark:hover:bg-[#2C1A14] dark:hover:border-[#C68E58] dark:hover:text-[#FFD7BA] rounded-xl text-xs font-bold shadow-sm transition-colors"
@@ -193,18 +252,11 @@ export default function ShopPage() {
               </button>
             </SortBar>
 
-            {/* گرید محصولات */}
             {filteredAndSortedProducts.length === 0 ? (
-              // 🚀 FIXED: Empty state dark mode styling
               <div className="bg-white dark:bg-[#1A110F] rounded-[24px] border border-[#F5EFE6] dark:border-[#3c2317] p-10 flex flex-col items-center justify-center text-center h-64 transition-colors">
                 <Search className="w-12 h-12 text-[#E3C3A4] dark:text-[#6A5A4F] mb-4 transition-colors" />
-                <h3 className="text-lg font-black text-[#3D2616] dark:text-[#EAE0D5] mb-2 transition-colors">
-                  محصولی یافت نشد!
-                </h3>
-                <p className="text-[#8C7A6B] dark:text-[#A1A1A1] text-sm transition-colors">
-                  با این فیلترها نتیجه‌ای پیدا نکردیم. لطفاً فیلترها را تغییر
-                  دهید.
-                </p>
+                <h3 className="text-lg font-black text-[#3D2616] dark:text-[#EAE0D5] mb-2 transition-colors">محصولی یافت نشد!</h3>
+                <p className="text-[#8C7A6B] dark:text-[#A1A1A1] text-sm transition-colors">با این فیلترها نتیجه‌ای پیدا نکردیم. لطفاً فیلترها را تغییر دهید.</p>
                 <button
                   onClick={handleResetFilters}
                   className="mt-6 text-sm font-bold text-[#C68E58] hover:text-[#A87242] dark:text-[#C68E58] dark:hover:text-[#FFD7BA] transition-colors"
@@ -217,7 +269,7 @@ export default function ShopPage() {
                 {filteredAndSortedProducts.map((product, index) => (
                   <ShopProductCard
                     key={product.id}
-                    product={product}
+                    product={product as any}
                     index={index}
                   />
                 ))}
@@ -227,17 +279,10 @@ export default function ShopPage() {
         </div>
       </div>
 
-      {/* ================= کشوی فیلترها (موبایل) ================= */}
       {isMobileFilterOpen && (
         <div className="fixed inset-0 z-[100] lg:hidden">
-          {/* 🚀 FIXED: Overlay dark mode */}
-          <div
-            className="absolute inset-0 bg-black/50 dark:bg-black/70 backdrop-blur-sm transition-opacity"
-            onClick={() => setIsMobileFilterOpen(false)}
-          />
-          {/* 🚀 FIXED: Mobile drawer container dark mode */}
+          <div className="absolute inset-0 bg-black/50 dark:bg-black/70 backdrop-blur-sm transition-opacity" onClick={() => setIsMobileFilterOpen(false)} />
           <div className="absolute bottom-0 left-0 right-0 bg-[#FCF9F5] dark:bg-[#1A1412] rounded-t-3xl h-[85vh] flex flex-col shadow-2xl animate-in slide-in-from-bottom duration-300 transition-colors">
-            {/* 🚀 FIXED: Mobile drawer header dark mode */}
             <div className="flex items-center justify-between p-6 border-b border-[#F5EFE6] dark:border-[#3c2317] bg-white dark:bg-[#1A110F] rounded-t-3xl shrink-0 transition-colors">
               <h2 className="text-lg font-black text-[#2C1E16] dark:text-[#EAE0D5] flex items-center gap-2 transition-colors">
                 <Filter className="w-5 h-5 text-[#C68E58]" /> فیلتر محصولات
@@ -252,6 +297,8 @@ export default function ShopPage() {
 
             <div className="flex-1 overflow-y-auto p-4 custom-scrollbar">
               <FilterSideBar
+                availableCategories={availableCategories.filter(Boolean)}
+                availableBrands={availableBrands.filter(Boolean)}
                 searchQuery={searchQuery}
                 setSearchQuery={setSearchQuery}
                 selectedCategories={selectedCategories}
@@ -262,11 +309,11 @@ export default function ShopPage() {
                 setMinPrice={setMinPrice}
                 maxPrice={maxPrice}
                 setMaxPrice={setMaxPrice}
-                MAX_ALLOWED_PRICE={MAX_ALLOWED_PRICE}
+                MIN_ALLOWED_PRICE={dynamicPrices.min} // 🚀 Pass Min limit
+                MAX_ALLOWED_PRICE={dynamicPrices.max} // 🚀 Pass Max limit
               />
             </div>
 
-            {/* 🚀 FIXED: Mobile drawer footer dark mode */}
             <div className="p-4 border-t border-[#F5EFE6] dark:border-[#3c2317] bg-white dark:bg-[#1A110F] shrink-0 transition-colors">
               <button
                 onClick={() => setIsMobileFilterOpen(false)}
@@ -279,5 +326,13 @@ export default function ShopPage() {
         </div>
       )}
     </div>
+  );
+}
+
+export default function ShopPage() {
+  return (
+    <Suspense fallback={<div className="bg-[#FCF9F5] dark:bg-[#1A1412] min-h-screen flex items-center justify-center"><div className="w-8 h-8 border-4 border-[#C68E58] border-t-transparent rounded-full animate-spin"></div></div>}>
+      <ShopPageContent />
+    </Suspense>
   );
 }

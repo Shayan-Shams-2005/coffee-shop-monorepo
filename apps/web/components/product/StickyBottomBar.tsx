@@ -1,7 +1,9 @@
+// components/product/StickyBottomBar.tsx
 "use client";
 
+import { useState, useEffect } from "react";
 import Image from "next/image";
-import { Star, ShoppingBag } from "lucide-react";
+import { Star, ShoppingBag, Timer } from "lucide-react";
 
 interface StickyBottomBarProps {
   product: any;
@@ -13,6 +15,56 @@ const toFarsiNumber = (num: number | string) => {
   const farsiDigits = ["۰", "۱", "۲", "۳", "۴", "۵", "۶", "۷", "۸", "۹"];
   return num.toString().replace(/\d/g, (x) => farsiDigits[parseInt(x)] || x);
 };
+
+// 🚀 LIVE TIMER COMPONENT (Only shows if < 24 Hours)
+function OfferTimer({ targetDate }: { targetDate: string | Date | null }) {
+  const [timeLeft, setTimeLeft] = useState<{ h: number; m: number; s: number } | null>(null);
+
+  useEffect(() => {
+    if (!targetDate) {
+      setTimeLeft(null);
+      return;
+    }
+    
+    const target = new Date(targetDate).getTime();
+    
+    const updateTimer = () => {
+      const now = new Date().getTime();
+      const diff = target - now;
+      
+      if (diff <= 0) {
+        setTimeLeft({ h: 0, m: 0, s: 0 });
+      } else {
+        const h = Math.floor(diff / (1000 * 60 * 60));
+        if (h >= 24) {
+          setTimeLeft(null); // Hide if more than 24 hours
+        } else {
+          setTimeLeft({
+            h,
+            m: Math.floor((diff / 1000 / 60) % 60),
+            s: Math.floor((diff / 1000) % 60)
+          });
+        }
+      }
+    };
+    
+    updateTimer(); 
+    const interval = setInterval(updateTimer, 1000);
+    return () => clearInterval(interval);
+  }, [targetDate]);
+
+  if (!timeLeft) return null;
+
+  const pad = (num: number) => num.toString().padStart(2, '0');
+  const timeString = `${pad(timeLeft.h)}:${pad(timeLeft.m)}:${pad(timeLeft.s)}`;
+
+  return (
+    <div className="flex items-center gap-1.5 text-rose-500 bg-rose-50 dark:bg-rose-500/10 dark:text-rose-400 px-2.5 py-1 rounded-lg text-xs font-bold w-fit animate-pulse border border-rose-200 dark:border-rose-500/20">
+      <Timer className="w-3 h-3" />
+      <span dir="ltr" className="tracking-widest mt-0.5">{toFarsiNumber(timeString)}</span>
+    </div>
+  );
+}
 
 export function StickyBottomBar({
   product,
@@ -56,10 +108,15 @@ export function StickyBottomBar({
             </div>
           </div>
 
-          <div className="flex items-center justify-between w-full sm:w-auto gap-6 sm:gap-8">
+          <div className="flex items-center justify-between w-full sm:w-auto gap-4 sm:gap-8">
+            
+            {/* 🚀 FIXED: Wrapped in a div to maintain proper spacing when timer is null */}
+            <div>
+              <OfferTimer targetDate={product.offerEndDate} />
+            </div>
+
             <div className="flex flex-col items-end">
               {product.discount > 0 && (
-                // 🚀 FIXED: Added the discount percentage badge to the right of the initial price
                 <div className="flex items-center gap-1.5 mb-0.5" dir="ltr">
                   <span className="text-[11px] text-[#8C7A6B] dark:text-[#A1A1A1] line-through font-medium transition-colors pt-0.5">
                     {product.oldPrice.toLocaleString("fa-IR")}

@@ -41,7 +41,6 @@ export interface ProductFormData {
   galleryFiles: File[];
   
   // Specs & Variants
-  keyFeatures: KeyValueStr[];
-  specs: KeyValueStr[];
+  specs: KeyValueStr[]; // 🚀 فیلد keyFeatures حذف شد
   optionGroups: OptionGroup[];
 }

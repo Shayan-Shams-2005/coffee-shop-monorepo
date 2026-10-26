@@ -7,10 +7,8 @@ import { FilterCheckboxList } from "./FilterCheckboxList";
 import { FilterPrice } from "./FilterPrice";
 
 interface OffersSidebarProps {
-  // 🚀 Added dynamic list props
   availableCategories: string[];
   availableBrands: string[];
-  
   searchQuery: string;
   setSearchQuery: (query: string) => void;
   selectedCategories: string[];
@@ -21,6 +19,7 @@ interface OffersSidebarProps {
   setMinPrice: (price: string) => void;
   maxPrice: string;
   setMaxPrice: (price: string) => void;
+  MIN_ALLOWED_PRICE?: number; // 🚀 FIX: Support dynamic Min Price
   MAX_ALLOWED_PRICE: number;
   isCategoryOpen?: boolean;
   isBrandOpen?: boolean;
@@ -37,7 +36,6 @@ export function FilterSideBar(props: OffersSidebarProps) {
         className="bg-white dark:bg-[#1A110F] rounded-3xl shadow-[0_8px_30px_rgba(0,0,0,0.03)] dark:shadow-[0_8px_30px_rgba(0,0,0,0.4)] border border-[#F5EFE6] dark:border-[#3A221C] w-full max-h-[450px] lg:max-h-[550px] overflow-y-auto overscroll-none hover-scroll-trigger transition-colors duration-300 custom-scrollbar"
       >
         <div dir="rtl" className="p-5 sm:p-6 flex flex-col gap-6">
-          {/* Header */}
           <div className="flex items-center gap-2 border-b border-[#F5EFE6] dark:border-[#3A221C] pb-4 transition-colors">
             <Filter className="w-5 h-5 text-[#C68E58]" />
             <h3 className="text-[18px] font-black text-[#2C1E16] dark:text-[#EAE0D5] transition-colors">
@@ -45,7 +43,6 @@ export function FilterSideBar(props: OffersSidebarProps) {
             </h3>
           </div>
 
-          {/* Search */}
           <div className="border-b border-[#F5EFE6] dark:border-[#3A221C] pb-6 transition-colors">
             <h4 className="text-[14px] font-black text-[#2C1E16] dark:text-[#EAE0D5] mb-3 transition-colors">
               جستجو در محصولات
@@ -63,12 +60,11 @@ export function FilterSideBar(props: OffersSidebarProps) {
             </div>
           </div>
 
-          {/* Categories */}
           <FilterAccordion title="دسته‌بندی محصولات" defaultOpen={hasSelectedCategory}>
             <div className="max-h-60 overflow-y-auto pr-3 custom-scrollbar" dir="ltr">
               <div dir="rtl">
                 <FilterCheckboxList
-                  items={props.availableCategories} // 🚀 Using dynamic data
+                  items={props.availableCategories} 
                   selectedItems={props.selectedCategories}
                   onToggle={props.toggleCategory}
                 />
@@ -76,12 +72,11 @@ export function FilterSideBar(props: OffersSidebarProps) {
             </div>
           </FilterAccordion>
 
-          {/* Brands */}
           <FilterAccordion title="برندها" defaultOpen={hasSelectedBrand}>
             <div className="max-h-60 overflow-y-auto pr-3 custom-scrollbar" dir="ltr">
               <div dir="rtl">
                 <FilterCheckboxList
-                  items={props.availableBrands} // 🚀 Using dynamic data
+                  items={props.availableBrands} 
                   selectedItems={props.selectedBrands}
                   onToggle={props.toggleBrand}
                 />
@@ -89,13 +84,13 @@ export function FilterSideBar(props: OffersSidebarProps) {
             </div>
           </FilterAccordion>
 
-          {/* Price Range */}
           <FilterAccordion title="محدوده قیمت" maxHeight="max-h-[500px]" defaultOpen={false}>
             <FilterPrice
               minPrice={props.minPrice}
               setMinPrice={props.setMinPrice}
               maxPrice={props.maxPrice}
               setMaxPrice={props.setMaxPrice}
+              MIN_ALLOWED_PRICE={props.MIN_ALLOWED_PRICE} // 🚀 Pass it down
               MAX_ALLOWED_PRICE={props.MAX_ALLOWED_PRICE}
             />
           </FilterAccordion>
