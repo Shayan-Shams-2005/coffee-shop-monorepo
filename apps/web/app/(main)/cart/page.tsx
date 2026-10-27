@@ -3,11 +3,11 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Loader2, Ticket, Percent, ArrowLeft, ShieldCheck } from "lucide-react";
-import { useCartStore, useCartTotal } from "../../src/store/useCartStore";
+import { useCartStore, useCartTotal } from "../../../src/store/useCartStore";
 
-import { OrderStepper } from "../../components/cart-page/CartStepper";
-import { EmptyCartView } from "../../components/cart-page/EmptyCartView";
-import { CartItemCard } from "../../components/cart-page/CartItemCard";
+import { OrderStepper } from "../../../components/cart-page/CartStepper";
+import { EmptyCartView } from "../../../components/cart-page/EmptyCartView";
+import { CartItemCard } from "../../../components/cart-page/CartItemCard";
 
 const toFarsiNumber = (num: number) => num.toLocaleString("fa-IR");
 
