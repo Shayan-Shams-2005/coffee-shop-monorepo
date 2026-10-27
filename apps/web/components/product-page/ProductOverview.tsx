@@ -23,12 +23,16 @@ export function ProductOverview({ product }: ProductOverviewProps) {
         </h2>
         <div className="relative z-10">
           <div
-            className={`text-base text-[#5A4A42] dark:text-[#EAE0D5] leading-[2.2] text-justify transition-all duration-700 overflow-hidden ${showFullDesc ? "max-h-[1000px]" : "max-h-[140px]"}`}
+            // 🚀 FIX: Added min-h-[90px], break-words, and whitespace-pre-wrap so text wraps and doesn't get fully covered
+            className={`text-base text-[#5A4A42] dark:text-[#EAE0D5] leading-[2.2] text-justify break-words whitespace-pre-wrap transition-all duration-700 overflow-hidden ${
+              showFullDesc ? "max-h-[2000px]" : "max-h-[140px] min-h-[90px]"
+            }`}
           >
             {product.description}
           </div>
           {!showFullDesc && (
-            <div className="absolute bottom-0 left-0 right-0 h-24 bg-gradient-to-t from-white dark:from-[#1A110F] via-white/80 dark:via-[#1A110F]/80 to-transparent pointer-events-none transition-colors"></div>
+            // 🚀 FIX: Reduced the gradient height to h-16 so the first line is always above the fade
+            <div className="absolute bottom-0 left-0 right-0 h-16 bg-gradient-to-t from-white dark:from-[#1A110F] via-white/80 dark:via-[#1A110F]/80 to-transparent pointer-events-none transition-colors"></div>
           )}
         </div>
         <div className="flex justify-center mt-6 relative z-10">
@@ -54,7 +58,7 @@ export function ProductOverview({ product }: ProductOverviewProps) {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-6">
           
           {/* Always Visible Specs (First 6) */}
-          {product.specifications
+          {(product.specifications || [])
             .slice(0, 6)
             .map((spec: any, idx: number) => (
               <div
@@ -77,7 +81,7 @@ export function ProductOverview({ product }: ProductOverviewProps) {
             }`}
           >
             <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-6">
-              {product.specifications
+              {(product.specifications || [])
                 .slice(6)
                 .map((spec: any, idx: number) => (
                   <div
@@ -97,7 +101,7 @@ export function ProductOverview({ product }: ProductOverviewProps) {
 
         </div>
 
-        {product.specifications.length > 6 && (
+        {(product.specifications?.length || 0) > 6 && (
           <div className="flex justify-center mt-8">
             <button
               onClick={() => setShowFullSpecs(!showFullSpecs)}
