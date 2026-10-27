@@ -2,7 +2,9 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Store, ShieldCheck, Award, Truck, ShoppingBag, Timer } from "lucide-react";
+import Link from "next/link";
+import { Store, ShieldCheck, Award, Truck, ShoppingBag, Timer, Plus, Minus, Trash2 } from "lucide-react";
+import { useCartStore } from "../../src/store/useCartStore";
 
 interface ProductOrderCardProps {
   product: any;
@@ -11,11 +13,12 @@ interface ProductOrderCardProps {
 }
 
 const toFarsiNumber = (num: number | string) => {
+  if (num === undefined || num === null) return "";
   const farsiDigits = ["۰", "۱", "۲", "۳", "۴", "۵", "۶", "۷", "۸", "۹"];
   return num.toString().replace(/\d/g, (x) => farsiDigits[parseInt(x)] || x);
 };
 
-// 🚀 LIVE TIMER COMPONENT (Only shows if < 24 Hours)
+// 🚀 LIVE TIMER COMPONENT 
 function OfferTimer({ targetDate }: { targetDate: string | Date | null }) {
   const [timeLeft, setTimeLeft] = useState<{ h: number; m: number; s: number } | null>(null);
 
@@ -36,7 +39,7 @@ function OfferTimer({ targetDate }: { targetDate: string | Date | null }) {
       } else {
         const h = Math.floor(diff / (1000 * 60 * 60));
         if (h >= 24) {
-          setTimeLeft(null); // Hide if more than 24 hours
+          setTimeLeft(null); 
         } else {
           setTimeLeft({
             h,
@@ -70,6 +73,21 @@ export function ProductOrderCard({
   onAddToCart,
   addToCartBtnRef,
 }: ProductOrderCardProps) {
+  
+  const [isMounted, setIsMounted] = useState(false);
+  
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
+  
+  const cartItems = useCartStore((state) => state.cartItems);
+  const updateQuantity = useCartStore((state) => state.updateQuantity);
+  const removeFromCart = useCartStore((state) => state.removeFromCart);
+                  
+  const safeCart = Array.isArray(cartItems) ? cartItems : [];
+  
+  const cartItem = isMounted ? safeCart.find((item: any) => String(item.id) === String(product.id)) : null;
+
   return (
     <div className="lg:col-span-3 h-full relative">
       <div className="bg-white dark:bg-[#1A110F] rounded-[32px] border border-[#F0EBE1] dark:border-[#3c2317] p-6 shadow-[0_20px_50px_rgba(0,0,0,0.04)] dark:shadow-[0_20px_50px_rgba(0,0,0,0.4)] sticky top-28 flex flex-col gap-6 transition-colors">
@@ -116,7 +134,6 @@ export function ProductOrderCard({
         <div className="flex flex-col gap-5 pt-2">
           <div className="flex flex-col items-end">
             
-            {/* 🚀 FIXED: Wrapped Timer in a div so justify-between ALWAYS pushes the discount badge to the left */}
             <div className="flex items-center justify-between w-full mb-1">
               <div>
                 <OfferTimer targetDate={product.offerEndDate} />
@@ -146,13 +163,63 @@ export function ProductOrderCard({
             </div>
           </div>
 
-          <button
-            ref={addToCartBtnRef}
-            onClick={onAddToCart}
-            className="w-full h-14 bg-[#C68E58] hover:bg-[#A87242] text-white font-bold text-base rounded-2xl transition-all shadow-[0_8px_25px_rgba(198,142,88,0.25)] active:scale-[0.98] flex items-center justify-center gap-2.5 dark:bg-[#6A422D] dark:text-[#F3E8E0] dark:hover:bg-[#5A3826] dark:shadow-none"
-          >
-            <ShoppingBag className="w-5 h-5" /> افزودن به سبد خرید
-          </button>
+          {/* 🚀 DYNAMIC CART BUTTON UI */}
+          {!isMounted ? (
+             <div className="w-full h-14 bg-[#C68E58]/20 rounded-2xl animate-pulse mt-2"></div>
+          ) : cartItem ? (
+            <div className="w-full flex flex-row-reverse items-center justify-between p-3 rounded-2xl bg-[#F9F8F6] dark:bg-[#150D0A] border border-[#F0EBE1] dark:border-[#3c2317] transition-colors mt-2">
+              
+              {/* 🚀 NEW: Styled Quantity Controls */}
+              <div className="flex items-center gap-3 bg-white dark:bg-[#1A110F] p-1.5 rounded-2xl border border-[#F0EBE1] dark:border-[#3A221C] shadow-sm dir-rtl">
+                <button 
+                  onClick={() => updateQuantity(cartItem.id, cartItem.quantity + 1)} 
+                  className="w-8 h-8 rounded-xl bg-[#FCF9F5] dark:bg-[#2C1A14] flex items-center justify-center text-[#C68E58] dark:text-[#FFD7BA] hover:bg-[#E3C3A4]/30 dark:hover:bg-[#3A221C] transition-colors cursor-pointer"
+                >
+                  <Plus className="w-4 h-4" />
+                </button>
+
+                <span className="text-[#2C1E16] dark:text-[#EAE0D5] font-black text-sm w-5 text-center pt-0.5">
+                  {toFarsiNumber(cartItem.quantity || 1)}
+                </span>
+                
+                {cartItem.quantity > 1 ? (
+                  <button 
+                    onClick={() => updateQuantity(cartItem.id, cartItem.quantity - 1)} 
+                    className="w-8 h-8 rounded-xl bg-[#FCF9F5] dark:bg-[#2C1A14] flex items-center justify-center text-[#C68E58] dark:text-[#FFD7BA] hover:bg-[#E3C3A4]/30 dark:hover:bg-[#3A221C] transition-colors cursor-pointer"
+                  >
+                    <Minus className="w-4 h-4" />
+                  </button>
+                ) : (
+                  <button 
+                    onClick={() => removeFromCart(cartItem.id)} 
+                    className="w-8 h-8 rounded-xl bg-red-50 dark:bg-red-900/20 flex items-center justify-center text-red-500 dark:text-red-400 hover:bg-red-100 dark:hover:bg-red-900/40 transition-colors cursor-pointer"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </button>
+                )}
+              </div>
+
+              {/* Status Text & Link */}
+              <div className="flex flex-col items-start gap-1.5 px-2 text-right dir-rtl">
+                <span className="text-[13px] font-bold text-[#5A4A42] dark:text-[#EAE0D5] transition-colors">
+                  در سبد شما
+                </span>
+                <Link href="/cart" className="text-xs font-bold text-[#C68E58] hover:text-[#A87242] dark:text-[#FFD7BA] dark:hover:text-[#E3C3A4] transition-colors underline underline-offset-4 decoration-[#C68E58]/30 hover:decoration-[#C68E58]">
+                  مشاهده سبد خرید
+                </Link>
+              </div>
+
+            </div>
+          ) : (
+            <button
+              ref={addToCartBtnRef}
+              onClick={onAddToCart}
+              className="w-full h-14 bg-[#C68E58] hover:bg-[#A87242] text-white font-bold text-base rounded-2xl transition-all shadow-[0_8px_25px_rgba(198,142,88,0.25)] active:scale-[0.98] flex items-center justify-center gap-2.5 dark:bg-[#6A422D] dark:text-[#F3E8E0] dark:hover:bg-[#5A3826] dark:shadow-none mt-2"
+            >
+              <ShoppingBag className="w-5 h-5" /> افزودن به سبد خرید
+            </button>
+          )}
+
         </div>
       </div>
     </div>
