@@ -3,12 +3,12 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Loader2 } from "lucide-react";
-import { useCartStore, useCartTotal } from "../../src/store/useCartStore";
-import { useAuthStore } from "../../src/store/useAuthStore";
+import { useCartStore, useCartTotal } from "../../../src/store/useCartStore";
+import { useAuthStore } from "../../../src/store/useAuthStore";
 
-import { CheckoutStepper } from "../../components/checkout/CheckoutStepper";
-import { CheckoutForm } from "../../components/checkout/CheckoutForm";
-import { OrderSummary } from "../../components/checkout/OrderSummary";
+import { CheckoutStepper } from "../../../components/checkout/CheckoutStepper";
+import { CheckoutForm } from "../../../components/checkout/CheckoutForm";
+import { OrderSummary } from "../../../components/checkout/OrderSummary";
 
 export default function CheckoutPage() {
   const router = useRouter();
