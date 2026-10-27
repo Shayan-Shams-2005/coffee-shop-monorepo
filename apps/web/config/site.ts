@@ -7,6 +7,7 @@ export const siteConfig = {
     { id: 1, label: "محصولات", href: "/shop" },
     { id: 2, label: "تخفیف‌های ویژه", href: "/offers", isOffer: true },
     { id: 3, label: "پرفروش‌ترین‌ها", href: "/bestsellers" },
-    { id: 4, label: "درباره ما", href: "/about" },
+    { id: 4, label: "ارتباط با پشتیبانی", href: "/support" },
+    { id: 5, label: "درباره ما", href: "/about" },
   ],
 };

@@ -1,4 +1,3 @@
-// app/login/api.ts (or wherever your Auth API is)
 const API_BASE_URL = (process.env.NEXT_PUBLIC_API_URL || "http://localhost:5103").replace(/\/$/, "");
 
 export const AuthApi = {
@@ -29,8 +28,12 @@ export const AuthApi = {
       body: JSON.stringify({ phoneNumber, otp, code: otp }),
       credentials: "include", 
     });
+    
     if (!res.ok) throw new Error("کد تایید وارد شده اشتباه است.");
-    return res.ok;
+    
+    // 🚀 FIXED: Parse and return the JSON so the login page can extract the token!
+    const text = await res.text();
+    return text ? JSON.parse(text) : true;
   },
 
   verifyRegisterOtp: async (phoneNumber: string, otp: string) => {
@@ -40,8 +43,12 @@ export const AuthApi = {
       body: JSON.stringify({ phoneNumber, otp, code: otp }),
       credentials: "include", 
     });
+    
     if (!res.ok) throw new Error("کد تایید وارد شده اشتباه است.");
-    return res.ok;
+    
+    // 🚀 FIXED: Parse and return the JSON
+    const text = await res.text();
+    return text ? JSON.parse(text) : true;
   },
 
   // 🚀 OPTIMAL JWT: Automatically renews the AccessToken using the HttpOnly RefreshToken
@@ -51,7 +58,9 @@ export const AuthApi = {
       credentials: "include", 
     });
     if (!res.ok) throw new Error("Session expired");
-    return res.ok;
+    
+    const text = await res.text();
+    return text ? JSON.parse(text) : true;
   },
 
   // 🚀 OPTIMAL JWT: Tells the C# backend to destroy the HttpOnly cookies securely

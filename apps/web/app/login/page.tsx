@@ -76,6 +76,7 @@ export default function LoginPage() {
         await AuthApi.verifyRegisterOtp(phoneNumber, otpCode);
       }
 
+      // Automatically log the user in. The browser will handle the HttpOnly cookies securely.
       login(phoneNumber);
       router.push(redirectUrl);
       

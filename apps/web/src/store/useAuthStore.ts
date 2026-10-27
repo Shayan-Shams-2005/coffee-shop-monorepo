@@ -8,6 +8,7 @@ export interface Address {
 }
 
 export interface UserProfile {
+  id?: number; // 🚀 FIX: Added user ID
   phone: string;
   firstName?: string;
   lastName?: string;
@@ -19,7 +20,7 @@ export interface UserProfile {
 interface AuthState {
   isAuthenticated: boolean;
   user: UserProfile | null;
-  login: (phone: string) => void;
+  login: (phone: string, id?: number) => void; // 🚀 FIX: Accept ID on login
   logout: () => void;
   updateUser: (data: Partial<UserProfile>) => void;
   addAddress: (address: Address) => void;
@@ -31,31 +32,19 @@ export const useAuthStore = create<AuthState>()(
     (set) => ({
       isAuthenticated: false,
       user: null,
-
-      login: (phone) =>
-        set({ isAuthenticated: true, user: { phone, addresses: [] } }),
+      login: (phone, id) => set({ isAuthenticated: true, user: { phone, id, addresses: [] } }),
       logout: () => set({ isAuthenticated: false, user: null }),
-
       updateUser: (data) =>
         set((state) => ({
           user: state.user ? { ...state.user, ...data } : null,
         })),
-
       addAddress: (address) =>
         set((state) => ({
-          user: state.user
-            ? { ...state.user, addresses: [...state.user.addresses, address] }
-            : null,
+          user: state.user ? { ...state.user, addresses: [...state.user.addresses, address] } : null,
         })),
-
       removeAddress: (id) =>
         set((state) => ({
-          user: state.user
-            ? {
-                ...state.user,
-                addresses: state.user.addresses.filter((a) => a.id !== id),
-              }
-            : null,
+          user: state.user ? { ...state.user, addresses: state.user.addresses.filter((a) => a.id !== id) } : null,
         })),
     }),
     { name: "neo-cafe-auth" },
