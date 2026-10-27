@@ -61,13 +61,7 @@ function ShopPageContent() {
           ShopPublicApi.getBrands().catch(() => ({ items: [] }))
         ]);
         
-        const catList = Array.isArray(categoriesData) ? categoriesData : (categoriesData?.items || []);
-        setAvailableCategories(catList.map((c: any) => c?.categoryName || c?.name || "").filter(Boolean));
-
-        const brandList = Array.isArray(brandsData) ? brandsData : (brandsData?.items || []);
-        setAvailableBrands(brandList.map((b: any) => b?.brandName || b?.name || "").filter(Boolean));
-
-        const rawArray = Array.isArray(productsData) ? productsData : (productsData?.items || []);
+        const rawArray = Array.isArray(productsData) ? productsData : (productsData?.items || productsData?.data || []);
         
         const mappedProducts = rawArray.map((p: any, index: number) => {
           if (!p) return null;
@@ -98,7 +92,23 @@ function ShopPageContent() {
           };
         }).filter(Boolean);
 
+        const catList = Array.isArray(categoriesData) ? categoriesData : (categoriesData?.items || categoriesData?.data || []);
+        let parsedCategories = catList.map((c: any) => c?.categoryName || c?.CategoryName || c?.name || c?.Name || c?.title || c?.Title || "").filter(Boolean);
+
+        const brandList = Array.isArray(brandsData) ? brandsData : (brandsData?.items || brandsData?.data || []);
+        let parsedBrands = brandList.map((b: any) => b?.brandName || b?.BrandName || b?.name || b?.Name || b?.title || b?.Title || "").filter(Boolean);
+
+        if (parsedCategories.length === 0 && mappedProducts.length > 0) {
+          parsedCategories = Array.from(new Set(mappedProducts.map((p: any) => p.category))).filter(c => c && c !== "نامشخص");
+        }
+        if (parsedBrands.length === 0 && mappedProducts.length > 0) {
+          parsedBrands = Array.from(new Set(mappedProducts.map((p: any) => p.brand))).filter(b => b && b !== "نامشخص");
+        }
+
+        setAvailableCategories(parsedCategories);
+        setAvailableBrands(parsedBrands);
         setProducts(mappedProducts);
+
       } catch (err) {
         console.error("Failed to fetch shop data", err);
       } finally {
@@ -146,7 +156,6 @@ function ShopPageContent() {
     scrollToProducts();
   };
 
-  // 🚀 FIX: Calculates exact MIN and MAX prices for the slider limits
   const dynamicPrices = useMemo(() => {
     if (!products || products.length === 0) return { min: 0, max: 5000000 };
     
@@ -232,8 +241,8 @@ function ShopPageContent() {
               setMinPrice={setMinPrice}
               maxPrice={maxPrice}
               setMaxPrice={setMaxPrice}
-              MIN_ALLOWED_PRICE={dynamicPrices.min} // 🚀 Pass Min limit
-              MAX_ALLOWED_PRICE={dynamicPrices.max} // 🚀 Pass Max limit
+              MIN_ALLOWED_PRICE={dynamicPrices.min} 
+              MAX_ALLOWED_PRICE={dynamicPrices.max} 
             />
           </div>
 
@@ -309,8 +318,8 @@ function ShopPageContent() {
                 setMinPrice={setMinPrice}
                 maxPrice={maxPrice}
                 setMaxPrice={setMaxPrice}
-                MIN_ALLOWED_PRICE={dynamicPrices.min} // 🚀 Pass Min limit
-                MAX_ALLOWED_PRICE={dynamicPrices.max} // 🚀 Pass Max limit
+                MIN_ALLOWED_PRICE={dynamicPrices.min} 
+                MAX_ALLOWED_PRICE={dynamicPrices.max} 
               />
             </div>
 
