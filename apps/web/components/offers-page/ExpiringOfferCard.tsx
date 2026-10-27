@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useEffect, useMemo } from "react";
-import Image from "next/image";
 import Link from "next/link";
 import { Timer, Star } from "lucide-react";
 import { useCartStore } from "../../src/store/useCartStore";
@@ -64,9 +63,10 @@ export function ExpiringOfferCard({
   product: any;
   index: number;
 }) {
-  const addToCart = useCartStore((state) => state.addToCart);
-  const folderNumber = (index % 5) + 1;
-  const imagePath = `/p${folderNumber}/1.jpg`;
+  const addToCart = useCartStore((state: any) => state.addToCart);
+  
+  // 🚀 FIXED: Get the real dynamic image from the backend mapping
+  const imagePath = product.imageUrl || "/placeholder.png";
 
   return (
     <div className="w-[340px] sm:w-[380px] flex-shrink-0 snap-start bg-white dark:bg-[#1A110F] rounded-[32px] p-5 flex items-center gap-4 border-2 border-[#F5EFE6] dark:border-[#3A221C] shadow-[0_10px_30px_rgba(198,142,88,0.05)] dark:shadow-[0_8px_30px_rgba(0,0,0,0.4)] hover:border-[#E3C3A4] dark:hover:border-[#C68E58] hover:shadow-[0_15px_40px_rgba(198,142,88,0.15)] transition-all group relative overflow-hidden">
@@ -77,11 +77,11 @@ export function ExpiringOfferCard({
           فروش ویژه
         </div>
         <Link href={`/product/${product.id}`}>
-          <Image
+          {/* 🚀 FIXED: Replaced next/image with standard img to prevent unconfigured host crashes */}
+          <img
             src={imagePath}
             alt={product.name}
-            fill
-            className="object-contain p-3 mix-blend-multiply group-hover:scale-110 transition-transform duration-500"
+            className="absolute inset-0 w-full h-full object-contain p-3 mix-blend-multiply group-hover:scale-110 transition-transform duration-500"
           />
         </Link>
       </div>
@@ -99,7 +99,7 @@ export function ExpiringOfferCard({
           <div className="flex items-center gap-1 shrink-0">
             <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-400" />
             <span className="text-[12px] font-bold text-[#8C7A6B] dark:text-[#EAE0D5] transition-colors">
-              {toFarsiNumber(product.rating)}
+              {toFarsiNumber(product.rating || 5)}
             </span>
           </div>
         </div>
@@ -111,11 +111,11 @@ export function ExpiringOfferCard({
                 {toFarsiNumber(product.discount)}٪
               </span>
               <span className="text-[11px] text-[#A1A1A1] dark:text-[#8C7A6B] line-through font-medium transition-colors">
-                {toFarsiNumber(product.oldPrice.toLocaleString("en-US"))}
+                {toFarsiNumber((product.oldPrice || 0).toLocaleString("en-US"))}
               </span>
             </div>
             <div className="text-[16px] sm:text-[18px] font-black text-[#2C1E16] dark:text-[#FFF8F0] tracking-tighter flex items-center gap-1 transition-colors">
-              {toFarsiNumber(product.price.toLocaleString("en-US"))}
+              {toFarsiNumber((product.price || 0).toLocaleString("en-US"))}
               <span className="text-[9px] text-[#717171] dark:text-[#C6B59D] font-bold pt-0.5 transition-colors">
                 تومان
               </span>
@@ -131,7 +131,6 @@ export function ExpiringOfferCard({
                 imageUrl: imagePath,
               } as any)
             }
-            // 🚀 FIXED: Applied primary Mocha (#6A422D) background and creamy (#F3E8E0) text in dark mode
             className="h-9 px-3 sm:px-4 text-[11px] sm:text-xs font-bold rounded-xl flex items-center justify-center transition-colors shadow-sm active:scale-95 whitespace-nowrap bg-[#C68E58] hover:bg-[#A87242] text-white border border-[#C68E58] hover:border-[#A87242] dark:bg-[#6A422D] dark:border-[#6A422D] dark:text-[#F3E8E0] dark:hover:bg-[#5A3826] dark:hover:border-[#5A3826] dark:shadow-none"
           >
             افزودن به سبد
