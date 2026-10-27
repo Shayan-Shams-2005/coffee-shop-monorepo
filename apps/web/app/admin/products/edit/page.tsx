@@ -84,7 +84,6 @@ function ProductEditContent() {
                  parsedVariantEndDate = new Date(Date.now() + v.saleDurationMinutes * 60000);
              }
              
-             // 🚀 FIX: Strictly check that the backend sale price is actually LOWER than the original price
              const origPrice = v.originalPrice || v.price || 0;
              const rawSalePrice = v.salePrice || 0;
              const isLegitDiscount = rawSalePrice > 0 && rawSalePrice < origPrice;
@@ -94,7 +93,7 @@ function ProductEditContent() {
                 name: optionName,
                 price: origPrice,
                 stock: v.stockQuantity || 0,
-                hasOffer: isLegitDiscount, // Only turn on if mathematically true
+                hasOffer: isLegitDiscount, 
                 salePrice: isLegitDiscount ? rawSalePrice : 0,
                 offerEndDate: isLegitDiscount ? parsedVariantEndDate : undefined
              });
@@ -105,7 +104,6 @@ function ProductEditContent() {
            });
         }
 
-        // 🚀 FIX: Apply the same mathematical safety check to the main product base price
         const baseRawDate = data.saleEndAt || data.offerEndDate;
         const rawBasePrice = data.price || data.originalPrice || data.basePrice || 0;
         const rawMainSalePrice = data.salePrice || data.newPrice || 0;
@@ -170,9 +168,8 @@ function ProductEditContent() {
         const isoDate = formatToISODate(formData.offerEndDate);
         if (isoDate) {
            const diffMs = new Date(isoDate).getTime() - new Date().getTime();
-           mainSaleDurationMinutes = diffMs > 0 ? Math.floor(diffMs / 60000) : (30 * 24 * 60);
-        } else {
-           mainSaleDurationMinutes = 30 * 24 * 60; 
+           // 🚀 FIX: Backend strictly requires > 0. Math.max guarantees it will send at least 1.
+           mainSaleDurationMinutes = Math.max(1, Math.floor(diffMs / 60000));
         }
       }
 
@@ -191,7 +188,7 @@ function ProductEditContent() {
           submitData.append("HasOffer", "true");
           const isoDate = formatToISODate(formData.offerEndDate);
           if (isoDate) submitData.append("OfferEndDate", isoDate);
-          if (mainSaleDurationMinutes) submitData.append("SaleDurationMinutes", mainSaleDurationMinutes.toString());
+          if (mainSaleDurationMinutes !== null) submitData.append("SaleDurationMinutes", mainSaleDurationMinutes.toString());
         } else {
           submitData.append("HasOffer", "false");
         }
@@ -300,9 +297,8 @@ function ProductEditContent() {
                 
                 if (isoString) {
                    const diffMs = new Date(isoString).getTime() - new Date().getTime();
-                   saleDurationMinutes = diffMs > 0 ? Math.floor(diffMs / 60000) : 30 * 24 * 60; 
-                } else {
-                   saleDurationMinutes = 30 * 24 * 60; 
+                   // 🚀 FIX: Backend strictly requires > 0. Math.max guarantees it will send at least 1.
+                   saleDurationMinutes = Math.max(1, Math.floor(diffMs / 60000)); 
                 }
               }
 
