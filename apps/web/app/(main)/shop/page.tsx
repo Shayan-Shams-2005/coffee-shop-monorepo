@@ -3,6 +3,7 @@
 
 import { useState, useMemo, useRef, useEffect, Suspense } from "react";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import { Search, ChevronLeft, Filter, X } from "lucide-react";
 
 import { ShopProductCard } from "../../../components/product/ShopProductCard";
@@ -36,6 +37,8 @@ const SHOP_SORT_OPTIONS: SortOption[] = [
 ];
 
 function ShopPageContent() {
+  const searchParams = useSearchParams();
+  
   const [products, setProducts] = useState<Product[]>([]);
   const [availableCategories, setAvailableCategories] = useState<string[]>([]);
   const [availableBrands, setAvailableBrands] = useState<string[]>([]);
@@ -46,10 +49,22 @@ function ShopPageContent() {
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
   const [minPrice, setMinPrice] = useState<string>("");
   const [maxPrice, setMaxPrice] = useState<string>("");
-  const [activeSort, setActiveSort] = useState<SortType>("newest");
+  
+  const [activeSort, setActiveSort] = useState<SortType>(
+    (searchParams.get("sort") as SortType) || "newest"
+  );
+  
   const [isMobileFilterOpen, setIsMobileFilterOpen] = useState(false);
 
   const productsTopRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const sortParam = searchParams.get("sort") as SortType;
+    const validSorts = ["bestoffer", "most_viewed", "newest", "bestselling", "cheapest", "expensive"];
+    if (sortParam && validSorts.includes(sortParam)) {
+      setActiveSort(sortParam);
+    }
+  }, [searchParams]);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -203,7 +218,13 @@ function ShopPageContent() {
         case "expensive": return priceB - priceA;
         case "bestselling": return (b.salesVolume || 0) - (a.salesVolume || 0);
         case "most_viewed": return ((b as any).views || 0) - ((a as any).views || 0);
-        case "newest": return new Date((b as any).createdAt || (b as any).date || 0).getTime() - new Date((a as any).createdAt || (a as any).date || 0).getTime(); 
+        case "newest": {
+          // 🚀 FIXED: If no date is found, it sorts by ID descending (highest/newest ID goes to the top right)
+          const timeB = new Date((b as any).createdAt || (b as any).date || 0).getTime();
+          const timeA = new Date((a as any).createdAt || (a as any).date || 0).getTime();
+          if (timeB !== timeA && timeB !== 0 && timeA !== 0) return timeB - timeA;
+          return Number(b.id || 0) - Number(a.id || 0);
+        }
         default: return 0;
       }
     });
