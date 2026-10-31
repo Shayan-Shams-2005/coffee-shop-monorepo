@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Vazirmatn } from "next/font/google";
 import "./globals.css";
+import { Providers } from "./providers"; // 🚀 Import the newly created provider
 
 const vazirmatn = Vazirmatn({
   subsets: ["arabic", "latin"],
@@ -24,7 +25,10 @@ export default function RootLayout({
         suppressHydrationWarning
         className="font-sans min-h-screen flex flex-col antialiased bg-[#FCF9F5] text-[#2C1E16] dark:bg-[#1A1412] dark:text-[#E3C3A4] transition-colors duration-300"
       >
-        {children}
+        {/* 🚀 Wrap children in the Providers component */}
+        <Providers attribute="class" defaultTheme="dark" enableSystem>
+          {children}
+        </Providers>
       </body>
     </html>
   );

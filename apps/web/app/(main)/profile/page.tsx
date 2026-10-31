@@ -1,3 +1,4 @@
+// app/(main)/profile/page.tsx
 "use client";
 
 import { useState, useEffect } from "react";
@@ -9,16 +10,17 @@ import { ProfileSidebar } from "./components/ProfileSidebar";
 import { ProfileInfoTab } from "./components/ProfileInfoTab";
 import { ProfileAddressesTab } from "./components/ProfileAddressesTab";
 import { ProfileOrdersTab } from "./components/ProfileOrdersTab";
+import { ProfileSecurityTab } from "./components/ProfileSecurityTab"; // 🚀 تب جدید
 
 export default function ProfilePage() {
   const router = useRouter();
 
-  const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
-  const user = useAuthStore((state) => state.user);
+  const isAuthenticated = useAuthStore((state: any) => state.isAuthenticated);
+  const user = useAuthStore((state: any) => state.user);
 
   const [isMounted, setIsMounted] = useState(false);
   const [activeTab, setActiveTab] = useState<
-    "profile" | "addresses" | "orders"
+    "profile" | "addresses" | "orders" | "security"
   >("profile");
 
   useEffect(() => {
@@ -33,7 +35,7 @@ export default function ProfilePage() {
 
   if (!isMounted || !user) {
     return (
-      <div className="bg-[#FDFCFB] dark:bg-[#1A1412] min-h-screen flex items-center justify-center transition-colors">
+      <div className="bg-[#FDFCFB] dark:bg-[#1A1412] min-h-[70vh] flex items-center justify-center transition-colors">
         <Loader2 className="w-10 h-10 text-[#D4A373] dark:text-[#6A422D] animate-spin" />
       </div>
     );
@@ -58,6 +60,7 @@ export default function ProfilePage() {
             {activeTab === "profile" && <ProfileInfoTab />}
             {activeTab === "addresses" && <ProfileAddressesTab />}
             {activeTab === "orders" && <ProfileOrdersTab />}
+            {activeTab === "security" && <ProfileSecurityTab />} {/* 🚀 */}
           </div>
         </div>
       </div>
