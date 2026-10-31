@@ -26,13 +26,13 @@ export function SpecialOfferCard({
 
       <Link
         href={`/product/${product.id}`}
-        // 🚀 FIXED: The warm latte gradient in dark mode makes the JPG white background vanish!
         className="relative w-full aspect-square mb-3 bg-gradient-to-br from-[#FFFDFB] to-[#FCF9F5] dark:from-[#D4C5B0] dark:to-[#C6B59D] rounded-[14px] flex items-center justify-center overflow-hidden border border-[#F5EFE6] dark:border-transparent group/card transition-colors"
       >
         <Image
           src={imagePath}
           alt={product.name}
           fill
+          // 🚀 FIXED: The sizes prop is properly set here to clear the Next.js warning
           sizes="(max-width: 640px) 170px, 200px"
           className="object-contain p-3.5 mix-blend-multiply group-hover/card:scale-110 transition-transform duration-500 z-10"
         />
