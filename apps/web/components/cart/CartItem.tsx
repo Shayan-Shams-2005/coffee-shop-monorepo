@@ -11,6 +11,9 @@ export function CartItem({
   const formatPrice = (price: number) => price.toLocaleString("fa-IR");
   const toFarsiNumber = (num: number) => num.toLocaleString("fa-IR");
 
+  // 🚀 FIXED: Fallback logic prevents Next.js crashing if item.imageUrl is an empty string
+  const validImageUrl = item.imageUrl?.trim() ? item.imageUrl : `/p${(item.id % 5) + 1}/1.jpg`;
+
   return (
     <div className="flex gap-4 p-4 bg-white dark:bg-[#1A110F] border border-[#F0EBE1] dark:border-[#3c2317] rounded-2xl hover:border-[#D4A373]/50 dark:hover:border-[#C68E58] hover:shadow-sm dark:hover:shadow-[0_4px_15px_rgba(0,0,0,0.3)] transition-all group">
       <Link
@@ -19,9 +22,11 @@ export function CartItem({
         className="w-20 h-20 relative bg-[#FCF9F5] dark:bg-gradient-to-br dark:from-[#D4C5B0] dark:to-[#C6B59D] rounded-xl flex-shrink-0 border border-[#F0EBE1]/50 dark:border-transparent p-2 overflow-hidden transition-colors"
       >
         <Image
-          src={item.imageUrl}
-          alt={item.name}
+          src={validImageUrl}
+          alt={item.name || "Product image"}
           fill
+          // 🚀 FIXED: Added required sizes prop for Next.js Image component optimization
+          sizes="80px"
           className="object-contain mix-blend-multiply group-hover:scale-110 transition-transform duration-500"
         />
       </Link>
