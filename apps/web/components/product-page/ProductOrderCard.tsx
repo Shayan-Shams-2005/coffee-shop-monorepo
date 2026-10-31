@@ -35,7 +35,7 @@ function OfferTimer({ targetDate }: { targetDate: string | Date | null }) {
       const diff = target - now;
       
       if (diff <= 0) {
-        setTimeLeft({ h: 0, m: 0, s: 0 });
+        setTimeLeft(null); // 🚀 FIXED: Completely hide timer if time is up
       } else {
         const h = Math.floor(diff / (1000 * 60 * 60));
         if (h >= 24) {
@@ -75,18 +75,37 @@ export function ProductOrderCard({
 }: ProductOrderCardProps) {
   
   const [isMounted, setIsMounted] = useState(false);
+  // 🚀 FIXED: Real-time expiration state for the product page
+  const [isOfferActive, setIsOfferActive] = useState(true);
   
   useEffect(() => {
     setIsMounted(true);
   }, []);
+
+  const rawEndDate = product.offerEndDate || product.saleEndAt;
+
+  useEffect(() => {
+    if (!rawEndDate) return;
+    
+    const checkActive = () => {
+      setIsOfferActive(new Date(rawEndDate).getTime() > new Date().getTime());
+    };
+    
+    checkActive(); // Initial check
+    const interval = setInterval(checkActive, 1000); // Verify every second
+    return () => clearInterval(interval);
+  }, [rawEndDate]);
   
   const cartItems = useCartStore((state) => state.cartItems);
   const updateQuantity = useCartStore((state) => state.updateQuantity);
   const removeFromCart = useCartStore((state) => state.removeFromCart);
                   
   const safeCart = Array.isArray(cartItems) ? cartItems : [];
-  
   const cartItem = isMounted ? safeCart.find((item: any) => String(item.id) === String(product.id)) : null;
+
+  // 🚀 FIXED: Smart pricing logic based on real-time timer
+  const showDiscount = product.discount > 0 && (!rawEndDate || isOfferActive);
+  const currentPrice = showDiscount ? product.price : (product.oldPrice || product.price);
 
   return (
     <div className="lg:col-span-3 h-full relative">
@@ -136,17 +155,19 @@ export function ProductOrderCard({
             
             <div className="flex items-center justify-between w-full mb-1">
               <div>
-                <OfferTimer targetDate={product.offerEndDate} />
+                {/* 🚀 FIXED: Only render timer if discount is active */}
+                {showDiscount && <OfferTimer targetDate={rawEndDate} />}
               </div>
               
               <div className="flex items-center gap-2" dir="rtl">
-                {product.discount > 0 && (
+                {/* 🚀 FIXED: Only render old price and badge if discount is active */}
+                {showDiscount && (
                   <>
                     <span className="bg-[#D95D39] text-white text-[12px] font-black px-2 py-0.5 rounded-lg shadow-sm">
                       {toFarsiNumber(product.discount)}٪
                     </span>
                     <span className="text-sm text-[#8C7A6B] dark:text-[#A1A1A1] line-through font-medium transition-colors pt-0.5">
-                      {product.oldPrice.toLocaleString("fa-IR")}
+                      {product.oldPrice?.toLocaleString("fa-IR")}
                     </span>
                   </>
                 )}
@@ -154,8 +175,9 @@ export function ProductOrderCard({
             </div>
 
             <div className="flex items-baseline gap-1.5" dir="rtl">
+              {/* 🚀 FIXED: Uses dynamically calculated currentPrice */}
               <span className="text-3xl font-black text-[#2C1E16] dark:text-[#FFF8F0] tracking-tighter transition-colors">
-                {product.price.toLocaleString("fa-IR")}
+                {currentPrice?.toLocaleString("fa-IR")}
               </span>
               <span className="text-sm font-bold text-[#8C7A6B] dark:text-[#A1A1A1] transition-colors">
                 تومان
@@ -169,7 +191,7 @@ export function ProductOrderCard({
           ) : cartItem ? (
             <div className="w-full flex flex-row-reverse items-center justify-between p-3 rounded-2xl bg-[#F9F8F6] dark:bg-[#150D0A] border border-[#F0EBE1] dark:border-[#3c2317] transition-colors mt-2">
               
-              {/* 🚀 NEW: Styled Quantity Controls */}
+              {/* 🚀 Styled Quantity Controls */}
               <div className="flex items-center gap-3 bg-white dark:bg-[#1A110F] p-1.5 rounded-2xl border border-[#F0EBE1] dark:border-[#3A221C] shadow-sm dir-rtl">
                 <button 
                   onClick={() => updateQuantity(cartItem.id, cartItem.quantity + 1)} 
