@@ -9,12 +9,11 @@ export const INITIAL_PRODUCT_DATA: ProductFormData = {
   basePrice: 0,
   salePrice: 0,
   stock: 0, 
-  offerEndDate: undefined, // Better to start as undefined rather than today's date
+  offerEndDate: undefined, 
   mainImage: "",
-  mainImageFile: null, // 🚀 FIX: Added missing property
+  mainImageFile: null, 
   gallery: [],
-  galleryFiles: [],    // 🚀 FIX: Added missing property
-  keyFeatures: [],     // Usually better to start empty
-  specs: [],           // Usually better to start empty
+  galleryFiles: [],    
+  specs: [],           
   optionGroups: [],
 };
