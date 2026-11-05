@@ -18,30 +18,37 @@ export function ImageSection({ formData, setFormData }: Props) {
 
   const hasMainImage = Boolean(formData.mainImage?.trim()) && !mainImageBroken;
 
+  // 🚀 OPTIMIZATION: Robust image validation to prevent broken UI
   useEffect(() => {
     setMainImageBroken(false);
     const src = formData.mainImage?.trim();
     if (!src) return;
-    let cancelled = false;
+    
+    let isMounted = true;
     const probe = new window.Image();
-    probe.onerror = () => { if (!cancelled) setMainImageBroken(true); };
+    
+    probe.onerror = () => {
+      if (isMounted) setMainImageBroken(true);
+    };
     probe.src = src;
-    return () => { cancelled = true; };
+    
+    return () => { isMounted = false; };
   }, [formData.mainImage]);
 
+  // 🚀 OPTIMIZATION: Validate all gallery images and auto-remove broken ones
   useEffect(() => {
     if (!formData.gallery || formData.gallery.length === 0) return;
-    let cancelled = false;
+    let isMounted = true;
     
-    const removeFromGallery = (src: string) => {
-      if (cancelled) return;
+    const removeFromGallery = (srcToRemove: string) => {
+      if (!isMounted) return;
       setFormData((prev: any) => {
-        const index = prev.gallery.indexOf(src);
+        const index = prev.gallery.indexOf(srcToRemove);
         const newGalleryFiles = prev.galleryFiles ? [...prev.galleryFiles] : [];
         if (index > -1) newGalleryFiles.splice(index, 1);
         return {
           ...prev,
-          gallery: prev.gallery.filter((g: string) => g !== src),
+          gallery: prev.gallery.filter((g: string) => g !== srcToRemove),
           galleryFiles: newGalleryFiles
         };
       });
@@ -56,7 +63,8 @@ export function ImageSection({ formData, setFormData }: Props) {
       probe.onerror = () => removeFromGallery(src);
       probe.src = src;
     });
-    return () => { cancelled = true; };
+    
+    return () => { isMounted = false; };
   }, [formData.gallery, setFormData]);
 
   const handleMainImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -65,6 +73,8 @@ export function ImageSection({ formData, setFormData }: Props) {
       const imageUrl = URL.createObjectURL(file);
       setFormData((prev: any) => ({ ...prev, mainImage: imageUrl, mainImageFile: file }));
     }
+    // Reset input value so the same file can be selected again if needed
+    e.target.value = "";
   };
 
   const handleGalleryUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -80,6 +90,7 @@ export function ImageSection({ formData, setFormData }: Props) {
         galleryFiles: [...(prev.galleryFiles || []), ...filesToAdd], 
       }));
     }
+    e.target.value = "";
   };
 
   const handleGalleryImageReplace = (index: number, e: React.ChangeEvent<HTMLInputElement>) => {
@@ -94,6 +105,7 @@ export function ImageSection({ formData, setFormData }: Props) {
         return { ...prev, gallery: newGallery, galleryFiles: newGalleryFiles };
       });
     }
+    e.target.value = "";
   };
 
   const removeGalleryImage = (index: number) => {
@@ -130,7 +142,7 @@ export function ImageSection({ formData, setFormData }: Props) {
       const newGallery = [...(prev.gallery || [])];
       const newGalleryFiles = [...(prev.galleryFiles || [])];
       
-      // 1. Reordering entirely inside the gallery (Old Logic)
+      // 1. Reordering entirely inside the gallery
       if (draggedIdx >= 0 && targetIdx >= 0) {
         const [draggedItem] = newGallery.splice(draggedIdx, 1);
         if (draggedItem) newGallery.splice(targetIdx, 0, draggedItem);
@@ -149,12 +161,10 @@ export function ImageSection({ formData, setFormData }: Props) {
         const oldMainSrc = prev.mainImage;
         const oldMainFile = prev.mainImageFile;
 
-        // If the main image wasn't empty, put it in the side image's old spot
         if (oldMainSrc && oldMainSrc.trim() !== "") {
           newGallery[draggedIdx] = oldMainSrc;
           newGalleryFiles[draggedIdx] = oldMainFile;
         } else {
-          // If the main image was empty, just remove the side image from the array
           newGallery.splice(draggedIdx, 1);
           newGalleryFiles.splice(draggedIdx, 1);
         }
@@ -171,7 +181,6 @@ export function ImageSection({ formData, setFormData }: Props) {
         const oldMainSrc = prev.mainImage;
         const oldMainFile = prev.mainImageFile;
 
-        // Swap the side image to become the new main image
         newGallery[targetIdx] = oldMainSrc;
         newGalleryFiles[targetIdx] = oldMainFile;
 
@@ -209,7 +218,6 @@ export function ImageSection({ formData, setFormData }: Props) {
           <div>
             <label className="block text-sm font-bold text-[#4A3022] dark:text-[#EAE0D5] mb-2.5">تصویر اصلی</label>
             
-            {/* 🚀 Main Image Drop Zone (Index: -1) */}
             <div 
               draggable={hasMainImage}
               onDragStart={(e) => handleDragStart(e, -1)} 

@@ -2,7 +2,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Plus, Layers, Tag } from "lucide-react";
+import { Plus, Layers, Tag, ChevronDown } from "lucide-react";
 import { ProductFormData } from "../../types";
 import { CategoryApi, BrandApi } from "../../../api";
 
@@ -18,19 +18,37 @@ export function CategoryBrandSection({ formData, setFormData }: Props) {
   const [newItemName, setNewItemName] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  // 🚀 OPTIMIZATION: Prevent state updates if component unmounts
   useEffect(() => {
+    let isMounted = true;
+    
     const fetchSelectOptions = async () => {
       try {
         const catData = await CategoryApi.getAll();
         const brandData = await BrandApi.getAll();
-        setCategories(catData.map((c: any) => ({ id: (c.id || c.categoryId).toString(), name: c.name || c.categoryName || c.title })));
-        setBrands(brandData.map((b: any) => ({ id: (b.id || b.brandId).toString(), name: b.name || b.brandName || b.title })));
+        
+        if (isMounted) {
+          setCategories(catData.map((c: any) => ({ id: (c.id || c.categoryId).toString(), name: c.name || c.categoryName || c.title })));
+          setBrands(brandData.map((b: any) => ({ id: (b.id || b.brandId).toString(), name: b.name || b.brandName || b.title })));
+        }
       } catch (error) {
         console.error("Failed to load options", error);
       }
     };
+    
     fetchSelectOptions();
+    
+    return () => { isMounted = false; };
   }, []);
+
+  // 🚀 UX: Handle Escape key for modal
+  useEffect(() => {
+    const handleEsc = (e: KeyboardEvent) => {
+      if (e.key === "Escape" && activeModal) closeModal();
+    };
+    window.addEventListener("keydown", handleEsc);
+    return () => window.removeEventListener("keydown", handleEsc);
+  }, [activeModal]);
 
   const handleChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const { name, value } = e.target;
@@ -56,7 +74,7 @@ export function CategoryBrandSection({ formData, setFormData }: Props) {
       }
       closeModal();
     } catch (error: any) {
-      alert(`Error from database: ${error.message}`);
+      alert(`خطا از سمت سرور: ${error.message}`);
     } finally {
       setIsSubmitting(false);
     }
@@ -84,10 +102,17 @@ export function CategoryBrandSection({ formData, setFormData }: Props) {
                 <Plus className="w-3 h-3" /> افزودن دسته‌بندی
               </button>
             </div>
-            <select name="category" value={formData.category} onChange={handleChange} className="w-full h-14 bg-white dark:bg-[#231511] border border-[#E3C3A4]/60 dark:border-[#3c2317] rounded-2xl px-5 text-[#4A3022] dark:text-[#EAE0D5] focus:border-[#C68E58] dark:focus:border-[#C68E58] focus:ring-4 focus:ring-[#C68E58]/10 outline-none transition-all cursor-pointer appearance-none">
-              <option value="" disabled>انتخاب کنید...</option>
-              {categories.map((cat) => <option key={cat.id} value={cat.id}>{cat.name}</option>)}
-            </select>
+            
+            {/* 🚀 Custom Select Wrapper for a premium look */}
+            <div className="relative group">
+              <select name="category" value={formData.category} onChange={handleChange} className="w-full h-14 bg-white dark:bg-[#231511] border border-[#E3C3A4]/60 dark:border-[#3c2317] rounded-2xl px-5 text-[#4A3022] dark:text-[#EAE0D5] focus:border-[#C68E58] focus:ring-4 focus:ring-[#C68E58]/10 outline-none transition-all cursor-pointer appearance-none">
+                <option value="" disabled>انتخاب کنید...</option>
+                {categories.map((cat) => <option key={cat.id} value={cat.id}>{cat.name}</option>)}
+              </select>
+              <div className="absolute left-4 top-1/2 -translate-y-1/2 pointer-events-none text-[#8C7A6B] group-hover:text-[#C68E58] transition-colors">
+                <ChevronDown className="w-5 h-5" />
+              </div>
+            </div>
           </div>
 
           <div>
@@ -99,17 +124,23 @@ export function CategoryBrandSection({ formData, setFormData }: Props) {
                 <Plus className="w-3 h-3" /> افزودن برند
               </button>
             </div>
-            <select name="brand" value={formData.brand} onChange={handleChange} className="w-full h-14 bg-white dark:bg-[#231511] border border-[#E3C3A4]/60 dark:border-[#3c2317] rounded-2xl px-5 text-[#4A3022] dark:text-[#EAE0D5] focus:border-[#C68E58] dark:focus:border-[#C68E58] focus:ring-4 focus:ring-[#C68E58]/10 outline-none transition-all cursor-pointer appearance-none">
-              <option value="" disabled>انتخاب کنید...</option>
-              {brands.map((brand) => <option key={brand.id} value={brand.id}>{brand.name}</option>)}
-            </select>
+            
+            <div className="relative group">
+              <select name="brand" value={formData.brand} onChange={handleChange} className="w-full h-14 bg-white dark:bg-[#231511] border border-[#E3C3A4]/60 dark:border-[#3c2317] rounded-2xl px-5 text-[#4A3022] dark:text-[#EAE0D5] focus:border-[#C68E58] focus:ring-4 focus:ring-[#C68E58]/10 outline-none transition-all cursor-pointer appearance-none">
+                <option value="" disabled>انتخاب کنید...</option>
+                {brands.map((brand) => <option key={brand.id} value={brand.id}>{brand.name}</option>)}
+              </select>
+              <div className="absolute left-4 top-1/2 -translate-y-1/2 pointer-events-none text-[#8C7A6B] group-hover:text-[#C68E58] transition-colors">
+                <ChevronDown className="w-5 h-5" />
+              </div>
+            </div>
           </div>
         </div>
       </div>
 
       {activeModal && (
         <div className="fixed inset-0 z-[110] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-in fade-in duration-200" dir="rtl">
-          <div className="bg-[#FCF9F5] dark:bg-[#1A0F0C] w-full max-w-sm rounded-[2rem] p-6 shadow-2xl border border-[#E3C3A4]/60 dark:border-[#3c2317]">
+          <div className="bg-[#FCF9F5] dark:bg-[#1A0F0C] w-full max-w-sm rounded-[2rem] p-6 shadow-2xl border border-[#E3C3A4]/60 dark:border-[#3c2317] animate-in zoom-in-95 duration-200">
             <h3 className="font-bold text-[#4A3022] dark:text-white text-lg mb-5 text-right">
               {activeModal === "category" ? "افزودن دسته‌بندی جدید" : "افزودن برند جدید"}
             </h3>
