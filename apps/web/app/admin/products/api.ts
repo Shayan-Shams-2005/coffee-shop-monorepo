@@ -1,10 +1,12 @@
-// app/admin/products/edit/api.ts
+// مسیر دقیق: app/admin/products/api.ts
+
 import { AuthApi } from "../../login/api"; 
 
-// 1. Sanitize the base URL once to prevent double-slash issues globally
 const API_BASE_URL = (process.env.NEXT_PUBLIC_API_URL || "http://localhost:5103").replace(/\/$/, "");
 
-// 2. Define standard interfaces for type safety matching your C# backend
+// ==========================================
+// 🚀 Types (منطبق با DTOهای بک‌اند)
+// ==========================================
 export interface ProductUpdateData {
   ProductName: string;
   OriginalPrice: number;
@@ -14,12 +16,33 @@ export interface ProductUpdateData {
   CategoryId: number;
   BrandId: number;
   HasOffer: boolean;
-  NewPrice?: number | null;
   OfferEndDate: string | null;
-  SaleDurationMinutes?: number | null; // 🚀 Added to match backend payload requirements
+  SaleDurationMinutes?: number | null; 
 }
 
-// 3. Extract the dummy file generation to keep the code DRY
+export interface SpecificationPayload {
+  Key: string;
+  Value: string;
+  DisplayOrder: number;
+  IsMain: boolean;
+}
+
+export interface AttributePayload {
+  attributes: { name: string; values: string[] }[];
+}
+
+export interface VariantPayload {
+  Sku: string;
+  OriginalPrice: number;
+  SalePrice: number | null;
+  SaleDurationMinutes: number | null;
+  StockQuantity: number;
+  AttributeValueIds: number[];
+}
+
+// ==========================================
+// Dummy Image Generator
+// ==========================================
 const createDummyImageFile = (): File => {
   const tinyPng = new Uint8Array([
     137, 80, 78, 71, 13, 10, 26, 10, 0, 0, 0, 13, 73, 72, 68, 82, 0, 0, 0, 1, 0, 0, 0, 1, 
@@ -30,18 +53,17 @@ const createDummyImageFile = (): File => {
 };
 
 // ============================================================================
-// 🚀 SMART JWT FETCHER (Handles Cookies & Auto-Refresh)
+// 🚀 SMART JWT FETCHER
 // ============================================================================
 const fetchWithAuth = async (url: string, options: RequestInit = {}) => {
-  options.credentials = "include"; // CRITICAL: Always send HttpOnly cookies
+  options.credentials = "include"; 
   
   let res = await fetch(url, options);
 
-  // If the AccessToken expired, intercept the 401, refresh it, and try again
   if (res.status === 401) {
     try {
       await AuthApi.refreshToken();
-      res = await fetch(url, options); // Retry original request
+      res = await fetch(url, options); 
     } catch (error) {
       throw new Error("SESSION_EXPIRED");
     }
@@ -50,24 +72,16 @@ const fetchWithAuth = async (url: string, options: RequestInit = {}) => {
 };
 
 // ============================================================================
-// APIs
+// APIs (🚀 اصلاح آدرس‌ها دقیقاً بر اساس روت‌های C#)
 // ============================================================================
-
 export const ProductApi = {
   getImageUrl: (url: string | null | undefined): string => {
     if (!url) return "";
-    
     let cleaned = url.replace(/\\/g, '/');
+    if (/^(https?:\/\/|data:image|blob:)/i.test(cleaned)) return cleaned;
     
-    if (/^(https?:\/\/|data:image|blob:)/i.test(cleaned)) {
-      return cleaned;
-    }
+    cleaned = cleaned.replace(/^file:\/\/\//i, '').replace(/^[a-zA-Z]:\//i, '/');
     
-    // 🚀 FIX: Securely strip out file:/// and C:/ to prevent Security Errors
-    cleaned = cleaned.replace(/^file:\/\/\//i, '');
-    cleaned = cleaned.replace(/^[a-zA-Z]:\//i, '/');
-    
-    // 🚀 FIX: Added 'Products' to the allowed folders regex
     const uploadFolderMatch = cleaned.match(/(\/uploads\/|\/images\/|\/Categories\/|\/Brands\/|\/Products\/).*/i);
     if (uploadFolderMatch) {
        cleaned = uploadFolderMatch[0];
@@ -75,51 +89,42 @@ export const ProductApi = {
        const parts = cleaned.split('/');
        cleaned = '/' + parts[parts.length - 1];
     }
-    
     return cleaned.startsWith("/") ? `${API_BASE_URL}${cleaned}` : `${API_BASE_URL}/${cleaned}`;
   },
 
   getAll: async () => {
-    const res = await fetchWithAuth(`${API_BASE_URL}/api/Product/GetAll`, { cache: 'no-store' });
+    const res = await fetchWithAuth(`${API_BASE_URL}/api/Product`, { cache: 'no-store' });
     if (!res.ok) throw new Error("Failed to fetch products");
     return res.json();
   },
 
   getById: async (id: number) => {
-    const res = await fetchWithAuth(`${API_BASE_URL}/api/Product/GetById/${id}`, { cache: 'no-store' });
+    const res = await fetchWithAuth(`${API_BASE_URL}/api/Product/${id}`, { cache: 'no-store' });
     if (!res.ok) throw new Error(`Failed to fetch product ${id}`);
     return res.json();
   },
 
   create: async (formData: FormData) => {
-    const res = await fetchWithAuth(`${API_BASE_URL}/api/Product/Create`, {
+    const res = await fetchWithAuth(`${API_BASE_URL}/api/Product`, {
       method: "POST",
       body: formData, 
     });
-    if (!res.ok) {
-        const errorText = await res.text();
-        throw new Error(`Creation failed: ${errorText}`);
-    }
+    if (!res.ok) throw new Error(`Creation failed: ${await res.text()}`);
     return res.json();
   },
 
   update: async (id: number, data: ProductUpdateData) => {
-    const res = await fetchWithAuth(`${API_BASE_URL}/api/Product/Update/${id}`, {
+    const res = await fetchWithAuth(`${API_BASE_URL}/api/Product/${id}`, {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(data),
     });
-    if (!res.ok) {
-        const errorText = await res.text();
-        throw new Error(`Update failed: ${errorText}`);
-    }
+    if (!res.ok) throw new Error(`Update failed: ${await res.text()}`);
     return res.status === 204 ? true : res.json();
   },
 
   delete: async (id: number) => {
-    const res = await fetchWithAuth(`${API_BASE_URL}/api/Product/Delete/${id}`, {
-      method: "DELETE",
-    });
+    const res = await fetchWithAuth(`${API_BASE_URL}/api/Product/${id}`, { method: "DELETE" });
     if (!res.ok) throw new Error(`Deletion failed for product ${id}`);
     return res.status === 204;
   },
@@ -127,78 +132,60 @@ export const ProductApi = {
   addImage: async (productId: number, file: File, isMain: boolean = false) => {
     const formData = new FormData();
     formData.append("File", file); 
-    formData.append("file", file); 
     formData.append("isMain", isMain.toString());
 
-    const res = await fetchWithAuth(`${API_BASE_URL}/api/Product/AddImage/${productId}/images?isMain=${isMain}`, {
+    const res = await fetchWithAuth(`${API_BASE_URL}/api/Product/${productId}/images`, {
       method: "POST",
       body: formData,
     });
-    
-    if (!res.ok) {
-        const errorText = await res.text();
-        throw new Error(`آپلود عکس سرور با خطا مواجه شد: ${errorText || res.status}`);
-    }
+    if (!res.ok) throw new Error(`آپلود عکس با خطا مواجه شد: ${await res.text() || res.status}`);
     return res.status === 204 ? true : res.json(); 
   },
 
-  setSpecifications: async (id: number, specs: any[]) => {
-    const res = await fetchWithAuth(`${API_BASE_URL}/api/Product/SetSpecifications/${id}/specifications`, {
+  setSpecifications: async (id: number, specs: SpecificationPayload[]) => {
+    const res = await fetchWithAuth(`${API_BASE_URL}/api/Product/${id}/specifications`, {
       method: "PUT", 
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(specs), 
     });
-    if (!res.ok) {
-        // 🚀 FIX: Get the exact validation error from C# and show it!
-        const errorText = await res.text();
-        throw new Error(`ارور ولیدیشن مشخصات:\n ${errorText}`);
-    }
+    if (!res.ok) throw new Error(`ارور ولیدیشن مشخصات:\n ${await res.text()}`);
     return true;
   },
 
-  setAttributes: async (id: number, attributesPayload: any) => {
-    const res = await fetchWithAuth(`${API_BASE_URL}/api/Product/SetAttributes/${id}/attributes`, {
+  setAttributes: async (id: number, attributesPayload: AttributePayload) => {
+    const res = await fetchWithAuth(`${API_BASE_URL}/api/Product/${id}/attributes`, {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(attributesPayload),
     });
-    if (!res.ok) {
-        const errorText = await res.text();
-        throw new Error(`Failed to set attributes: ${errorText}`);
-    }
+    if (!res.ok) throw new Error(`Failed to set attributes: ${await res.text()}`);
     return res.status === 204 ? true : res.json();
   }
 };
 
 export const ProductVariantApi = {
-  create: async (productId: number, variantData: any) => {
-    const res = await fetchWithAuth(`${API_BASE_URL}/api/ProductVariant/Create/${productId}`, {
+  create: async (productId: number, variantData: VariantPayload) => {
+    const res = await fetchWithAuth(`${API_BASE_URL}/api/ProductVariant/${productId}`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(variantData),
     });
-    if (!res.ok) {
-      const errorText = await res.text();
-      throw new Error(`Failed to create variant: ${errorText}`);
-    }
+    if (!res.ok) throw new Error(`Failed to create variant: ${await res.text()}`);
     return res.json();
   },
 
-  update: async (productId: number, variantId: number, variantData: any) => {
-    const res = await fetchWithAuth(`${API_BASE_URL}/api/ProductVariant/Update/${productId}/${variantId}`, {
+  update: async (productId: number, variantId: number, variantData: VariantPayload) => {
+    const res = await fetchWithAuth(`${API_BASE_URL}/api/ProductVariant/${productId}/${variantId}`, {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(variantData),
     });
-    if (!res.ok) {
-      const errorText = await res.text();
-      throw new Error(`Failed to update variant: ${errorText}`);
-    }
+    if (!res.ok) throw new Error(`Failed to update variant: ${await res.text()}`);
     return res.status === 204 ? true : res.json();
   },
 
   delete: async (productId: number, variantId: number) => {
-    const res = await fetchWithAuth(`${API_BASE_URL}/api/ProductVariant/Delete/${productId}/${variantId}`, {
+    const res = await fetchWithAuth(`${API_BASE_URL}/api/ProductVariant/${productId}/${variantId}`, {
       method: "DELETE",
     });
     if (!res.ok) throw new Error("Failed to delete variant");
@@ -208,21 +195,15 @@ export const ProductVariantApi = {
 
 export const CategoryApi = {
   getAll: async () => {
-    const res = await fetchWithAuth(`${API_BASE_URL}/api/Category/GetAll`, { cache: 'no-store' });
+    const res = await fetchWithAuth(`${API_BASE_URL}/api/Category`, { cache: 'no-store' });
     if (!res.ok) throw new Error("Failed to fetch categories");
     return res.json();
   },
-  
   create: async (name: string) => {
     const formData = new FormData();
     formData.append("CategoryName", name); 
     formData.append("File", createDummyImageFile());
-
-    const res = await fetchWithAuth(`${API_BASE_URL}/api/Category/Create`, {
-      method: "POST",
-      body: formData,
-    });
-    
+    const res = await fetchWithAuth(`${API_BASE_URL}/api/Category`, { method: "POST", body: formData });
     if (!res.ok) throw new Error(await res.text());
     return res.json();
   }
@@ -230,21 +211,15 @@ export const CategoryApi = {
 
 export const BrandApi = {
   getAll: async () => {
-    const res = await fetchWithAuth(`${API_BASE_URL}/api/Brand/GetAll`, { cache: 'no-store' });
+    const res = await fetchWithAuth(`${API_BASE_URL}/api/Brand`, { cache: 'no-store' });
     if (!res.ok) throw new Error("Failed to fetch brands");
     return res.json();
   },
-  
   create: async (name: string) => {
     const formData = new FormData();
     formData.append("BrandName", name);
     formData.append("File", createDummyImageFile());
-
-    const res = await fetchWithAuth(`${API_BASE_URL}/api/Brand/Create`, {
-      method: "POST",
-      body: formData,
-    });
-    
+    const res = await fetchWithAuth(`${API_BASE_URL}/api/Brand`, { method: "POST", body: formData });
     if (!res.ok) throw new Error(await res.text());
     return res.json();
   }

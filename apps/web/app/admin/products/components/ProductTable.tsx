@@ -95,8 +95,8 @@ function TableRow({ product, onDelete }: { product: Product, onDelete: (id: numb
     ? Number(selectedVariant.stockQuantity ?? selectedVariant.StockQuantity ?? selectedVariant.stock ?? selectedVariant.Stock ?? 0) 
     : baseStock;
     
-  // 🚀 FIX: Ignore the API's 'hasOffer' flags completely. Strictly check the math.
-  const hasOffer = newPrice > 0 && newPrice < price;
+  // 🚀 OPTIMIZATION: Strictly checking the math to guarantee a valid offer
+  const hasOffer = price > 0 && newPrice > 0 && newPrice < price;
   
   const offerEndDate = selectedVariant ? (selectedVariant.offerEndDate || selectedVariant.OfferEndDate || selectedVariant.saleEndAt || null) : baseOfferEndDate;
   
@@ -216,7 +216,7 @@ function TableRow({ product, onDelete }: { product: Product, onDelete: (id: numb
                 )
               })}
 
-              {/* Collapse Button (Only shows if at least one group is expanded) */}
+              {/* Collapse Button */}
               {expandedGroups.length > 0 && (
                 <button
                   type="button"
@@ -338,8 +338,13 @@ function EmptyState({ onResetFilters }: { onResetFilters: () => void }) {
 
 function CountdownTimer({ targetDate }: { targetDate: string | Date }) {
   const [timeLeft, setTimeLeft] = useState<{ d: number; h: number; m: number; s: number } | null>(null);
+  
+  // 🚀 OPTIMIZATION: Check if the provided date is valid before running the interval
+  const isValidDate = !isNaN(new Date(targetDate).getTime());
 
   useEffect(() => {
+    if (!isValidDate) return;
+
     const target = new Date(targetDate).getTime();
 
     const updateTimer = () => {
@@ -362,8 +367,9 @@ function CountdownTimer({ targetDate }: { targetDate: string | Date }) {
     const interval = setInterval(updateTimer, 1000);
 
     return () => clearInterval(interval);
-  }, [targetDate]);
+  }, [targetDate, isValidDate]);
 
+  if (!isValidDate) return <span>نامشخص</span>;
   if (!timeLeft) return <span className="opacity-0">...</span>;
 
   if (timeLeft.d === 0 && timeLeft.h === 0 && timeLeft.m === 0 && timeLeft.s === 0) {

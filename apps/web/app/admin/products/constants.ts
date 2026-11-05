@@ -9,21 +9,28 @@ export const ADMIN_SORT_OPTIONS = [
   { id: "bestoffer", label: "بیشترین تخفیف" },
 ];
 
-export const toFarsiNumber = (num: number | string | null | undefined) => {
-  if (num === null || num === undefined) return "۰";
+export const toFarsiNumber = (num: number | string | null | undefined): string => {
+  if (num === null || num === undefined || num === "") return "۰";
   
   const farsiDigits = ["۰", "۱", "۲", "۳", "۴", "۵", "۶", "۷", "۸", "۹"];
   return num.toString().replace(/\d/g, (x) => farsiDigits[parseInt(x)] || x);
 }; 
 
-export const formatPersianDate = (dateString: string) => {
+export const formatPersianDate = (dateString: string | null | undefined): string => {
+  if (!dateString) return "-"; // 🚀 جلوگیری از خطای مقادیر خالی
+  
   const date = new Date(dateString);
+  
+  // 🚀 جلوگیری از خطای تاریخ نامعتبر (Invalid Date)
+  if (isNaN(date.getTime())) return "تاریخ نامعتبر"; 
+
   const datePart = new Intl.DateTimeFormat('fa-IR', { day: 'numeric', month: 'long' }).format(date);
   const timePart = new Intl.DateTimeFormat('fa-IR', { hour: '2-digit', minute: '2-digit', hour12: false }).format(date);
+  
   return `${datePart}، ${timePart}`;
 };
 
-export const sanitizeNameForFilter = (name: string | null) => {
+export const sanitizeNameForFilter = (name: string | null | undefined): string | null => {
   if (!name) return null;
   return (name.split('(')[0] ?? "").trim();
 };

@@ -15,6 +15,37 @@ import { ProductTable } from "./components/ProductTable";
 import { MobileFilterDrawer } from "./components/MobileFilterDrawer";
 import { ProductApi, CategoryApi, BrandApi } from "./api"; 
 
+// ============================================================================
+// 🚀 CLEAN ARCHITECTURE: Data Mapping Utility
+// وظیفه این تابع فقط تبدیل دیتای خام بک‌اند (DTO) به مدل استاندارد فرانت‌اند (Product) است
+// ============================================================================
+const mapApiProductToClient = (p: any, index: number): Product => {
+  let rawImageStr = "";
+
+  if (Array.isArray(p.images) && p.images.length > 0) {
+    const mainImg = p.images.find((img: any) => img.isMain === true || img.IsMain === true) || p.images[0];
+    rawImageStr = mainImg.imageUrl || mainImg.ImageUrl || "";
+  }
+
+  const priceVal = Number(p.initialPrice || p.InitialPrice || p.originalPrice || p.OriginalPrice || p.price || p.Price || p.basePrice || 0);
+  const salePriceVal = Number(p.salePrice || p.SalePrice || p.newPrice || p.NewPrice || 0);
+
+  return {
+    ...p,
+    id: p.productId || p.id || index, 
+    name: p.productName || p.ProductName || p.name || "محصول بدون نام",
+    category: p.categoryName || p.CategoryName || (p.categoryId ? p.categoryId.toString() : "نامشخص"),
+    brand: p.brandName || p.BrandName || (p.brandId ? p.brandId.toString() : "نامشخص"),
+    price: priceVal,
+    newPrice: salePriceVal > 0 ? salePriceVal : null,
+    hasOffer: p.hasOffer ?? p.HasOffer ?? (salePriceVal > 0),
+    stock: p.stockQuantity ?? p.StockQuantity ?? p.stock ?? p.Stock ?? 0,
+    salesVolume: p.soldQuantity ?? p.SoldQuantity ?? p.salesVolume ?? p.SalesVolume ?? 0,
+    offerEndDate: p.offerEndDate || p.OfferEndDate || null,
+    image: ProductApi.getImageUrl(rawImageStr), 
+  };
+};
+
 function ProductsPageContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
@@ -30,7 +61,6 @@ function ProductsPageContent() {
   const [error, setError] = useState<string | null>(null);
 
   const [searchQuery, setSearchQuery] = useState("");
-  // مقدار اولیه از URL گرفته می‌شود (ممکن است آیدی باشد یا نام)
   const [selectedBrands, setSelectedBrands] = useState<string[]>(initialBrand ? [initialBrand] : []);
   const [selectedCategories, setSelectedCategories] = useState<string[]>(initialCategory ? [initialCategory] : []);
   const [minPrice, setMinPrice] = useState<string>("");
@@ -52,7 +82,7 @@ function ProductsPageContent() {
         const catList = Array.isArray(categoriesData) ? categoriesData : (categoriesData.items || []);
         setAvailableCategories(catList.map((c: any) => c.categoryName || c.name || ""));
 
-        // 🚀 FIX: تبدیل آیدی دسته‌بندی به نام دسته‌بندی (اگر از URL آیدی ارسال شده باشد)
+        // تبدیل آیدی دسته‌بندی به نام (در صورت وجود در URL)
         if (initialCategory) {
           const foundCat = catList.find((c: any) => c.categoryId?.toString() === initialCategory || c.id?.toString() === initialCategory || c.categoryName === initialCategory);
           if (foundCat) {
@@ -68,46 +98,21 @@ function ProductsPageContent() {
         const brandList = Array.isArray(brandsData) ? brandsData : (brandsData.items || []);
         setAvailableBrands(brandList.map((b: any) => b.brandName || b.name || ""));
 
-        // 🚀 FIX: تبدیل آیدی برند به نام برند (اگر از URL آیدی 4 ارسال شده باشد، آن را به "عربیکا" تبدیل می‌کند)
+        // تبدیل آیدی برند به نام (در صورت وجود در URL)
         if (initialBrand) {
           const foundBrand = brandList.find((b: any) => b.brandId?.toString() === initialBrand || b.id?.toString() === initialBrand || b.brandName === initialBrand);
           if (foundBrand) {
             const brandName = foundBrand.brandName || foundBrand.name;
             setSelectedBrands(prev => {
-              const filtered = prev.filter(p => p !== initialBrand); // حذف آیدی 4 از لیست فیلترها
-              return filtered.includes(brandName) ? filtered : [...filtered, brandName]; // اضافه کردن "عربیکا"
+              const filtered = prev.filter(p => p !== initialBrand);
+              return filtered.includes(brandName) ? filtered : [...filtered, brandName];
             });
           }
         }
 
-        // 3. Process Products
+        // 3. Process Products (با استفاده از تابع Mapper مجزا)
         const rawArray = Array.isArray(productsData) ? productsData : (productsData.items || []);
-        const mappedProducts = rawArray.map((p: any, index: number) => {
-          let rawImageStr = "";
-
-          if (Array.isArray(p.images) && p.images.length > 0) {
-            const mainImg = p.images.find((img: any) => img.isMain === true || img.IsMain === true) || p.images[0];
-            rawImageStr = mainImg.imageUrl || mainImg.ImageUrl || "";
-          }
-
-          const priceVal = Number(p.initialPrice || p.InitialPrice || p.originalPrice || p.OriginalPrice || p.price || p.Price || p.basePrice || 0);
-          const salePriceVal = Number(p.salePrice || p.SalePrice || p.newPrice || p.NewPrice || 0);
-
-          return {
-            ...p,
-            id: p.productId || p.id || index, 
-            name: p.productName || p.ProductName || p.name || "محصول بدون نام",
-            category: p.categoryName || p.CategoryName || (p.categoryId ? p.categoryId.toString() : "نامشخص"),
-            brand: p.brandName || p.BrandName || (p.brandId ? p.brandId.toString() : "نامشخص"),
-            price: priceVal,
-            newPrice: salePriceVal > 0 ? salePriceVal : null,
-            hasOffer: p.hasOffer ?? p.HasOffer ?? (salePriceVal > 0),
-            stock: p.stockQuantity ?? p.StockQuantity ?? p.stock ?? p.Stock ?? 0,
-            salesVolume: p.soldQuantity ?? p.SoldQuantity ?? p.salesVolume ?? p.SalesVolume ?? 0,
-            offerEndDate: p.offerEndDate || p.OfferEndDate || null,
-            image: ProductApi.getImageUrl(rawImageStr), 
-          };
-        });
+        const mappedProducts = rawArray.map((p: any, index: number) => mapApiProductToClient(p, index));
 
         setProducts(mappedProducts);
       } catch (err) {
@@ -117,8 +122,9 @@ function ProductsPageContent() {
         setIsLoading(false);
       }
     };
+    
     fetchData();
-  }, []); // وابسته به هیچ مقداری نیست تا فقط یکبار لود شود
+  }, [initialCategory, initialBrand]); 
 
   const toggleBrand = (brand: string) => {
     setSelectedBrands((prev) => prev.includes(brand) ? prev.filter((b) => b !== brand) : [...prev, brand]);

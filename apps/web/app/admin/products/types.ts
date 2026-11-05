@@ -16,7 +16,26 @@ export interface Product {
   hasOffer: boolean;
   newPrice: number | null;
   offerEndDate: string | null;
-  image: string;
+  image: string | null; // 🚀 اصلاح شد: ممکن است محصول عکس نداشته باشد
+}
+
+// ==========================================
+// Types for Product Variants (Option Groups)
+// ==========================================
+// 🚀 اضافه شد: تعریف دقیق تنوع‌ها برای جلوگیری از استفاده از any
+export interface ProductOption {
+  variantId?: number; // برای زمان ویرایش که تنوع از قبل آیدی دارد
+  name: string;
+  price: number;
+  stock: number;
+  hasOffer: boolean;
+  salePrice: number;
+  offerEndDate?: Date;
+}
+
+export interface OptionGroup {
+  title: string;
+  options: ProductOption[];
 }
 
 // ==========================================
@@ -31,15 +50,19 @@ export interface ProductFormData {
   brand: string;
   stock: number;
   
-  // Optional properties for handling actual file uploads
-  mainImageFile?: File;
-  galleryFiles?: File[];
+  // 🚀 اصلاح شد: نوع دقیق فایل‌ها و مقادیر تهی
+  mainImage: string;
+  mainImageFile: File | null;
+  gallery: string[];
+  galleryFiles: File[];
   
   offerEndDate?: Date;
-  mainImage?: string;
-  gallery?: string[];
   
   keyFeatures: { key: string; value: string }[];
-  specs: { key: string; value: string }[];
-  optionGroups: any[]; 
+  
+  // 🚀 اصلاح شد: اضافه شدن id برای زمان ویرایش ویژگی‌های از قبل ثبت شده
+  specs: { id?: number; key: string; value: string }[]; 
+  
+  // 🚀 رفع باگ بزرگ: جایگزینی any[] با تایپ‌های دقیق
+  optionGroups: OptionGroup[]; 
 }
