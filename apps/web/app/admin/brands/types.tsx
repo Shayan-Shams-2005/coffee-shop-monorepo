@@ -7,28 +7,23 @@ export const toFarsiNumber = (num: number | string) => {
   return num.toString().replace(/\d/g, (x) => farsiDigits[parseInt(x)] || x);
 };
 
-export type UIBrand = {
+export interface UIBrand {
   id: string;
   name: string;
-  category: string;
+  groupId: string;
   image: string | null;
   productCount: number;
-};
+}
 
-// Mock data completely removed
-export const initialBrands: UIBrand[] = [];
+export interface UIBrandGroup {
+  id: string;
+  name: string;
+  slug: string;
+  displayOrder: number;
+  brands: UIBrand[];
+}
 
-export const getCategoryTitle = (cat: string) => {
-  if (cat === "all") return "همه برندها";
-  return `برندهای ${cat}`;
-};
-
-export const getCategoryShortName = (cat: string) => {
-  if (cat === "all") return "همه";
-  return cat;
-};
-
-export const getCategoryIcon = (cat: string, isLarge = false) => {
+export const getCategoryIcon = (isLarge = false) => {
   const sizeClass = isLarge ? "" : "w-4 h-4";
   const stroke = isLarge ? 1.5 : undefined;
   return <Folder className={sizeClass} strokeWidth={stroke} />;

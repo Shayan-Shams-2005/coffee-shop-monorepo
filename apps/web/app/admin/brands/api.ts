@@ -1,90 +1,91 @@
 // app/admin/brands/api.ts
-import { AuthApi } from "../../login/api"; 
+import { AuthApi } from "../../login/api";
 
 const API_BASE_URL = (process.env.NEXT_PUBLIC_API_URL || "http://localhost:5103").replace(/\/$/, "");
 
-// ============================================================================
-// 🚀 SMART JWT FETCHER (Handles Cookies & Auto-Refresh)
-// ============================================================================
 const fetchWithAuth = async (url: string, options: RequestInit = {}) => {
-  options.credentials = "include"; // CRITICAL: Always send HttpOnly cookies
-  
+  options.credentials = "include";
   let res = await fetch(url, options);
-
-  // If the AccessToken expired, intercept the 401, refresh it, and try again
   if (res.status === 401) {
     try {
       await AuthApi.refreshToken();
-      res = await fetch(url, options); // Retry original request
+      res = await fetch(url, options);
     } catch (error) {
-      // If refresh fails (e.g., RefreshToken expired), throw a specific error
       throw new Error("SESSION_EXPIRED");
     }
   }
   return res;
 };
 
-// ============================================================================
-// BRAND APIs
-// ============================================================================
-
-export interface BackendBrand {
-  brandId: number;
-  brandName: string;
-  mainImageUrl: string;
-}
-
-export const BrandApi = {
-  getAll: async (): Promise<BackendBrand[]> => {
-    const res = await fetchWithAuth(`${API_BASE_URL}/api/Brand/GetAll`, { cache: 'no-store' });
-    if (!res.ok) throw new Error("Failed to fetch brands");
+export const BrandGroupApi = {
+  getAll: async () => {
+    const res = await fetchWithAuth(`${API_BASE_URL}/api/BrandGroup/GetAll`, { cache: 'no-store' });
+    if (!res.ok) throw new Error("Failed to fetch brand groups");
     return res.json();
   },
-
-  getById: async (id: number): Promise<BackendBrand> => {
-    const res = await fetchWithAuth(`${API_BASE_URL}/api/Brand/GetById/${id}`, { cache: 'no-store' });
-    if (!res.ok) throw new Error("Failed to fetch brand");
-    return res.json();
-  },
-
-  create: async (formData: FormData): Promise<BackendBrand> => {
-    const res = await fetchWithAuth(`${API_BASE_URL}/api/Brand/Create`, {
+  create: async (data: { name: string; displayOrder: number }) => {
+    const res = await fetchWithAuth(`${API_BASE_URL}/api/BrandGroup/Create`, {
       method: "POST",
-      body: formData, 
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(data),
     });
     if (!res.ok) throw new Error(await res.text());
     return res.json();
   },
+  update: async (id: number, data: { name: string; displayOrder: number }) => {
+    const res = await fetchWithAuth(`${API_BASE_URL}/api/BrandGroup/Update/${id}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(data),
+    });
+    if (!res.ok) throw new Error(await res.text());
+    return res.status === 204 ? true : res.json();
+  },
+  delete: async (id: number) => {
+    const res = await fetchWithAuth(`${API_BASE_URL}/api/BrandGroup/Delete/${id}`, { method: "DELETE" });
+    if (!res.ok) throw new Error(await res.text());
+    return res.status === 204;
+  }
+};
 
-  update: async (id: number, formData: FormData): Promise<void> => {
+export const BrandApi = {
+  getImageUrl: (url: string | null | undefined): string => {
+    if (!url) return "";
+    let cleaned = url.replace(/\\/g, '/');
+    if (/^(https?:\/\/|data:image|blob:)/i.test(cleaned)) return cleaned;
+    cleaned = cleaned.replace(/^file:\/\/\/?/gi, '/').replace(/^[a-zA-Z]:\//i, '/');
+    const uploadFolderMatch = cleaned.match(/(\/uploads\/|\/images\/|\/Categories\/|\/Brands\/|\/Products\/).*/i);
+    if (uploadFolderMatch) cleaned = uploadFolderMatch[0];
+    else {
+       const parts = cleaned.split('/');
+       cleaned = '/' + parts[parts.length - 1];
+    }
+    return cleaned.startsWith("/") ? `${API_BASE_URL}${cleaned}` : `${API_BASE_URL}/${cleaned}`;
+  },
+  getAll: async () => {
+    const res = await fetchWithAuth(`${API_BASE_URL}/api/Brand/GetAll`, { cache: 'no-store' });
+    if (!res.ok) throw new Error("Failed to fetch brands");
+    return res.json();
+  },
+  create: async (formData: FormData) => {
+    const res = await fetchWithAuth(`${API_BASE_URL}/api/Brand/Create`, {
+      method: "POST",
+      body: formData,
+    });
+    if (!res.ok) throw new Error(await res.text());
+    return res.json();
+  },
+  update: async (id: number, formData: FormData) => {
     const res = await fetchWithAuth(`${API_BASE_URL}/api/Brand/Update/${id}`, {
       method: "PUT",
       body: formData,
     });
     if (!res.ok) throw new Error(await res.text());
+    return res.status === 204 ? true : res.json();
   },
-
-  delete: async (id: number): Promise<void> => {
-    const res = await fetchWithAuth(`${API_BASE_URL}/api/Brand/Delete/${id}`, {
-      method: "DELETE",
-    });
-    if (!res.ok) throw new Error("Failed to delete brand");
-  },
-
-  getImageUrl: (path: string) => {
-    if (!path) return "";
-    
-    let cleaned = path.replace(/\\/g, '/');
-    if (/^(https?:\/\/|data:image|blob:)/i.test(cleaned)) return cleaned;
-    
-    cleaned = cleaned.replace(/^file:\/\/\//i, '');
-    
-    // Safely extract the relative path (supports Brands folder from your C# backend)
-    const uploadFolderMatch = cleaned.match(/(\/uploads\/|\/images\/|\/Brands\/).*/i);
-    if (uploadFolderMatch) {
-       cleaned = uploadFolderMatch[0];
-    }
-    
-    return cleaned.startsWith("/") ? `${API_BASE_URL}${cleaned}` : `${API_BASE_URL}/${cleaned}`;
+  delete: async (id: number) => {
+    const res = await fetchWithAuth(`${API_BASE_URL}/api/Brand/Delete/${id}`, { method: "DELETE" });
+    if (!res.ok) throw new Error(await res.text());
+    return res.status === 204;
   }
 };

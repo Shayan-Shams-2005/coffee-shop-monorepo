@@ -3,17 +3,20 @@
 
 import { useState, useEffect } from "react";
 import { Plus, Edit, X, ImagePlus } from "lucide-react";
-import { UIBrand } from "../types";
+import { UIBrand, UIBrandGroup } from "../types";
 
 interface BrandModalProps {
   isOpen: boolean;
   onClose: () => void;
   editingBrand: UIBrand | null;
-  onSubmit: (data: { name: string; file: File | null }) => void;
+  groups: UIBrandGroup[];
+  defaultGroupId: string | null;
+  onSubmit: (data: { name: string; groupId: string; file: File | null }) => void;
 }
 
-export function BrandModal({ isOpen, onClose, editingBrand, onSubmit }: BrandModalProps) {
+export function BrandModal({ isOpen, onClose, editingBrand, groups, defaultGroupId, onSubmit }: BrandModalProps) {
   const [name, setName] = useState("");
+  const [groupId, setGroupId] = useState("");
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -22,16 +25,18 @@ export function BrandModal({ isOpen, onClose, editingBrand, onSubmit }: BrandMod
     if (isOpen) {
       if (editingBrand) {
         setName(editingBrand.name);
+        setGroupId(editingBrand.groupId);
         setImagePreview(editingBrand.image || "");
         setImageFile(null);
       } else {
         setName("");
+        setGroupId(defaultGroupId || groups[0]?.id || "");
         setImagePreview("");
         setImageFile(null);
       }
       setIsSubmitting(false);
     }
-  }, [isOpen, editingBrand]);
+  }, [isOpen, editingBrand, defaultGroupId, groups]);
 
   if (!isOpen) return null;
 
@@ -45,8 +50,9 @@ export function BrandModal({ isOpen, onClose, editingBrand, onSubmit }: BrandMod
 
   const handleSubmitForm = async (e: React.FormEvent) => {
     e.preventDefault();
+    if(!groupId) { alert("گروه باید انتخاب شود"); return;}
     setIsSubmitting(true);
-    await onSubmit({ name, file: imageFile });
+    await onSubmit({ name, groupId, file: imageFile });
     setIsSubmitting(false);
   };
 
@@ -80,6 +86,19 @@ export function BrandModal({ isOpen, onClose, editingBrand, onSubmit }: BrandMod
           </div>
 
           <div>
+            <label className="block text-sm font-bold text-[#4A3022] dark:text-[#EAE0D5] mb-2 text-right">گروه برند</label>
+            <select
+              value={groupId}
+              onChange={(e) => setGroupId(e.target.value)}
+              className="w-full bg-white dark:bg-[#231511] border border-[#E3C3A4]/60 dark:border-[#3c2317] rounded-xl px-4 py-3 text-[#4A3022] dark:text-white focus:outline-none focus:ring-2 focus:ring-[#C68E58]/50 transition-all"
+            >
+              {groups.map(g => (
+                <option key={g.id} value={g.id}>{g.name}</option>
+              ))}
+            </select>
+          </div>
+
+          <div>
             <label className="block text-sm font-bold text-[#4A3022] dark:text-[#EAE0D5] mb-2 text-right">لوگوی برند</label>
             <div className="flex items-center gap-4">
               <div className="w-20 h-20 rounded-xl bg-white dark:bg-[#231511] border border-dashed border-[#C68E58]/50 flex items-center justify-center overflow-hidden shrink-0">
@@ -103,7 +122,6 @@ export function BrandModal({ isOpen, onClose, editingBrand, onSubmit }: BrandMod
                 >
                   انتخاب تصویر جدید
                 </label>
-                <p className="text-xs text-[#8C7A6B] mt-2 text-right">فرمت‌های مجاز: JPG, PNG, WEBP (حداکثر ۵ مگابایت)</p>
               </div>
             </div>
           </div>
