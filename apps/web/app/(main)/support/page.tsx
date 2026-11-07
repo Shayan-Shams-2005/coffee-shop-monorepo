@@ -1,9 +1,9 @@
-// cSpell:disable
+// app/(main)/support/page.tsx
 "use client";
 
 import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
-import { ArrowLeft, Loader2, MessageSquare, AlertCircle, User, Headset, ShieldAlert, CheckCircle, CheckCircle2 } from "lucide-react";
+import { ArrowLeft, Loader2, MessageSquare, AlertCircle, User, ShieldAlert, CheckCircle, CheckCircle2 } from "lucide-react";
 import { useAuthStore } from "../../../src/store/useAuthStore";
 
 const API_BASE_URL = (process.env.NEXT_PUBLIC_API_URL || "http://localhost:5103").replace(/\/$/, "");
@@ -22,7 +22,7 @@ export default function SupportPage() {
   const [isMounted, setIsMounted] = useState(false);
   const [conversationId, setConversationId] = useState<string | null>(null);
   
-  // 🚀 FIX: State to hold the exact user ID returned from the Conversation API
+  // State to hold the exact user ID returned from the Conversation API
   const [myUserId, setMyUserId] = useState<string | null>(null);
   
   const [messages, setMessages] = useState<any[]>([]);
@@ -80,7 +80,7 @@ export default function SupportPage() {
         } else if (res.ok) {
            const data = await res.json();
            
-           // 🚀 FIX: Grab the exact userId directly from the SupportConversationDto!
+           // Grab the exact userId directly from the SupportConversationDto
            if (data?.userId) setMyUserId(String(data.userId));
            
            currentConvId = data?.supportConversationId || data?.id || data?.conversationId;
@@ -213,17 +213,7 @@ export default function SupportPage() {
     <div className="min-h-[85vh] bg-[#FCF9F5] dark:bg-[#1A1412] py-8 px-4 transition-colors" dir="rtl">
       <div className="container mx-auto max-w-4xl h-[75vh] flex flex-col bg-white dark:bg-[#1A110F] border border-[#F5EFE6] dark:border-[#3c2317] rounded-[32px] shadow-[0_8px_30px_rgba(0,0,0,0.04)] dark:shadow-[0_8px_30px_rgba(0,0,0,0.5)] overflow-hidden relative">
         
-        <div className="shrink-0 h-20 border-b border-[#F5EFE6] dark:border-[#3c2317] px-6 sm:px-8 flex items-center gap-4 bg-[#FDFCFB] dark:bg-[#231511]">
-          <div className="w-12 h-12 bg-[#C68E58]/10 dark:bg-[#C68E58]/20 text-[#C68E58] rounded-full flex items-center justify-center shrink-0">
-            <Headset className="w-6 h-6" />
-          </div>
-          <div>
-            <h1 className="text-lg sm:text-xl font-black text-[#2C1E16] dark:text-white">پشتیبانی نئو کافه</h1>
-            <p className="text-xs sm:text-sm font-medium text-[#8C7A6B] dark:text-[#ba8d71] mt-0.5">
-              پاسخگویی سریع به سوالات و مشکلات شما
-            </p>
-          </div>
-        </div>
+        {/* 🚀 FIXED: The header containing the headset icon and "ارتباط با پشتیبانی" was completely removed here. */}
 
         <div className="flex-1 overflow-y-auto p-6 sm:p-8 flex flex-col gap-4 custom-scrollbar bg-white dark:bg-[#1A110F]">
           {isLoading ? (
@@ -248,7 +238,7 @@ export default function SupportPage() {
           ) : (
             messages.map((msg, idx) => {
               
-              // 🚀 FIX: We now compare the message sender against the true User ID we extracted from the Conversation
+              // Compare the message sender against the true User ID we extracted from the Conversation
               const rawSenderId = String(msg.senderId ?? msg.SenderId ?? "");
               
               // If it matches your User ID, it goes to the Right. Otherwise, it is the Admin and goes Left.
