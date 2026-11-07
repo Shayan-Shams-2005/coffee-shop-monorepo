@@ -5,7 +5,7 @@ import { AdBanners } from "../../components/home/AdBanners";
 import { CategoryGrid } from "../../components/home/CategoryGrid";
 import { NewestProducts } from "../../components/home/newest-products/NewestProducts";
 import { Bestsellers } from "../../components/home/best-sellers/BestSellers";
-import { PopularBrands } from "../../components/home/PopularBrands";
+import { PopularBrands } from "../../components/brands/PopularBrands";
 
 // 🚀 ایمپورت دیتای استاتیک
 import {
