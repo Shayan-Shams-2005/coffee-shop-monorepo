@@ -18,6 +18,14 @@ export function BannerSection({ sectionId, banners, onAdd, onEdit, onDelete }: B
   const sectionBanners = banners.filter(b => b.section === sectionId);
   const isFull = sectionBanners.length >= config.max;
 
+  // Determine grid layout based on section
+  let gridCols = "grid-cols-1 md:grid-cols-2 lg:grid-cols-4";
+  if (sectionId === "above_header" || sectionId === "search_menu") {
+    gridCols = "grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4"; // Adaptive for 1 item
+  } else if (sectionId === "main_slideshow") {
+    gridCols = "grid-cols-1 sm:grid-cols-2 lg:grid-cols-3"; // Bigger cards for slideshow
+  }
+
   return (
     <div className="bg-[#FCF9F5] dark:bg-[#1A0F0C] rounded-[2rem] border border-[#E3C3A4]/60 dark:border-[#3c2317] overflow-hidden shadow-[0_4px_20px_rgba(198,142,88,0.03)] dark:shadow-none mb-8">
       
@@ -30,7 +38,7 @@ export function BannerSection({ sectionId, banners, onAdd, onEdit, onDelete }: B
           <div>
             <h2 className="text-xl font-black text-[#4A3022] dark:text-[#EAE0D5]">{config.title}</h2>
             <p className="text-xs font-bold text-[#8C7A6B] mt-1">
-              ظرفیت: {toFarsiNumber(sectionBanners.length)} از {toFarsiNumber(config.max)} بنر
+              ظرفیت: {toFarsiNumber(sectionBanners.length)} از {toFarsiNumber(config.max)} بنر (تصویر یا GIF)
             </p>
           </div>
         </div>
@@ -56,7 +64,7 @@ export function BannerSection({ sectionId, banners, onAdd, onEdit, onDelete }: B
             هیچ بنری در این بخش ثبت نشده است.
           </div>
         ) : (
-          <div className={`grid gap-6 ${sectionId === 'above_header' ? 'grid-cols-1' : 'grid-cols-1 md:grid-cols-2 lg:grid-cols-4'}`}>
+          <div className={`grid gap-6 ${gridCols}`}>
             {sectionBanners.map(banner => (
               <BannerCard 
                 key={banner.id} 

@@ -7,7 +7,7 @@ import { BannerSection } from "./components/BannerSection";
 import { BannerModal } from "./components/BannerModal";
 
 export default function AdminBannersPage() {
-  const [banners, setBanners] = useState<AdBanner[]>([]); // 🚀 Empty array initially
+  const [banners, setBanners] = useState<AdBanner[]>([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingBanner, setEditingBanner] = useState<AdBanner | null>(null);
   const [activeSectionForNew, setActiveSectionForNew] = useState<SectionId | null>(null);
@@ -37,13 +37,12 @@ export default function AdminBannersPage() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-6 mb-8">
         <div>
-          {/* 🚀 Changed title text color to warm brown */}
           <h1 className="text-3xl font-black text-[#4A3022] dark:text-[#EAE0D5] tracking-tight">بنرهای تبلیغاتی</h1>
-          <p className="text-[#8C7A6B] dark:text-[#A1A1A1] font-medium mt-2">مدیریت تصاویر تبلیغاتی در بخش‌های مختلف فروشگاه (Image / GIF)</p>
+          <p className="text-[#8C7A6B] dark:text-[#A1A1A1] font-medium mt-2">مدیریت تصاویر و GIFهای تبلیغاتی در بخش‌های مختلف سایت</p>
         </div>
       </div>
 
-      {/* Render Sections */}
+      {/* Render Sections Dynamically Based on Config */}
       {(Object.keys(SECTION_CONFIG) as SectionId[]).map(sectionId => (
         <BannerSection 
           key={sectionId}

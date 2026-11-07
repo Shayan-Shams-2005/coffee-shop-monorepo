@@ -19,11 +19,16 @@ export function BannerCard({ banner, sectionId, onEdit, onDelete }: BannerCardPr
     setHasError(false);
   }, [banner.imageUrl]);
 
+  // Adjust aspect ratio based on banner placement
+  let imgContainerClass = "aspect-video"; // Default for grid items
+  if (sectionId === 'above_header') imgContainerClass = "h-20 sm:h-24";
+  if (sectionId === 'main_slideshow') imgContainerClass = "aspect-[21/9] sm:aspect-[2.5/1]"; // Wider ratio for slider
+
   return (
-    <div className="group relative rounded-2xl border border-[#E3C3A4]/60 dark:border-[#3c2317] overflow-hidden bg-white dark:bg-[#231511] transition-all hover:border-[#C68E58]/70 hover:shadow-[0_4px_20px_rgba(198,142,88,0.1)]">
+    <div className="group relative rounded-2xl border border-[#E3C3A4]/60 dark:border-[#3c2317] overflow-hidden bg-white dark:bg-[#231511] transition-all hover:border-[#C68E58]/70 hover:shadow-[0_4px_20px_rgba(198,142,88,0.1)] flex flex-col">
       
       {/* Image Thumbnail */}
-      <div className={`relative overflow-hidden ${sectionId === 'above_header' ? 'h-24' : 'aspect-video'}`}>
+      <div className={`relative overflow-hidden w-full ${imgContainerClass}`}>
         {!banner.imageUrl || hasError ? (
           <div className="w-full h-full flex flex-col items-center justify-center bg-[#F5EFE6]/50 dark:bg-[#1A0F0C]">
             <ImageIcon className="w-6 h-6 text-[#8C7A6B] dark:text-[#6A5A4F] mb-1" />
@@ -56,7 +61,7 @@ export function BannerCard({ banner, sectionId, onEdit, onDelete }: BannerCardPr
       </div>
 
       {/* Banner Details */}
-      <div className="p-4 border-t border-[#E3C3A4]/60 dark:border-[#3c2317]">
+      <div className="p-4 border-t border-[#E3C3A4]/60 dark:border-[#3c2317] flex-1 flex flex-col justify-end">
         <h3 className="font-bold text-sm text-[#4A3022] dark:text-white truncate mb-2" title={banner.alt}>
           {banner.alt || "بدون عنوان جایگزین (Alt)"}
         </h3>
