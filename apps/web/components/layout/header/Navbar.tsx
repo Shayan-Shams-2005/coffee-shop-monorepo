@@ -1,12 +1,14 @@
+// components/layout/Navbar.tsx
 "use client";
 
 import Link from "next/link";
-import { Search, Coffee, Percent } from "lucide-react";
+import { Coffee, Percent } from "lucide-react";
 import { siteConfig } from "../../../config/site";
 import { MegaMenu } from "./MegaMenu";
 import { CartButton } from "./CartButton";
 import { AuthButton } from "./AuthButton";
 import { ThemeCoffeeToggle } from "../../../components/ThemeCoffeeToggle";
+import { SearchDropdown } from "../../search/SearchDropdown"; // 🚀 Import the Dropdown
 
 export function Navbar() {
   return (
@@ -14,11 +16,9 @@ export function Navbar() {
       <header className="fixed top-0 left-0 right-0 z-[100] w-full bg-[#FCF9F5]/95 dark:bg-[#1A1412]/95 backdrop-blur-md border-b border-[#E3C3A4]/30 shadow-sm transition-all duration-300">
         <div className="container mx-auto px-2 sm:px-4 h-20 flex items-center justify-between">
           
-          {/* ================= سمت راست (منوها) ================= */}
-          {/* 🚀 FIXED: پیچیدن در flex-1 برای جدا کردن کامل از مرکز */}
+          {/* ================= Right (Menus) ================= */}
           <div className="flex-1 flex items-center justify-start gap-2 xl:gap-5 h-full overflow-visible">
             <MegaMenu />
-            {/* 🚀 FIXED: کوچکتر کردن فونت در مانیتورهای معمولی (text-[11px]) تا جا برای ۵ دکمه باز شود */}
             <nav className="hidden lg:flex items-center gap-2 xl:gap-4 text-[#3D2616] dark:text-[#E3C3A4] font-medium text-[11px] xl:text-[14px] whitespace-nowrap">
               {siteConfig.navLinks.map((link) => (
                 <Link
@@ -37,8 +37,7 @@ export function Navbar() {
             </nav>
           </div>
 
-          {/* ================= وسط (لوگو) ================= */}
-          {/* 🚀 FIXED: حذف absolute! حالا لوگو در جریان عادی صفحه قرار دارد و هرگز روی منوها نمی‌افتد */}
+          {/* ================= Center (Logo) ================= */}
           <div className="shrink-0 flex justify-center px-2">
             <Link
               href="/"
@@ -51,17 +50,12 @@ export function Navbar() {
             </Link>
           </div>
 
-          {/* ================= سمت چپ (ابزارها) ================= */}
-          {/* 🚀 FIXED: پیچیدن در flex-1 با justify-end برای حفظ تقارن با سمت راست */}
+          {/* ================= Left (Tools) ================= */}
           <div className="flex-1 flex items-center justify-end gap-2 sm:gap-3 text-[#2C1E16] dark:text-white">
             <ThemeCoffeeToggle />
 
-            <button
-              className="p-1.5 sm:p-2 hover:bg-[#E3C3A4]/20 rounded-full transition-colors hidden sm:block"
-              aria-label="جستجو"
-            >
-              <Search className="w-5 h-5 sm:w-6 sm:h-6" />
-            </button>
+            {/* 🚀 Replace the simple button with the SearchDropdown */}
+            <SearchDropdown />
 
             <AuthButton />
 
