@@ -1,3 +1,4 @@
+// components/product-page/RelatedProducts/RelatedProductCard.tsx
 "use client";
 
 import { useState, useEffect } from "react";
@@ -8,7 +9,6 @@ import { CarouselCartButton } from "../../ui/CarouselCartButton";
 
 interface RelatedProductCardProps {
   product: any;
-  index: number;
 }
 
 const formatPrice = (price: number) => price.toLocaleString("fa-IR");
@@ -17,12 +17,9 @@ const toFarsiNumber = (num: number | string) => {
   return num.toString().replace(/\d/g, (x) => farsiDigits[parseInt(x)] || x);
 };
 
-export function RelatedProductCard({
-  product,
-  index,
-}: RelatedProductCardProps) {
-  const folderNumber = (index % 5) + 1;
-  const imagePath = `/p${folderNumber}/1.jpg`;
+export function RelatedProductCard({ product }: RelatedProductCardProps) {
+  // 🚀 FIX: Map to the real backend image
+  const imagePath = product.image || "/placeholder.png";
 
   const [timeLeft, setTimeLeft] = useState(4 * 3600 + 59 * 60 + 46);
 
@@ -71,7 +68,6 @@ export function RelatedProductCard({
           {product.discount > 0 && (
             <div className="flex items-center justify-between w-full mb-1.5">
               {product.hasTimer ? (
-                // 🚀 FIXED: Styled the timer with a hollow background, outlined icon, and dimmed colons[cite: 12]
                 <div
                   className="flex items-center gap-1.5 border border-[#F0EBE1] dark:border-[#3A221C] bg-white dark:bg-[#1A110F] px-2 py-0.5 rounded-[8px] transition-colors"
                   dir="ltr"
@@ -97,7 +93,6 @@ export function RelatedProductCard({
                 <div></div>
               )}
 
-              {/* 🚀 FIXED: Set direction to LTR to visually enforce [Initial Price] [Discount Badge] order[cite: 11] */}
               <div className="flex items-center gap-1.5" dir="ltr">
                 <span className="text-[11px] text-[#A1A1A1] dark:text-[#8C7A6B] line-through font-bold pt-0.5 transition-colors">
                   {formatPrice(product.oldPrice)}

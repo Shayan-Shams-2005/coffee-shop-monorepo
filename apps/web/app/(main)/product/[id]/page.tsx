@@ -14,18 +14,9 @@ import { RelatedProductsSlider } from "../../../../components/product-page/Relat
 import { ProductDetails } from "../../../../components/product-page/ProductDetails";
 import { ProductOverview } from "../../../../components/product-page/ProductOverview";
 import { ProductOrderCard } from "../../../../components/product-page/ProductOrderCard";
+import { ProductApi } from "../../../../components/product-page/RelatedProducts/api"; // 🚀 Import the new API
 
 const API_BASE_URL = (process.env.NEXT_PUBLIC_API_URL || "http://localhost:5103").replace(/\/$/, "");
-
-const getImageUrl = (path: string) => {
-  if (!path) return "";
-  let cleaned = path.replace(/\\/g, '/');
-  if (/^(https?:\/\/|data:image|blob:)/i.test(cleaned)) return cleaned;
-  cleaned = cleaned.replace(/^file:\/\/\//i, '').replace(/^[a-zA-Z]:\//i, '/');
-  const uploadFolderMatch = cleaned.match(/(\/uploads\/|\/images\/|\/Categories\/|\/Brands\/).*/i);
-  if (uploadFolderMatch) cleaned = uploadFolderMatch[0];
-  return cleaned.startsWith("/") ? `${API_BASE_URL}${cleaned}` : `${API_BASE_URL}/${cleaned}`;
-};
 
 export default function ProductPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
@@ -59,18 +50,16 @@ export default function ProductPage({ params }: { params: Promise<{ id: string }
         }
         const pData = await prodRes.json();
 
-        // 🚀 FIX 1: Use the correct Swagger endpoint for fetching reviews
         const revRes = await fetch(`${API_BASE_URL}/api/Reviews/GetByProduct?productId=${id}`).catch(() => null);
         
         let rData = [];
         if (revRes?.ok) {
           const rawRevData = await revRes.json();
-          // Sometimes APIs return { items: [...] } or just the array directly
           rData = Array.isArray(rawRevData) ? rawRevData : (rawRevData.items || []);
         }
 
-        const allRes = await fetch(`${API_BASE_URL}/api/Product/GetAll`).catch(() => null);
-        const allData = allRes?.ok ? await allRes.json() : [];
+        // 🚀 FIX: Use the specific similar products endpoint instead of fetching ALL products
+        const similarData = await ProductApi.getSimilarProducts(id, 8).catch(() => []);
 
         const basePrice = Number(pData.price || pData.originalPrice || 0);
         const salePrice = Number(pData.newPrice || pData.salePrice || 0);
@@ -78,8 +67,8 @@ export default function ProductPage({ params }: { params: Promise<{ id: string }
 
         const rawImages = pData.images || [];
         const images = rawImages.length > 0 
-          ? rawImages.map((img: any) => getImageUrl(img.imageUrl || img.ImageUrl)) 
-          : ["/p1/1.jpg"];
+          ? rawImages.map((img: any) => ProductApi.getImageUrl(img.imageUrl || img.ImageUrl)) 
+          : ["/placeholder.png"];
 
         let hoursLeft = 0;
         if (isDiscounted && pData.offerEndDate) {
@@ -145,7 +134,6 @@ export default function ProductPage({ params }: { params: Promise<{ id: string }
         setSelectedGrind(grinds[0] || ""); 
         setVariants(parsedVariants);
 
-        // 🚀 FIX 2: Apply the C# field name mappings (reviewerName, productReviewId) 
         const formattedReviews = rData
           .filter((r: any) => r.isApproved !== false) 
           .map((r: any) => ({
@@ -154,7 +142,7 @@ export default function ProductPage({ params }: { params: Promise<{ id: string }
             date: r.createdAt || r.date || new Date().toISOString(),
             rating: r.rating || r.Rating || 5,
             text: r.comment || r.text || r.Comment || "",
-            isBuyer: true, // You can make this dynamic if your API sends a flag
+            isBuyer: true,
             likes: r.likes || 0,
             dislikes: r.dislikes || 0,
             adminReply: r.adminReply || r.AdminReply
@@ -165,14 +153,19 @@ export default function ProductPage({ params }: { params: Promise<{ id: string }
           formattedProduct.rating = Number((sum / formattedReviews.length).toFixed(1));
         }
 
-        const rawAll = Array.isArray(allData) ? allData : (allData.items || []);
-        const formattedRelated = rawAll
+        // 🚀 FIX: Formatting the similar products and extracting their real images
+        const formattedRelated = similarData
           .filter((p: any) => (p.productId || p.id) !== formattedProduct.id)
-          .slice(0, 6)
           .map((p: any) => {
              const pBase = Number(p.price || p.originalPrice || p.basePrice || 0);
              const pSale = Number(p.newPrice || p.salePrice || 0);
              const pDisc = (p.hasOffer || p.HasOffer) && pSale > 0 && pSale < pBase;
+             
+             // Extract main image
+             const pRawImages = p.images || p.Images || [];
+             const pMainImg = pRawImages.find((img: any) => img.isMain || img.IsMain) || pRawImages[0];
+             const imageUrl = pMainImg ? ProductApi.getImageUrl(pMainImg.imageUrl || pMainImg.ImageUrl) : "/placeholder.png";
+
              return {
                  id: p.productId || p.id,
                  name: p.productName || p.name,
@@ -180,6 +173,7 @@ export default function ProductPage({ params }: { params: Promise<{ id: string }
                  oldPrice: pDisc ? pBase : 0,
                  discount: pDisc ? Math.round(((pBase - pSale) / pBase) * 100) : 0,
                  hasTimer: pDisc && p.offerEndDate,
+                 image: imageUrl, // Real image
              };
           });
 
