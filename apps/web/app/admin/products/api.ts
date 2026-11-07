@@ -1,11 +1,11 @@
-// مسیر دقیق: app/admin/products/api.ts
+// مسیر: app/admin/products/api.ts
 
 import { AuthApi } from "../../login/api"; 
 
 const API_BASE_URL = (process.env.NEXT_PUBLIC_API_URL || "http://localhost:5103").replace(/\/$/, "");
 
 // ==========================================
-// 🚀 Types (منطبق با DTOهای بک‌اند)
+// 🚀 Types 
 // ==========================================
 export interface ProductUpdateData {
   ProductName: string;
@@ -72,7 +72,7 @@ const fetchWithAuth = async (url: string, options: RequestInit = {}) => {
 };
 
 // ============================================================================
-// APIs (🚀 اصلاح آدرس‌ها دقیقاً بر اساس روت‌های C#)
+// APIs (🚀 هماهنگ شده با اکشن‌های Swagger شما)
 // ============================================================================
 export const ProductApi = {
   getImageUrl: (url: string | null | undefined): string => {
@@ -92,20 +92,23 @@ export const ProductApi = {
     return cleaned.startsWith("/") ? `${API_BASE_URL}${cleaned}` : `${API_BASE_URL}/${cleaned}`;
   },
 
+  // 🚀 Added /GetAll
   getAll: async () => {
-    const res = await fetchWithAuth(`${API_BASE_URL}/api/Product`, { cache: 'no-store' });
+    const res = await fetchWithAuth(`${API_BASE_URL}/api/Product/GetAll`, { cache: 'no-store' });
     if (!res.ok) throw new Error("Failed to fetch products");
     return res.json();
   },
 
+  // 🚀 Added /GetById
   getById: async (id: number) => {
-    const res = await fetchWithAuth(`${API_BASE_URL}/api/Product/${id}`, { cache: 'no-store' });
+    const res = await fetchWithAuth(`${API_BASE_URL}/api/Product/GetById/${id}`, { cache: 'no-store' });
     if (!res.ok) throw new Error(`Failed to fetch product ${id}`);
     return res.json();
   },
 
+  // 🚀 Added /Create
   create: async (formData: FormData) => {
-    const res = await fetchWithAuth(`${API_BASE_URL}/api/Product`, {
+    const res = await fetchWithAuth(`${API_BASE_URL}/api/Product/Create`, {
       method: "POST",
       body: formData, 
     });
@@ -113,8 +116,9 @@ export const ProductApi = {
     return res.json();
   },
 
+  // 🚀 Added /Update
   update: async (id: number, data: ProductUpdateData) => {
-    const res = await fetchWithAuth(`${API_BASE_URL}/api/Product/${id}`, {
+    const res = await fetchWithAuth(`${API_BASE_URL}/api/Product/Update/${id}`, {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(data),
@@ -123,18 +127,20 @@ export const ProductApi = {
     return res.status === 204 ? true : res.json();
   },
 
+  // 🚀 Added /Delete
   delete: async (id: number) => {
-    const res = await fetchWithAuth(`${API_BASE_URL}/api/Product/${id}`, { method: "DELETE" });
+    const res = await fetchWithAuth(`${API_BASE_URL}/api/Product/Delete/${id}`, { method: "DELETE" });
     if (!res.ok) throw new Error(`Deletion failed for product ${id}`);
     return res.status === 204;
   },
 
+  // 🚀 Added /AddImage
   addImage: async (productId: number, file: File, isMain: boolean = false) => {
     const formData = new FormData();
     formData.append("File", file); 
     formData.append("isMain", isMain.toString());
 
-    const res = await fetchWithAuth(`${API_BASE_URL}/api/Product/${productId}/images`, {
+    const res = await fetchWithAuth(`${API_BASE_URL}/api/Product/AddImage/${productId}/images`, {
       method: "POST",
       body: formData,
     });
@@ -142,8 +148,9 @@ export const ProductApi = {
     return res.status === 204 ? true : res.json(); 
   },
 
+  // 🚀 Added /SetSpecifications
   setSpecifications: async (id: number, specs: SpecificationPayload[]) => {
-    const res = await fetchWithAuth(`${API_BASE_URL}/api/Product/${id}/specifications`, {
+    const res = await fetchWithAuth(`${API_BASE_URL}/api/Product/SetSpecifications/${id}/specifications`, {
       method: "PUT", 
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(specs), 
@@ -152,8 +159,9 @@ export const ProductApi = {
     return true;
   },
 
+  // 🚀 Added /SetAttributes
   setAttributes: async (id: number, attributesPayload: AttributePayload) => {
-    const res = await fetchWithAuth(`${API_BASE_URL}/api/Product/${id}/attributes`, {
+    const res = await fetchWithAuth(`${API_BASE_URL}/api/Product/SetAttributes/${id}/attributes`, {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(attributesPayload),
@@ -165,7 +173,7 @@ export const ProductApi = {
 
 export const ProductVariantApi = {
   create: async (productId: number, variantData: VariantPayload) => {
-    const res = await fetchWithAuth(`${API_BASE_URL}/api/ProductVariant/${productId}`, {
+    const res = await fetchWithAuth(`${API_BASE_URL}/api/ProductVariant/Create/${productId}`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(variantData),
@@ -175,7 +183,7 @@ export const ProductVariantApi = {
   },
 
   update: async (productId: number, variantId: number, variantData: VariantPayload) => {
-    const res = await fetchWithAuth(`${API_BASE_URL}/api/ProductVariant/${productId}/${variantId}`, {
+    const res = await fetchWithAuth(`${API_BASE_URL}/api/ProductVariant/Update/${productId}/${variantId}`, {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(variantData),
@@ -185,7 +193,7 @@ export const ProductVariantApi = {
   },
 
   delete: async (productId: number, variantId: number) => {
-    const res = await fetchWithAuth(`${API_BASE_URL}/api/ProductVariant/${productId}/${variantId}`, {
+    const res = await fetchWithAuth(`${API_BASE_URL}/api/ProductVariant/Delete/${productId}/${variantId}`, {
       method: "DELETE",
     });
     if (!res.ok) throw new Error("Failed to delete variant");
@@ -194,32 +202,36 @@ export const ProductVariantApi = {
 };
 
 export const CategoryApi = {
+  // 🚀 Added /GetAll
   getAll: async () => {
-    const res = await fetchWithAuth(`${API_BASE_URL}/api/Category`, { cache: 'no-store' });
+    const res = await fetchWithAuth(`${API_BASE_URL}/api/Category/GetAll`, { cache: 'no-store' });
     if (!res.ok) throw new Error("Failed to fetch categories");
     return res.json();
   },
+  // 🚀 Added /Create
   create: async (name: string) => {
     const formData = new FormData();
     formData.append("CategoryName", name); 
     formData.append("File", createDummyImageFile());
-    const res = await fetchWithAuth(`${API_BASE_URL}/api/Category`, { method: "POST", body: formData });
+    const res = await fetchWithAuth(`${API_BASE_URL}/api/Category/Create`, { method: "POST", body: formData });
     if (!res.ok) throw new Error(await res.text());
     return res.json();
   }
 };
 
 export const BrandApi = {
+  // 🚀 Added /GetAll
   getAll: async () => {
-    const res = await fetchWithAuth(`${API_BASE_URL}/api/Brand`, { cache: 'no-store' });
+    const res = await fetchWithAuth(`${API_BASE_URL}/api/Brand/GetAll`, { cache: 'no-store' });
     if (!res.ok) throw new Error("Failed to fetch brands");
     return res.json();
   },
+  // 🚀 Added /Create
   create: async (name: string) => {
     const formData = new FormData();
     formData.append("BrandName", name);
     formData.append("File", createDummyImageFile());
-    const res = await fetchWithAuth(`${API_BASE_URL}/api/Brand`, { method: "POST", body: formData });
+    const res = await fetchWithAuth(`${API_BASE_URL}/api/Brand/Create`, { method: "POST", body: formData });
     if (!res.ok) throw new Error(await res.text());
     return res.json();
   }
