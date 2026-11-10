@@ -5,6 +5,7 @@ const nextConfig: NextConfig = {
     ignoreBuildErrors: true,
   },
   images: {
+    dangerouslyAllowLocalIP: true, // 🚀 FIX: Allows Next.js to process images resolved to private IPs
     remotePatterns: [
       {
         protocol: 'https',
@@ -20,8 +21,12 @@ const nextConfig: NextConfig = {
       },
       {
         protocol: 'https',
-        hostname: 'via.placeholder.com', // 🚀 FIX: Allowed the placeholder image domain
+        hostname: 'via.placeholder.com',
       },
+      {
+        protocol: 'https',
+        hostname: 'images.unsplash.com',
+      }
     ],
   },
 };
