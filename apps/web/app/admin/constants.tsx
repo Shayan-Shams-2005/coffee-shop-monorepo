@@ -3,7 +3,9 @@ import {
   Users, ShoppingBag, DollarSign, Package, 
   Layers, Tag, Image as ImageIcon,
   Clock, CheckCircle, RotateCcw,
-  Bell, MessageSquare, TicketPercent
+  Bell, MessageSquare, TicketPercent,
+  AlignRight,
+  MessageCircleQuestion // 🚀 Imported FAQ icon
 } from "lucide-react";
 
 export interface DashboardStat {
@@ -86,6 +88,17 @@ export const QUICK_LINKS_DATA: QuickLinkItem[] = [
     title: "کدهای تخفیف", desc: "ساخت و مدیریت درصدهای تخفیف", href: "/admin/coupons", icon: TicketPercent, 
     accent: "text-pink-600 dark:text-pink-500", bg: "bg-pink-500/15 dark:bg-pink-500/10", 
     hover: "group-hover:bg-pink-500 group-hover:text-white dark:group-hover:bg-pink-500 dark:group-hover:text-[#1A110F] group-hover:shadow-lg group-hover:shadow-pink-500/30" 
+  },
+  { 
+    title: "تنظیمات فوتر", desc: "توضیحات، تماس و شبکه‌های اجتماعی", href: "/admin/settings/footer", icon: AlignRight, 
+    accent: "text-[#C68E58] dark:text-[#EAE0D5]", bg: "bg-[#C68E58]/10 dark:bg-[#7D4F35]/20", 
+    hover: "group-hover:bg-[#C68E58] group-hover:text-white dark:group-hover:bg-[#C68E58] dark:group-hover:text-[#1A110F] group-hover:shadow-lg group-hover:shadow-[#C68E58]/30" 
+  },
+  // 🚀 Added FAQ settings button
+  { 
+    title: "سوالات متداول (FAQ)", desc: "مدیریت گروه‌ها و پرسش و پاسخ‌ها", href: "/admin/settings/faq", icon: MessageCircleQuestion, 
+    accent: "text-[#C68E58] dark:text-[#EAE0D5]", bg: "bg-[#C68E58]/10 dark:bg-[#7D4F35]/20", 
+    hover: "group-hover:bg-[#C68E58] group-hover:text-white dark:group-hover:bg-[#C68E58] dark:group-hover:text-[#1A110F] group-hover:shadow-lg group-hover:shadow-[#C68E58]/30" 
   },
 ];
 
