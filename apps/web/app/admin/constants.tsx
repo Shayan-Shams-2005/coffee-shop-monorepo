@@ -5,7 +5,8 @@ import {
   Clock, CheckCircle, RotateCcw,
   Bell, MessageSquare, TicketPercent,
   AlignRight,
-  MessageCircleQuestion // 🚀 Imported FAQ icon
+  MessageCircleQuestion,
+  Scale // 🚀 Imported Scale icon for Terms & Conditions
 } from "lucide-react";
 
 export interface DashboardStat {
@@ -94,9 +95,14 @@ export const QUICK_LINKS_DATA: QuickLinkItem[] = [
     accent: "text-[#C68E58] dark:text-[#EAE0D5]", bg: "bg-[#C68E58]/10 dark:bg-[#7D4F35]/20", 
     hover: "group-hover:bg-[#C68E58] group-hover:text-white dark:group-hover:bg-[#C68E58] dark:group-hover:text-[#1A110F] group-hover:shadow-lg group-hover:shadow-[#C68E58]/30" 
   },
-  // 🚀 Added FAQ settings button
   { 
     title: "سوالات متداول (FAQ)", desc: "مدیریت گروه‌ها و پرسش و پاسخ‌ها", href: "/admin/settings/faq", icon: MessageCircleQuestion, 
+    accent: "text-[#C68E58] dark:text-[#EAE0D5]", bg: "bg-[#C68E58]/10 dark:bg-[#7D4F35]/20", 
+    hover: "group-hover:bg-[#C68E58] group-hover:text-white dark:group-hover:bg-[#C68E58] dark:group-hover:text-[#1A110F] group-hover:shadow-lg group-hover:shadow-[#C68E58]/30" 
+  },
+  // 🚀 Added Terms and Conditions settings button
+  { 
+    title: "شرایط و قوانین", desc: "ویرایش بندها و قوانین سایت", href: "/admin/settings/terms", icon: Scale, 
     accent: "text-[#C68E58] dark:text-[#EAE0D5]", bg: "bg-[#C68E58]/10 dark:bg-[#7D4F35]/20", 
     hover: "group-hover:bg-[#C68E58] group-hover:text-white dark:group-hover:bg-[#C68E58] dark:group-hover:text-[#1A110F] group-hover:shadow-lg group-hover:shadow-[#C68E58]/30" 
   },

@@ -6,7 +6,6 @@ import {
   Shield, 
   ShoppingBag, 
   CreditCard, 
-  AlertCircle,
   Clock,
   Headset
 } from "lucide-react";
@@ -104,17 +103,6 @@ export default function TermsPage() {
               </ul>
             </div>
           ))}
-
-          {/* Special Notice */}
-          <div className="bg-[#D95D39]/5 dark:bg-[#D95D39]/10 border border-[#D95D39]/20 rounded-[2.5rem] p-8 flex gap-4 mt-4">
-            <AlertCircle className="w-8 h-8 text-[#D95D39] shrink-0" />
-            <div>
-              <h3 className="font-black text-[#D95D39] mb-2 text-lg">ارتباطات الکترونیکی</h3>
-              <p className="text-sm font-medium text-[#4A3022] dark:text-[#EAE0D5] leading-relaxed text-justify opacity-80">
-                هنگامی که شما از سرویس‌ها و خدمات نئو کافه استفاده می‌کنید، سفارش اینترنتی خود را ثبت یا خرید می‌کنید و یا به ما ایمیل می‌زنید، این ارتباطات به صورت الکترونیکی انجام می‌شود و در صورتی که درخواست شما با رعایت کلیه اصول و رویه‌ها باشد، شما موافقت می‌کنید که نئو کافه به صورت الکترونیکی (از طریق پست الکترونیکی، سرویس پیام کوتاه و سایر سرویس‌های الکترونیکی) به درخواست شما پاسخ دهد.
-              </p>
-            </div>
-          </div>
         </div>
 
         {/* Support Call-to-action */}
