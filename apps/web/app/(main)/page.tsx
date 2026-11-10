@@ -7,7 +7,9 @@ import { NewestProducts } from "../../components/home/newest-products/NewestProd
 import { Bestsellers } from "../../components/home/best-sellers/BestSellers";
 import { PopularBrands } from "../../components/brands/PopularBrands";
 
-// 🚀 ایمپورت دیتای استاتیک
+// 🚀 ایمپورت کامپوننت جدیدترین مقالات
+import { LatestBlogs } from "../../components/home/LatestBlogs";
+
 import {
   promoBanners4,
   promoBanners2,
@@ -17,10 +19,6 @@ import {
 export default function Home() {
   return (
     <main className="w-full flex flex-col items-center">
-      {/* 
-        رنگ پس‌زمینه bg-[#FDFCFB] حذف شد چون توسط globals.css مدیریت می‌شود.
-        عرض 1440 پیکسل برای یکپارچگی المان‌های صفحه اصلی حفظ شد.
-      */}
       <div className="w-full max-w-[1440px] mx-auto pb-20">
         <Hero />
         <QuickLinks />
@@ -35,8 +33,10 @@ export default function Home() {
 
         <Bestsellers />
         <PopularBrands />
-
+      
         <AdBanners banners={promoBanners3} />
+
+          <LatestBlogs />
       </div>
     </main>
   );
