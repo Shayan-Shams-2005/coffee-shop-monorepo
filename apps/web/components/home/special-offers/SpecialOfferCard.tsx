@@ -1,3 +1,4 @@
+// apps/web/components/home/SpecialOfferCard.tsx
 import Image from "next/image";
 import Link from "next/link";
 import { CarouselCartButton } from "../../ui/CarouselCartButton";
@@ -19,20 +20,20 @@ export function SpecialOfferCard({
   const imagePath = `/p${folderNumber}/1.jpg`;
 
   return (
-    <div className="w-[170px] sm:w-[200px] flex-shrink-0 flex flex-col snap-start bg-white dark:bg-[#1A110F] dark:border dark:border-[#3A221C] rounded-[20px] p-3 shadow-[0_4px_15px_rgba(0,0,0,0.04)] hover:shadow-[0_12px_25px_rgba(198,142,88,0.15)] dark:shadow-[0_8px_20px_rgba(0,0,0,0.4)] dark:hover:border-[#C68E58] transition-all duration-300 relative">
+    // 🚀 FIXED: Updated dark mode background to #231511 and hover to #2D1B15, matched borders and shadows exactly with BestsellerCard[cite: 13]
+    <div className="w-[170px] sm:w-[200px] flex-shrink-0 flex flex-col snap-start bg-white dark:bg-[#231511] rounded-[20px] p-3 shadow-[0_4px_15px_rgba(0,0,0,0.04)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.2)] border border-[#F5EFE6] dark:border-[#3c2317] hover:shadow-[0_12px_25px_rgba(198,142,88,0.12)] dark:hover:shadow-[0_15px_30px_rgba(198,142,88,0.15)] hover:border-[#E3C3A4] dark:hover:border-[#C68E58] dark:hover:bg-[#2D1B15] transition-all duration-300 group/card relative">
       <div className="absolute top-3 right-3 z-20 bg-gradient-to-r from-[#D95D39] to-[#C44536] text-white text-[10px] font-bold px-3 py-1 rounded-tl-xl rounded-br-xl shadow-md">
         فروش ویژه
       </div>
 
       <Link
         href={`/product/${product.id}`}
-        className="relative w-full aspect-square mb-3 bg-gradient-to-br from-[#FFFDFB] to-[#FCF9F5] dark:from-[#D4C5B0] dark:to-[#C6B59D] rounded-[14px] flex items-center justify-center overflow-hidden border border-[#F5EFE6] dark:border-transparent group/card transition-colors"
+        className="relative w-full aspect-square mb-3 bg-gradient-to-br from-[#FFFDFB] to-[#FCF9F5] dark:from-[#D4C5B0] dark:to-[#C6B59D] rounded-[14px] flex items-center justify-center overflow-hidden border border-[#F5EFE6] dark:border-transparent transition-colors"
       >
         <Image
           src={imagePath}
           alt={product.name}
           fill
-          // 🚀 FIXED: The sizes prop is properly set here to clear the Next.js warning
           sizes="(max-width: 640px) 170px, 200px"
           className="object-contain p-3.5 mix-blend-multiply group-hover/card:scale-110 transition-transform duration-500 z-10"
         />
@@ -63,10 +64,11 @@ export function SpecialOfferCard({
             className="flex items-center justify-end gap-1.5 w-full"
             dir="rtl"
           >
-            <span className="text-[20px] sm:text-[24px] font-black text-[#2C1E16] dark:text-[#FFF8F0] tracking-tighter">
+            {/* 🚀 FIXED: Updated text colors for better readability on #231511 background[cite: 13] */}
+            <span className="text-[20px] sm:text-[24px] font-black text-[#2C1E16] dark:text-white tracking-tighter">
               {product.price.toLocaleString("fa-IR")}
             </span>
-            <span className="text-[10px] sm:text-[11px] text-[#717171] dark:text-[#C6B59D] font-bold pt-1">
+            <span className="text-[10px] sm:text-[11px] text-[#717171] dark:text-[#A1A1A1] font-bold pt-1">
               تومان
             </span>
           </div>

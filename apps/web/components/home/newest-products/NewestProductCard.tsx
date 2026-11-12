@@ -1,3 +1,4 @@
+// apps/web/components/home/NewestProductCard.tsx
 "use client";
 
 import { useState, useEffect } from "react";
@@ -63,7 +64,6 @@ export function NewestProductCard({ product }: NewestProductCardProps) {
 
   const rawEndDate = getBestDate(product);
 
-  // 🚀 FIXED: Real-time expiration tracker
   const [isOfferActive, setIsOfferActive] = useState(true);
 
   useEffect(() => {
@@ -79,18 +79,16 @@ export function NewestProductCard({ product }: NewestProductCardProps) {
   }, [rawEndDate]);
 
   const hasDiscountBase = !!product.salePrice && product.salePrice < product.originalPrice;
-  
-  // 🚀 FIXED: Only show the discount if it mathematically has a discount AND the timer hasn't expired
   const showDiscount = hasDiscountBase && (!rawEndDate || isOfferActive);
   
-  // 🚀 FIXED: Dynamically reverts to originalPrice if the offer has expired
   const currentPrice = showDiscount ? product.salePrice! : product.originalPrice;
   const discountPercent = showDiscount 
     ? Math.round(((product.originalPrice - product.salePrice!) / product.originalPrice) * 100) 
     : 0;
 
   return (
-    <div className="w-[170px] sm:w-[200px] flex-shrink-0 flex flex-col snap-start bg-white dark:bg-[#1A110F] rounded-[20px] p-3 shadow-[0_4px_15px_rgba(0,0,0,0.04)] dark:shadow-[0_8px_20px_rgba(0,0,0,0.4)] border border-[#F5EFE6] dark:border-[#3A221C] hover:shadow-[0_12px_25px_rgba(198,142,88,0.12)] hover:border-[#E3C3A4] dark:hover:border-[#C68E58] transition-all duration-300 group/card relative">
+    // 🚀 FIXED: Updated dark mode background to #231511 and hover to #2D1B15, matched borders and shadows exactly with BestsellerCard
+    <div className="w-[170px] sm:w-[200px] flex-shrink-0 flex flex-col snap-start bg-white dark:bg-[#231511] rounded-[20px] p-3 shadow-[0_4px_15px_rgba(0,0,0,0.04)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.2)] border border-[#F5EFE6] dark:border-[#3c2317] hover:shadow-[0_12px_25px_rgba(198,142,88,0.12)] dark:hover:shadow-[0_15px_30px_rgba(198,142,88,0.15)] hover:border-[#E3C3A4] dark:hover:border-[#C68E58] dark:hover:bg-[#2D1B15] transition-all duration-300 group/card relative">
       
       <Link href={`/product/${product.productId}`} className="relative w-full aspect-square mb-3 bg-gradient-to-br from-[#FFFDFB] to-[#FCF9F5] dark:from-[#D4C5B0] dark:to-[#C6B59D] rounded-[14px] flex items-center justify-center overflow-hidden border border-[#F5EFE6] dark:border-transparent transition-colors">
         <Image 
@@ -130,10 +128,11 @@ export function NewestProductCard({ product }: NewestProductCardProps) {
 
           {/* Bottom Row: Current Price aligned left */}
           <div className="flex items-center justify-start gap-1 w-full" dir="ltr">
-            <span className="text-[20px] sm:text-[24px] font-black text-[#2C1E16] dark:text-[#FFF8F0] tracking-tighter">
+            {/* 🚀 FIXED: Updated text colors for better readability on #231511 background */}
+            <span className="text-[20px] sm:text-[24px] font-black text-[#2C1E16] dark:text-white tracking-tighter">
               {formatPrice(currentPrice)}
             </span>
-            <span className="text-[10px] sm:text-[11px] text-[#717171] dark:text-[#C6B59D] font-bold pt-1">
+            <span className="text-[10px] sm:text-[11px] text-[#717171] dark:text-[#A1A1A1] font-bold pt-1">
               تومان
             </span>
           </div>

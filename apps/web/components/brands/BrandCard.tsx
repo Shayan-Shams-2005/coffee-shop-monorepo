@@ -10,36 +10,30 @@ export function BrandCard({ brand }: BrandCardProps) {
   return (
     <Link
       href={`/brand/${brand.id}`}
-      className="flex flex-col items-center flex-shrink-0 snap-start group animate-in fade-in zoom-in-95 duration-500"
+      className="flex-shrink-0 snap-start group animate-in fade-in zoom-in-95 duration-500 block"
     >
-      <div className="w-[130px] h-[130px] bg-white dark:bg-[#1A110F] border border-[#E3C3A4] dark:border-[#3A221C] rounded-[24px] flex flex-col items-center justify-center mb-4 group-hover:border-[#C68E58] dark:group-hover:border-[#C68E58] group-hover:shadow-[0_12px_25px_rgba(198,142,88,0.12)] dark:hover:shadow-[0_8px_20px_rgba(198,142,88,0.1)] transition-all duration-300 relative overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-br from-[#FFFDFB] to-[#FCF9F5] dark:from-[#231511] dark:to-[#1A110F] z-0 transition-colors"></div>
-
-        <div className="relative z-10 flex flex-col items-center justify-center w-full h-full p-4">
+      <div className="w-[140px] h-[140px] sm:w-[160px] sm:h-[160px] bg-white dark:bg-transparent border border-[#F5EFE6] dark:border-[#3c2317] rounded-[28px] sm:rounded-[36px] flex flex-col items-center justify-between p-4 group-hover:border-[#E3C3A4] dark:group-hover:border-[#6A422D] group-hover:shadow-[0_8px_25px_rgba(198,142,88,0.1)] dark:hover:shadow-[0_8px_25px_rgba(0,0,0,0.4)] dark:hover:bg-[#1A0F0C]/50 transition-all duration-300 relative overflow-hidden">
+        
+        {/* تصویر یا حرف اول برند */}
+        <div className="relative w-full flex-1 flex items-center justify-center mt-2 overflow-hidden">
           {brand.image ? (
-            // Render actual brand image from the API
             <img 
               src={brand.image} 
               alt={brand.name} 
-              className="w-full h-full object-contain filter group-hover:brightness-110 transition-all duration-300"
+              className="max-w-[80%] max-h-[80%] object-contain filter group-hover:scale-110 transition-transform duration-500"
             />
           ) : (
-            // Fallback to initial letter if no image was uploaded
-            <>
-              <span className="text-[36px] font-black text-[#C68E58]/30 dark:text-[#C68E58]/20 group-hover:text-[#C68E58] dark:group-hover:text-[#FFD7BA] transition-colors duration-300 mb-1 leading-none uppercase">
-                {brand.name.charAt(0)}
-              </span>
-              <span className="text-[#8C7A6B] dark:text-[#8C7A6B] text-[10px] font-black tracking-[0.2em] uppercase group-hover:text-[#4A3022] dark:group-hover:text-[#EAE0D5] transition-colors duration-300 truncate w-full text-center">
-                {brand.name}
-              </span>
-            </>
+            <span className="text-[40px] font-black text-[#C68E58]/30 dark:text-[#E3C3A4]/10 group-hover:text-[#C68E58] dark:group-hover:text-[#E3C3A4]/30 transition-colors duration-300 uppercase">
+              {brand.name.charAt(0)}
+            </span>
           )}
         </div>
-      </div>
 
-      <span className="text-[14px] font-bold text-[#3D2616] dark:text-[#EAE0D5] group-hover:text-[#C68E58] dark:group-hover:text-[#FFD7BA] transition-colors truncate max-w-[130px]">
-        {brand.name}
-      </span>
+        {/* نام برند (اکنون داخل باکس قرار دارد) */}
+        <span className="text-[13px] sm:text-[14px] font-bold text-[#3D2616] dark:text-[#EAE0D5] group-hover:text-[#C68E58] dark:group-hover:text-[#FFD7BA] transition-colors truncate max-w-full pb-1 mt-1">
+          {brand.name}
+        </span>
+      </div>
     </Link>
   );
 }

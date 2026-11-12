@@ -1,3 +1,4 @@
+// apps/web/components/home/Bestsellers.tsx
 import { bestsellersData } from "../../../lib/mock/products";
 import { ProductCarousel } from "../../ui/ProductCarousel";
 import { BestsellerCard } from "./BestSellerCard";
@@ -7,7 +8,10 @@ export function Bestsellers() {
   const topBestsellers = bestsellersData.slice(0, 20);
 
   return (
-    <ProductCarousel title="پرفروش‌ترین محصولات" viewAllLink="/bestsellers">
+    // 🚀 We don't need to change anything here; the styling fixes are inside BestsellerCard!
+    
+
+<ProductCarousel title="پرفروش‌ترین محصولات" viewAllLink="/bestsellers">
       {topBestsellers.map((product, index) => (
         <BestsellerCard key={product.id} product={product} rank={index + 1} />
       ))}

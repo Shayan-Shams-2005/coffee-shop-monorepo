@@ -6,8 +6,6 @@ import { CategoryGrid } from "../../components/home/CategoryGrid";
 import { NewestProducts } from "../../components/home/newest-products/NewestProducts";
 import { Bestsellers } from "../../components/home/best-sellers/BestSellers";
 import { PopularBrands } from "../../components/brands/PopularBrands";
-
-// 🚀 ایمپورت کامپوننت جدیدترین مقالات
 import { LatestBlogs } from "../../components/home/LatestBlogs";
 
 import {
@@ -19,8 +17,14 @@ import {
 export default function Home() {
   return (
     <main className="w-full flex flex-col items-center">
-      <div className="w-full max-w-[1440px] mx-auto pb-20">
+      
+      {/* 🚀 FIXED: کامپوننت Hero از محدودیت ۱۴۴۰ پیکسل خارج شد تا ۱۰۰٪ عرض صفحه را بگیرد */}
+      <div className="w-full">
         <Hero />
+      </div>
+
+      {/* 🚀 بقیه سایت در محدودیت ۱۴۴۰ پیکسل باقی می‌ماند تا چیدمان به هم نریزد */}
+      <div className="w-full max-w-[1440px] mx-auto pb-20 px-4 md:px-6">
         <QuickLinks />
         <SpecialOffers />
 
@@ -36,7 +40,7 @@ export default function Home() {
       
         <AdBanners banners={promoBanners3} />
 
-          <LatestBlogs />
+        <LatestBlogs />
       </div>
     </main>
   );

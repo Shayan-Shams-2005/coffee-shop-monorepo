@@ -1,3 +1,4 @@
+// apps/web/components/home/SpecialOffersCarousel.tsx
 "use client";
 
 import { useRef, useState, useEffect } from "react";
@@ -11,9 +12,10 @@ export function SpecialOffersCarousel({
   children: React.ReactNode;
 }) {
   const scrollRef = useRef<HTMLDivElement>(null);
+  const isScrolling = useRef(false);
   const [isAtRight, setIsAtRight] = useState(true);
   const [isAtLeft, setIsAtLeft] = useState(false);
-  const [isMounted, setIsMounted] = useState(false); // 🚀 ADDED: Track client mounting
+  const [isMounted, setIsMounted] = useState(false);
 
   const handleScroll = () => {
     if (!scrollRef.current) return;
@@ -24,32 +26,62 @@ export function SpecialOffersCarousel({
   };
 
   useEffect(() => {
-    setIsMounted(true); // 🚀 FIXED: Tell React the client has mounted
+    setIsMounted(true);
     handleScroll();
     window.addEventListener("resize", handleScroll);
     return () => window.removeEventListener("resize", handleScroll);
   }, []);
 
   const scroll = (direction: "left" | "right") => {
-    if (scrollRef.current && scrollRef.current.firstElementChild) {
-      const container = scrollRef.current;
-      const card = container.firstElementChild as HTMLElement;
-      const style = window.getComputedStyle(container);
-      const gap = parseFloat(style.columnGap) || 8;
-      const cardWidth = card.offsetWidth + gap;
-      const currentScroll = Math.abs(container.scrollLeft);
-      const remainder = currentScroll % cardWidth;
+    const container = scrollRef.current;
+    if (!container || !container.firstElementChild || isScrolling.current) return;
 
-      let scrollAmount = cardWidth;
-      if (remainder > 5 && cardWidth - remainder > 5) {
-        scrollAmount =
-          direction === "right" ? remainder : cardWidth - remainder;
-      }
-      container.scrollBy({
-        left: direction === "left" ? -scrollAmount : scrollAmount,
-        behavior: "smooth",
-      });
+    isScrolling.current = true;
+    const card = container.firstElementChild as HTMLElement;
+    const style = window.getComputedStyle(container);
+    const gap = parseFloat(style.columnGap) || 8;
+    const cardWidth = card.offsetWidth + gap;
+
+    // 🚀 FIXED: Absolute coordinate calculation based on browser dimensions
+    const maxScroll = container.scrollWidth - container.clientWidth;
+    const currentAbs = Math.abs(container.scrollLeft);
+    
+    let targetAbs = currentAbs;
+    if (direction === "left") {
+      targetAbs = Math.ceil((currentAbs + 1) / cardWidth) * cardWidth;
+    } else {
+      targetAbs = Math.floor((currentAbs - 1) / cardWidth) * cardWidth;
     }
+
+    // 🚀 FIXED: The absolute clamp avoids overshooting at the end
+    targetAbs = Math.max(0, Math.min(targetAbs, maxScroll));
+    
+    const sign = container.scrollLeft > 0 ? 1 : -1;
+    const targetPos = targetAbs * sign;
+
+    container.style.scrollSnapType = "none";
+    const startPos = container.scrollLeft;
+    const duration = 400; 
+    const startTime = performance.now();
+
+    const animateScroll = (currentTime: number) => {
+      const elapsed = currentTime - startTime;
+      const progress = Math.min(elapsed / duration, 1);
+      
+      const ease = 1 - Math.pow(1 - progress, 3);
+
+      container.scrollLeft = startPos + (targetPos - startPos) * ease;
+
+      if (progress < 1) {
+        requestAnimationFrame(animateScroll);
+      } else {
+        container.style.scrollSnapType = "";
+        isScrolling.current = false;
+        handleScroll();
+      }
+    };
+
+    requestAnimationFrame(animateScroll);
   };
 
   return (
@@ -75,7 +107,6 @@ export function SpecialOffersCarousel({
             <div className="hidden md:flex items-center gap-2">
               <button
                 onClick={() => scroll("right")}
-                // 🚀 FIXED: Matches initial server state (true) until client mounts
                 disabled={!isMounted ? true : isAtRight} 
                 className={`w-9 h-9 rounded-full flex items-center justify-center transition-all border ${
                   (!isMounted ? true : isAtRight)
@@ -87,7 +118,6 @@ export function SpecialOffersCarousel({
               </button>
               <button
                 onClick={() => scroll("left")}
-                // 🚀 FIXED: Matches initial server state (false) until client mounts
                 disabled={!isMounted ? false : isAtLeft} 
                 className={`w-9 h-9 rounded-full flex items-center justify-center transition-all border ${
                   (!isMounted ? false : isAtLeft)
