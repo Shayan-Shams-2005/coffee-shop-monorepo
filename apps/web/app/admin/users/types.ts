@@ -2,35 +2,35 @@
 
 export interface UserDto {
   userId: number;
-  firstName: string | null;
-  lastName: string | null;
+  firstName?: string;
+  lastName?: string;
   phoneNumber: string;
-  profileUrl: string | null;
   role: number; // 0 = Customer, 1 = Admin
+  profileUrl?: string;
   isDeleted: boolean;
   createdAt: string;
+  updatedAt?: string;
+  deletedAt?: string;
 }
 
-export type UserRoleFilter = "customer" | "admin" | "all";
-export type UserStatusFilter = "active" | "banned" | "all";
+export type UserRoleFilter = "all" | "admin" | "customer";
+export type UserStatusFilter = "all" | "active" | "banned";
 
-export const toFarsiNumber = (num?: string | number): string => {
-  if (num === undefined || num === null) return "";
-  const farsiDigits = ['۰', '۱', '۲', '۳', '۴', '۵', '۶', '۷', '۸', '۹'];
-  
-  // Adding || "" guarantees to TypeScript that this will always return a string
-  return num.toString().replace(/\d/g, (x) => farsiDigits[parseInt(x)] || "");
+export const toFarsiNumber = (num: number | string | undefined) => {
+  if (num === undefined || num === null) return "۰";
+  const farsiDigits = ["۰", "۱", "۲", "۳", "۴", "۵", "۶", "۷", "۸", "۹"];
+  return num.toString().replace(/\d/g, (x) => farsiDigits[parseInt(x)] || x);
 };
 
-export const formatDate = (dateString?: string): string => {
+export const formatDate = (dateString: string) => {
   if (!dateString) return "-";
   try {
-    return new Date(dateString).toLocaleDateString('fa-IR', {
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric',
-    });
-  } catch (e) {
-    return "-";
+    return new Intl.DateTimeFormat("fa-IR", {
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+    }).format(new Date(dateString));
+  } catch {
+    return dateString;
   }
 };
