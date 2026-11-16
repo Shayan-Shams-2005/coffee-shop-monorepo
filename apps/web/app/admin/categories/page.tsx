@@ -1,8 +1,8 @@
 // app/admin/categories/page.tsx
 "use client";
 
-import { useState, useMemo, useEffect } from "react";
-import { Plus } from "lucide-react";
+import { useState, useMemo, useEffect, useRef } from "react";
+import { Plus, Loader2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { Category } from "./types";
 import { CategoryNode } from "./components/CategoryNode";
@@ -19,23 +19,29 @@ export default function AdminCategoriesPage() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingCategory, setEditingCategory] = useState<Category | null>(null);
 
+  // Pagination states
+  const [page, setPage] = useState(1);
+  const [hasMore, setHasMore] = useState(true);
+  const [isFetchingNextPage, setIsFetchingNextPage] = useState(false);
+  const PAGE_SIZE = 20;
+  const observerTarget = useRef<HTMLDivElement>(null);
+
   const mainCategories = useMemo(() => categories.filter(c => c.parentId === null), [categories]);
 
-  useEffect(() => {
-    fetchCategories();
-  }, []);
-
-  const fetchCategories = async () => {
+  const fetchCategories = async (currentPage: number, replace = false) => {
     try {
-      setIsLoading(true);
+      if (currentPage === 1) setIsLoading(true);
+      else setIsFetchingNextPage(true);
       
       const [categoriesData, productsData] = await Promise.all([
-        CategoryApi.getAll(),
-        ProductApi.getAll().catch(() => []) 
+        CategoryApi.getAll(currentPage, PAGE_SIZE),
+        ProductApi.getAll().catch(() => ({ items: [] })) 
       ]);
 
+      const rawCategories = Array.isArray(categoriesData) ? categoriesData : (categoriesData?.items || []);
+      const rawProducts = Array.isArray(productsData) ? productsData : (productsData?.items || []);
+
       const productCounts: Record<string, number> = {};
-      const rawProducts = Array.isArray(productsData) ? productsData : (productsData.items || []);
       
       rawProducts.forEach((p: any) => {
         const catId = p.categoryId || p.CategoryId;
@@ -44,7 +50,7 @@ export default function AdminCategoriesPage() {
         }
       });
       
-      const mappedCats: Category[] = categoriesData.map((c: any) => {
+      const mappedCats: Category[] = rawCategories.map((c: any) => {
         return {
           id: c.categoryId,
           name: c.categoryName,
@@ -54,11 +60,17 @@ export default function AdminCategoriesPage() {
         };
       });
       
-      setCategories(mappedCats);
+      setCategories(prev => {
+        if (replace) return mappedCats;
+        return [...prev, ...mappedCats];
+      });
       
-      if (mappedCats.length > 0) {
+      if (currentPage === 1 && mappedCats.length > 0 && expandedCats.length === 0) {
         setExpandedCats(mappedCats.filter(c => c.parentId === null).map(c => c.id));
       }
+
+      setHasMore(rawCategories.length === PAGE_SIZE);
+
     } catch (err: any) {
       console.error(err);
       if (err.message === "SESSION_EXPIRED") {
@@ -67,7 +79,35 @@ export default function AdminCategoriesPage() {
       }
     } finally {
       setIsLoading(false);
+      setIsFetchingNextPage(false);
     }
+  };
+
+  useEffect(() => {
+    fetchCategories(page, page === 1);
+  }, [page]);
+
+  // Infinite Scroll Observer
+  useEffect(() => {
+    const target = observerTarget.current;
+    if (!target) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0]?.isIntersecting && hasMore && !isLoading && !isFetchingNextPage) {
+          setPage((p) => p + 1);
+        }
+      },
+      { threshold: 0.1 }
+    );
+
+    observer.observe(target);
+    return () => { observer.unobserve(target); };
+  }, [hasMore, isLoading, isFetchingNextPage]);
+
+  const reloadData = () => {
+    setPage(1);
+    fetchCategories(1, true);
   };
 
   const toggleExpand = (id: number) => {
@@ -85,7 +125,7 @@ export default function AdminCategoriesPage() {
     if (confirm("آیا از حذف این دسته‌بندی اطمینان دارید؟")) {
       try {
         await CategoryApi.delete(id);
-        await fetchCategories(); 
+        reloadData(); 
       } catch (err: any) {
         console.error("خطای حذف از سمت سرور:", err);
         if (err.message === "SESSION_EXPIRED") {
@@ -108,7 +148,6 @@ export default function AdminCategoriesPage() {
       }
       
       if (data.file) {
-        // 🚀 FIXED: The key must match the backend exactly: "File"
         formData.append("File", data.file); 
       } else if (!editingCategory) {
         alert("آپلود تصویر برای ایجاد دسته‌بندی الزامی است.");
@@ -121,7 +160,7 @@ export default function AdminCategoriesPage() {
         await CategoryApi.create(formData);
       }
 
-      await fetchCategories(); 
+      reloadData(); 
       setIsModalOpen(false);
 
       if (data.parentId && !expandedCats.includes(data.parentId)) {
@@ -159,9 +198,10 @@ export default function AdminCategoriesPage() {
       </div>
 
       <div className="bg-[#FCF9F5] dark:bg-[#1A0F0C] rounded-[2rem] border border-[#E3C3A4]/60 dark:border-[#3c2317] overflow-hidden shadow-[0_4px_20px_rgba(198,142,88,0.03)] dark:shadow-none p-6">
-        {isLoading ? (
-          <div className="flex justify-center items-center h-32 text-[#8C7A6B] font-bold">
-            در حال دریافت اطلاعات از سرور...
+        {isLoading && page === 1 ? (
+          <div className="flex justify-center items-center h-32 text-[#8C7A6B] font-bold gap-3">
+             <Loader2 className="w-6 h-6 animate-spin text-[#C68E58]" />
+             در حال دریافت اطلاعات از سرور...
           </div>
         ) : (
           <div>
@@ -177,7 +217,17 @@ export default function AdminCategoriesPage() {
                   />
               </div>
             ))}
-            {mainCategories.length === 0 && (
+            
+            <div ref={observerTarget} className="w-full h-16 mt-4 flex flex-col items-center justify-center">
+              {isFetchingNextPage && (
+                <div className="flex items-center gap-2">
+                  <Loader2 className="w-5 h-5 text-[#C68E58] animate-spin" />
+                  <span className="text-xs font-bold text-[#8C7A6B] dark:text-[#A1A1A1]">بارگذاری بیشتر...</span>
+                </div>
+              )}
+            </div>
+
+            {categories.length === 0 && !isLoading && (
               <div className="text-center py-10 text-[#8C7A6B] dark:text-[#6A5A4F] font-bold">
                 هنوز هیچ دسته‌بندی در دیتابیس ثبت نشده است.
               </div>
