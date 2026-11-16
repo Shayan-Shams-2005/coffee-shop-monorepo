@@ -1,46 +1,43 @@
 // app/admin/products/edit/types.ts
 
-export interface KeyValueStr {
-  id?: number; 
+export interface OptionGroup {
+  name: string;
+  options: string[];
+}
+
+export interface ProductVariant {
+  combo: string;
+  price: number;
+  newPrice: number;
+  stock: number;
+  sku: string;
+}
+
+export interface ProductSpec {
   key: string;
   value: string;
 }
 
-export interface ProductOption {
-  variantId?: number; 
-  name: string; 
-  price: number;
-  stock: number;
-  hasOffer: boolean;
-  salePrice: number;
-  offerEndDate?: Date;
-}
-
-export interface OptionGroup {
-  title: string; 
-  options: ProductOption[];
-}
-
 export interface ProductFormData {
-  // General Info
   title: string;
   description: string;
   category: string;
   brand: string;
-  
-  // Global / Default Pricing & Inventory
   basePrice: number;
   salePrice: number;
-  offerEndDate?: Date;
   stock: number;
+  
+  // Sale toggles and timer
+  hasInfiniteSale: boolean;
+  hasTimerSale: boolean;
+  saleEndDate: string;
   
   // Media
   mainImage: string;
-  mainImageFile: File | null;
-  gallery: string[];
-  galleryFiles: File[];
+  galleryFiles: string[]; 
   
-  // Specs & Variants
-  specs: KeyValueStr[]; // 🚀 فیلد keyFeatures حذف شد
+  // Advanced features
   optionGroups: OptionGroup[];
+  variants: ProductVariant[];
+  specs: ProductSpec[];
 }

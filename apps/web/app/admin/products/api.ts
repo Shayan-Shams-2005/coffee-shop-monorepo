@@ -1,63 +1,19 @@
-// مسیر: app/admin/products/api.ts
+// app/admin/products/api.ts
 
 import { AuthApi } from "../../login/api"; 
 
 const API_BASE_URL = (process.env.NEXT_PUBLIC_API_URL || "http://localhost:5103").replace(/\/$/, "");
 
-// ==========================================
-// 🚀 Types 
-// ==========================================
-export interface ProductUpdateData {
-  ProductName: string;
-  OriginalPrice: number;
-  SalePrice: number | null; 
-  Description: string;
-  StockQuantity: number;
-  CategoryId: number;
-  BrandId: number;
-  HasOffer: boolean;
-  OfferEndDate: string | null;
-  SaleDurationMinutes?: number | null; 
-}
-
-export interface SpecificationPayload {
-  Key: string;
-  Value: string;
-  DisplayOrder: number;
-  IsMain: boolean;
-}
-
-export interface AttributePayload {
-  attributes: { name: string; values: string[] }[];
-}
-
-export interface VariantPayload {
-  Sku: string;
-  OriginalPrice: number;
-  SalePrice: number | null;
-  SaleDurationMinutes: number | null;
-  StockQuantity: number;
-  AttributeValueIds: number[];
-}
-
-// ==========================================
-// Dummy Image Generator
-// ==========================================
-const createDummyImageFile = (): File => {
-  const tinyPng = new Uint8Array([
-    137, 80, 78, 71, 13, 10, 26, 10, 0, 0, 0, 13, 73, 72, 68, 82, 0, 0, 0, 1, 0, 0, 0, 1, 
-    8, 6, 0, 0, 0, 31, 21, 196, 137, 0, 0, 0, 10, 73, 68, 65, 84, 120, 156, 99, 0, 1, 0, 0, 
-    5, 0, 1, 13, 10, 45, 180, 0, 0, 0, 0, 73, 69, 78, 68, 174, 66, 96, 130
-  ]);
-  return new File([tinyPng], "placeholder.png", { type: "image/png" });
-};
-
-// ============================================================================
-// 🚀 SMART JWT FETCHER
-// ============================================================================
 const fetchWithAuth = async (url: string, options: RequestInit = {}) => {
   options.credentials = "include"; 
   
+  if (typeof window !== "undefined") {
+    const token = localStorage.getItem("token");
+    if (token) {
+      options.headers = { ...options.headers, Authorization: `Bearer ${token}` };
+    }
+  }
+
   let res = await fetch(url, options);
 
   if (res.status === 401) {
@@ -71,168 +27,105 @@ const fetchWithAuth = async (url: string, options: RequestInit = {}) => {
   return res;
 };
 
-// ============================================================================
-// APIs (🚀 هماهنگ شده با اکشن‌های Swagger شما)
-// ============================================================================
+export interface AdminSearchProductsParams {
+  search?: string;
+  categoryId?: number;
+  brandId?: number;
+  minPrice?: number;
+  maxPrice?: number;
+  sortBy?: string;
+  sortOrder?: string;
+  page?: number;
+  pageSize?: number;
+}
+
 export const ProductApi = {
+ // بخشی از app/admin/products/api.ts
+
+  // 🚀 FIXED: فوق‌العاده مقاوم شده در برابر خطای file:/// مرورگر
   getImageUrl: (url: string | null | undefined): string => {
     if (!url) return "";
-    let cleaned = url.replace(/\\/g, '/');
-    if (/^(https?:\/\/|data:image|blob:)/i.test(cleaned)) return cleaned;
     
-    cleaned = cleaned.replace(/^file:\/\/\//i, '').replace(/^[a-zA-Z]:\//i, '/');
+    // اگر آدرس یک Blob یا Base64 موقت است، دست نزن
+    if (/^(data:image|blob:)/i.test(url)) return url;
     
-    const uploadFolderMatch = cleaned.match(/(\/uploads\/|\/images\/|\/Categories\/|\/Brands\/|\/Products\/).*/i);
-    if (uploadFolderMatch) {
-       cleaned = uploadFolderMatch[0];
+    // اگر آدرس یک لینک کامل اینترنتی است، دست نزن
+    if (/^https?:\/\//i.test(url)) return url; 
+
+    // تبدیل بک‌اسلش‌های ویندوز به اسلش وب
+    let cleaned = url.replace(/\\/g, '/'); 
+    
+    // حذف هرگونه پیشوند فایل محلی و درایو ویندوزی
+    cleaned = cleaned.replace(/^file:[\/]*:?/i, ''); 
+    cleaned = cleaned.replace(/^[a-zA-Z]:\//i, '/'); 
+    
+    // در بدترین حالت اگر باز هم file در رشته ماند، آن را اجباراً حذف کن
+    if (cleaned.toLowerCase().startsWith('file')) {
+       cleaned = cleaned.replace(/^file.*/i, '/');
+    }
+
+    // استخراج فقط مسیر مفید فولدر آپلود
+    const match = cleaned.match(/(Categories|Brands|Products|uploads|images)\/.*/i);
+    if (match) {
+       cleaned = `/${match[0]}`;
     } else {
        const parts = cleaned.split('/');
-       cleaned = '/' + parts[parts.length - 1];
+       cleaned = `/${parts[parts.length - 1]}`; // فقط اسم فایل را بردار
     }
-    return cleaned.startsWith("/") ? `${API_BASE_URL}${cleaned}` : `${API_BASE_URL}/${cleaned}`;
+    
+    return `${API_BASE_URL}${cleaned}`;
   },
-
-  // 🚀 Added /GetAll
   getAll: async () => {
     const res = await fetchWithAuth(`${API_BASE_URL}/api/Product/GetAll`, { cache: 'no-store' });
     if (!res.ok) throw new Error("Failed to fetch products");
     return res.json();
   },
 
-  // 🚀 Added /GetById
+  // 🚀 FIXED: Added getById back into the API
   getById: async (id: number) => {
     const res = await fetchWithAuth(`${API_BASE_URL}/api/Product/GetById/${id}`, { cache: 'no-store' });
-    if (!res.ok) throw new Error(`Failed to fetch product ${id}`);
+    if (!res.ok) throw new Error("Failed to fetch product details");
     return res.json();
   },
 
-  // 🚀 Added /Create
-  create: async (formData: FormData) => {
-    const res = await fetchWithAuth(`${API_BASE_URL}/api/Product/Create`, {
-      method: "POST",
-      body: formData, 
-    });
-    if (!res.ok) throw new Error(`Creation failed: ${await res.text()}`);
+  search: async (params: AdminSearchProductsParams) => {
+    const query = new URLSearchParams();
+    if (params.search) query.append("Search", params.search);
+    if (params.categoryId) query.append("CategoryId", params.categoryId.toString());
+    if (params.brandId) query.append("BrandId", params.brandId.toString());
+    if (params.minPrice !== undefined) query.append("MinPrice", params.minPrice.toString());
+    if (params.maxPrice !== undefined) query.append("MaxPrice", params.maxPrice.toString());
+    if (params.sortBy) query.append("SortBy", params.sortBy);
+    if (params.sortOrder) query.append("SortOrder", params.sortOrder);
+    if (params.page) query.append("Page", params.page.toString());
+    if (params.pageSize) query.append("PageSize", params.pageSize.toString());
+
+    const url = `${API_BASE_URL}/api/Product/Search/search?${query.toString()}`;
+    const res = await fetchWithAuth(url, { cache: 'no-store', headers: { 'Accept': 'application/json' } });
+    
+    if (!res.ok) throw new Error("Failed to fetch products via search");
     return res.json();
   },
 
-  // 🚀 Added /Update
-  update: async (id: number, data: ProductUpdateData) => {
-    const res = await fetchWithAuth(`${API_BASE_URL}/api/Product/Update/${id}`, {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(data),
-    });
-    if (!res.ok) throw new Error(`Update failed: ${await res.text()}`);
-    return res.status === 204 ? true : res.json();
-  },
-
-  // 🚀 Added /Delete
   delete: async (id: number) => {
     const res = await fetchWithAuth(`${API_BASE_URL}/api/Product/Delete/${id}`, { method: "DELETE" });
-    if (!res.ok) throw new Error(`Deletion failed for product ${id}`);
-    return res.status === 204;
-  },
-
-  // 🚀 Added /AddImage
-  addImage: async (productId: number, file: File, isMain: boolean = false) => {
-    const formData = new FormData();
-    formData.append("File", file); 
-    formData.append("isMain", isMain.toString());
-
-    const res = await fetchWithAuth(`${API_BASE_URL}/api/Product/AddImage/${productId}/images`, {
-      method: "POST",
-      body: formData,
-    });
-    if (!res.ok) throw new Error(`آپلود عکس با خطا مواجه شد: ${await res.text() || res.status}`);
-    return res.status === 204 ? true : res.json(); 
-  },
-
-  // 🚀 Added /SetSpecifications
-  setSpecifications: async (id: number, specs: SpecificationPayload[]) => {
-    const res = await fetchWithAuth(`${API_BASE_URL}/api/Product/SetSpecifications/${id}/specifications`, {
-      method: "PUT", 
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(specs), 
-    });
-    if (!res.ok) throw new Error(`ارور ولیدیشن مشخصات:\n ${await res.text()}`);
+    if (!res.ok) throw new Error("Failed to delete product");
     return true;
   },
-
-  // 🚀 Added /SetAttributes
-  setAttributes: async (id: number, attributesPayload: AttributePayload) => {
-    const res = await fetchWithAuth(`${API_BASE_URL}/api/Product/SetAttributes/${id}/attributes`, {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(attributesPayload),
-    });
-    if (!res.ok) throw new Error(`Failed to set attributes: ${await res.text()}`);
-    return res.status === 204 ? true : res.json();
-  }
-};
-
-export const ProductVariantApi = {
-  create: async (productId: number, variantData: VariantPayload) => {
-    const res = await fetchWithAuth(`${API_BASE_URL}/api/ProductVariant/Create/${productId}`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(variantData),
-    });
-    if (!res.ok) throw new Error(`Failed to create variant: ${await res.text()}`);
-    return res.json();
-  },
-
-  update: async (productId: number, variantId: number, variantData: VariantPayload) => {
-    const res = await fetchWithAuth(`${API_BASE_URL}/api/ProductVariant/Update/${productId}/${variantId}`, {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(variantData),
-    });
-    if (!res.ok) throw new Error(`Failed to update variant: ${await res.text()}`);
-    return res.status === 204 ? true : res.json();
-  },
-
-  delete: async (productId: number, variantId: number) => {
-    const res = await fetchWithAuth(`${API_BASE_URL}/api/ProductVariant/Delete/${productId}/${variantId}`, {
-      method: "DELETE",
-    });
-    if (!res.ok) throw new Error("Failed to delete variant");
-    return res.status === 204;
-  }
 };
 
 export const CategoryApi = {
-  // 🚀 Added /GetAll
   getAll: async () => {
     const res = await fetchWithAuth(`${API_BASE_URL}/api/Category/GetAll`, { cache: 'no-store' });
     if (!res.ok) throw new Error("Failed to fetch categories");
     return res.json();
   },
-  // 🚀 Added /Create
-  create: async (name: string) => {
-    const formData = new FormData();
-    formData.append("CategoryName", name); 
-    formData.append("File", createDummyImageFile());
-    const res = await fetchWithAuth(`${API_BASE_URL}/api/Category/Create`, { method: "POST", body: formData });
-    if (!res.ok) throw new Error(await res.text());
-    return res.json();
-  }
 };
 
 export const BrandApi = {
-  // 🚀 Added /GetAll
   getAll: async () => {
     const res = await fetchWithAuth(`${API_BASE_URL}/api/Brand/GetAll`, { cache: 'no-store' });
     if (!res.ok) throw new Error("Failed to fetch brands");
     return res.json();
   },
-  // 🚀 Added /Create
-  create: async (name: string) => {
-    const formData = new FormData();
-    formData.append("BrandName", name);
-    formData.append("File", createDummyImageFile());
-    const res = await fetchWithAuth(`${API_BASE_URL}/api/Brand/Create`, { method: "POST", body: formData });
-    if (!res.ok) throw new Error(await res.text());
-    return res.json();
-  }
 };

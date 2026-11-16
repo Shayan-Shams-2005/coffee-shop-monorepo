@@ -1,7 +1,7 @@
 // app/admin/products/page.tsx
 "use client";
 
-import { useState, useMemo, useEffect, Suspense } from "react";
+import { useState, useRef, useEffect, Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { Filter } from "lucide-react";
 
@@ -17,7 +17,6 @@ import { ProductApi, CategoryApi, BrandApi } from "./api";
 
 // ============================================================================
 // 🚀 CLEAN ARCHITECTURE: Data Mapping Utility
-// وظیفه این تابع فقط تبدیل دیتای خام بک‌اند (DTO) به مدل استاندارد فرانت‌اند (Product) است
 // ============================================================================
 const mapApiProductToClient = (p: any, index: number): Product => {
   let rawImageStr = "";
@@ -53,85 +52,195 @@ function ProductsPageContent() {
   const initialCategory = sanitizeNameForFilter(searchParams.get("category"));
   const initialBrand = sanitizeNameForFilter(searchParams.get("brand"));
 
+  // 🚀 Pagination States
+  const [page, setPage] = useState(1);
+  const [hasMore, setHasMore] = useState(true);
+  const [isFetchingNextPage, setIsFetchingNextPage] = useState(false);
+  const PAGE_SIZE = 24; 
+  const observerTarget = useRef<HTMLDivElement>(null);
+  const [totalProductsCount, setTotalProductsCount] = useState(0);
+
   const [products, setProducts] = useState<Product[]>([]);
+  
+  const [rawCategories, setRawCategories] = useState<any[]>([]);
+  const [rawBrands, setRawBrands] = useState<any[]>([]);
   const [availableCategories, setAvailableCategories] = useState<string[]>([]);
   const [availableBrands, setAvailableBrands] = useState<string[]>([]);
   
   const [isLoading, setIsLoading] = useState(true);
+  const [isFiltersLoaded, setIsFiltersLoaded] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const [searchQuery, setSearchQuery] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
+  
   const [selectedBrands, setSelectedBrands] = useState<string[]>(initialBrand ? [initialBrand] : []);
   const [selectedCategories, setSelectedCategories] = useState<string[]>(initialCategory ? [initialCategory] : []);
+  
   const [minPrice, setMinPrice] = useState<string>("");
   const [maxPrice, setMaxPrice] = useState<string>("");
+  const [debouncedMinPrice, setDebouncedMinPrice] = useState("");
+  const [debouncedMaxPrice, setDebouncedMaxPrice] = useState("");
+  
   const [activeSort, setActiveSort] = useState<SortType>("newest");
   const [isMobileFilterOpen, setIsMobileFilterOpen] = useState(false);
 
+  // 1. Fetch Categories and Brands ONLY ONCE on Mount
   useEffect(() => {
-    const fetchData = async () => {
+    const fetchFilters = async () => {
       try {
-        setIsLoading(true);
-        const [productsData, categoriesData, brandsData] = await Promise.all([
-          ProductApi.getAll(),
-          CategoryApi.getAll().catch(() => []), 
-          BrandApi.getAll().catch(() => [])
+        const [categoriesData, brandsData] = await Promise.all([
+          CategoryApi.getAll().catch(() => ({ items: [] })), 
+          BrandApi.getAll().catch(() => ({ items: [] }))
         ]);
         
-        // 1. Process Categories
         const catList = Array.isArray(categoriesData) ? categoriesData : (categoriesData.items || []);
-        setAvailableCategories(catList.map((c: any) => c.categoryName || c.name || ""));
-
-        // تبدیل آیدی دسته‌بندی به نام (در صورت وجود در URL)
-        if (initialCategory) {
-          const foundCat = catList.find((c: any) => c.categoryId?.toString() === initialCategory || c.id?.toString() === initialCategory || c.categoryName === initialCategory);
-          if (foundCat) {
-            const catName = foundCat.categoryName || foundCat.name;
-            setSelectedCategories(prev => {
-              const filtered = prev.filter(p => p !== initialCategory);
-              return filtered.includes(catName) ? filtered : [...filtered, catName];
-            });
-          }
-        }
-
-        // 2. Process Brands
         const brandList = Array.isArray(brandsData) ? brandsData : (brandsData.items || []);
+
+        setRawCategories(catList);
+        setRawBrands(brandList);
+        setAvailableCategories(catList.map((c: any) => c.categoryName || c.name || ""));
         setAvailableBrands(brandList.map((b: any) => b.brandName || b.name || ""));
-
-        // تبدیل آیدی برند به نام (در صورت وجود در URL)
-        if (initialBrand) {
-          const foundBrand = brandList.find((b: any) => b.brandId?.toString() === initialBrand || b.id?.toString() === initialBrand || b.brandName === initialBrand);
-          if (foundBrand) {
-            const brandName = foundBrand.brandName || foundBrand.name;
-            setSelectedBrands(prev => {
-              const filtered = prev.filter(p => p !== initialBrand);
-              return filtered.includes(brandName) ? filtered : [...filtered, brandName];
-            });
-          }
-        }
-
-        // 3. Process Products (با استفاده از تابع Mapper مجزا)
-        const rawArray = Array.isArray(productsData) ? productsData : (productsData.items || []);
-        const mappedProducts = rawArray.map((p: any, index: number) => mapApiProductToClient(p, index));
-
-        setProducts(mappedProducts);
+        
+        setIsFiltersLoaded(true);
       } catch (err) {
-        setError("خطا در برقراری ارتباط با سرور");
         console.error(err);
-      } finally {
-        setIsLoading(false);
+        setIsFiltersLoaded(true); // Prevent UI freeze on failure
       }
     };
+    fetchFilters();
+  }, []);
+
+  // 2. Debouncing inputs
+  useEffect(() => {
+    const timerId = setTimeout(() => {
+      setDebouncedSearch(searchQuery);
+      setDebouncedMinPrice(minPrice);
+      setDebouncedMaxPrice(maxPrice);
+    }, 600);
+    return () => clearTimeout(timerId);
+  }, [searchQuery, minPrice, maxPrice]);
+
+  // 3. Reset page to 1 if any filter changes
+  useEffect(() => {
+    setPage(1);
+  }, [debouncedSearch, debouncedMinPrice, debouncedMaxPrice, activeSort, selectedCategories, selectedBrands]);
+
+  const getSortParams = (sort: SortType) => {
+    switch (sort) {
+      case "cheapest": return { sortBy: "price", sortOrder: "asc" };
+      case "expensive": return { sortBy: "price", sortOrder: "desc" };
+      case "newest": 
+      default: return { sortBy: "relevance", sortOrder: "desc" }; 
+    }
+  };
+
+  // 4. Fetch Products whenever page or filters change
+  useEffect(() => {
+    let ignore = false;
+
+    const fetchProducts = async () => {
+      if (!isFiltersLoaded) return; // Wait until raw categories/brands are available
+
+      try {
+        if (page === 1) setIsLoading(true);
+        else setIsFetchingNextPage(true);
+        setError(null);
+
+        const { sortBy, sortOrder } = getSortParams(activeSort);
+
+        let categoryId = undefined;
+        if (selectedCategories.length > 0 && rawCategories.length > 0) {
+          const cat = rawCategories.find(c => (c.categoryName || c.name) === selectedCategories[0]);
+          if (cat) categoryId = Number(cat.categoryId || cat.id);
+        }
+
+        let brandId = undefined;
+        if (selectedBrands.length > 0 && rawBrands.length > 0) {
+          const brand = rawBrands.find(b => (b.brandName || b.name) === selectedBrands[0]);
+          if (brand) brandId = Number(brand.brandId || brand.id);
+        }
+
+        const data = await ProductApi.search({
+          search: debouncedSearch,
+          minPrice: debouncedMinPrice ? Number(debouncedMinPrice) : undefined,
+          maxPrice: debouncedMaxPrice ? Number(debouncedMaxPrice) : undefined,
+          sortBy,
+          sortOrder,
+          categoryId: categoryId && !isNaN(categoryId) ? categoryId : undefined,
+          brandId: brandId && !isNaN(brandId) ? brandId : undefined,
+          page: page, 
+          pageSize: PAGE_SIZE 
+        });
+        
+        if (ignore) return;
+
+        const rawArray = Array.isArray(data) ? data : (data?.items || data?.Items || data?.data || []);
+        setTotalProductsCount(data?.totalCount || data?.TotalCount || rawArray.length);
+        
+        const mappedProducts = rawArray.map((p: any, index: number) => mapApiProductToClient(p, index));
+
+        if (page === 1) {
+          setProducts(mappedProducts);
+        } else {
+          setProducts(prev => [...prev, ...mappedProducts]);
+        }
+
+        setHasMore(rawArray.length === PAGE_SIZE);
+
+      } catch (err: any) {
+        if (!ignore) {
+          if (err.message === "SESSION_EXPIRED") {
+             alert("نشست شما منقضی شده است. لطفاً مجدداً وارد شوید.");
+             router.push("/login");
+          } else {
+             setError("خطا در برقراری ارتباط با سرور");
+          }
+          if (page === 1) setProducts([]);
+          setHasMore(false);
+        }
+      } finally {
+        if (!ignore) {
+          setIsLoading(false);
+          setIsFetchingNextPage(false);
+        }
+      }
+    };
+
+    fetchProducts();
     
-    fetchData();
-  }, [initialCategory, initialBrand]); 
+    return () => { ignore = true; };
+  }, [
+    page, isFiltersLoaded, debouncedSearch, debouncedMinPrice, debouncedMaxPrice, 
+    activeSort, selectedCategories, selectedBrands, rawCategories, rawBrands, router
+  ]);
+
+  // 5. Intersection Observer setup
+  useEffect(() => {
+    const target = observerTarget.current;
+    if (!target) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0]?.isIntersecting && hasMore && !isLoading && !isFetchingNextPage) {
+          setPage((p) => p + 1);
+        }
+      },
+      { threshold: 0.1 }
+    );
+
+    observer.observe(target);
+    return () => { observer.unobserve(target); };
+  }, [hasMore, isLoading, isFetchingNextPage]);
 
   const toggleBrand = (brand: string) => {
     setSelectedBrands((prev) => prev.includes(brand) ? prev.filter((b) => b !== brand) : [...prev, brand]);
+    setPage(1);
   };
 
   const toggleCategory = (category: string) => {
     setSelectedCategories((prev) => prev.includes(category) ? prev.filter((c) => c !== category) : [...prev, category]);
+    setPage(1);
   };
 
   const handleResetFilters = () => {
@@ -140,6 +249,7 @@ function ProductsPageContent() {
     setSelectedCategories([]);
     setMinPrice("");
     setMaxPrice("");
+    setPage(1);
     router.replace('/admin/products', { scroll: false });
   };
 
@@ -148,64 +258,14 @@ function ProductsPageContent() {
       try {
         await ProductApi.delete(id);
         setProducts(products.filter((p) => p.id !== id));
+        setTotalProductsCount(prev => prev - 1);
         alert("محصول با موفقیت حذف شد.");
-      } catch (err) {
-        alert("حذف محصول با خطا مواجه شد.");
+      } catch (err: any) {
+        if (err.message === "SESSION_EXPIRED") router.push("/login");
+        else alert("حذف محصول با خطا مواجه شد.");
       }
     }
   };
-
-  const dynamicMaxPrice = useMemo(() => {
-    if (!products || products.length === 0) return 5000000;
-    const max = Math.max(...products.map(p => (p.hasOffer && p.newPrice) ? p.newPrice : (p.price || 0)));
-    return max > 0 ? max : 5000000; 
-  }, [products]);
-
-  const filteredAndSortedProducts = useMemo(() => {
-    let result = products || [];
-
-    if (searchQuery.trim()) {
-      const query = searchQuery.trim().toLowerCase();
-      result = result.filter((p) => 
-        p.name?.toLowerCase().includes(query) || 
-        p.category?.toLowerCase().includes(query)
-      );
-    }
-    
-    if (selectedBrands.length > 0) {
-      result = result.filter((p) => p.brand && selectedBrands.includes(p.brand));
-    }
-    
-    if (selectedCategories.length > 0) {
-      result = result.filter((p) => p.category && selectedCategories.includes(p.category));
-    }
-    
-    if (minPrice) {
-      result = result.filter((p) => {
-        const effectivePrice = (p.hasOffer && p.newPrice) ? p.newPrice : (p.price || 0);
-        return effectivePrice >= parseInt(minPrice);
-      });
-    }
-    
-    if (maxPrice) {
-      result = result.filter((p) => {
-        const effectivePrice = (p.hasOffer && p.newPrice) ? p.newPrice : (p.price || 0);
-        return effectivePrice <= parseInt(maxPrice);
-      });
-    }
-
-    return [...result].sort((a, b) => {
-      const priceA = (a.hasOffer && a.newPrice) ? a.newPrice : (a.price || 0);
-      const priceB = (b.hasOffer && b.newPrice) ? b.newPrice : (b.price || 0);
-
-      switch (activeSort) {
-        case "cheapest": return priceA - priceB;
-        case "expensive": return priceB - priceA;
-        case "newest": return (b.id || 0) - (a.id || 0);
-        default: return 0;
-      }
-    });
-  }, [products, searchQuery, selectedBrands, selectedCategories, minPrice, maxPrice, activeSort]);
 
   const FilterComponent = (
     <FilterSideBar
@@ -221,7 +281,7 @@ function ProductsPageContent() {
       setMinPrice={setMinPrice}
       maxPrice={maxPrice}
       setMaxPrice={setMaxPrice}
-      MAX_ALLOWED_PRICE={dynamicMaxPrice} 
+      MAX_ALLOWED_PRICE={50000000} 
       isCategoryOpen={!!initialCategory}
       isBrandOpen={!!initialBrand}
     />
@@ -239,8 +299,11 @@ function ProductsPageContent() {
         <main className="flex-1 w-full min-w-0 space-y-6">
           <SortBar
             activeSort={activeSort}
-            onSortChange={(sort) => setActiveSort(sort as SortType)}
-            productCount={filteredAndSortedProducts.length}
+            onSortChange={(sort) => {
+              setActiveSort(sort as SortType);
+              setPage(1);
+            }}
+            productCount={totalProductsCount}
             options={ADMIN_SORT_OPTIONS}
           >
             <button
@@ -251,20 +314,38 @@ function ProductsPageContent() {
             </button>
           </SortBar>
 
-          {isLoading ? (
+          {isLoading && page === 1 ? (
             <div className="flex justify-center items-center h-64 text-[#8C7A6B] font-bold">
               در حال دریافت اطلاعات...
             </div>
-          ) : error ? (
+          ) : error && page === 1 ? (
             <div className="flex justify-center items-center h-64 text-rose-500 font-bold">
               {error}
             </div>
           ) : (
-            <ProductTable 
-              products={filteredAndSortedProducts} 
-              onDelete={handleDeleteProduct}
-              onResetFilters={handleResetFilters}
-            />
+            <>
+              <ProductTable 
+                products={products} 
+                onDelete={handleDeleteProduct}
+                onResetFilters={handleResetFilters}
+              />
+              
+              {/* Intersection Observer Target for Pagination */}
+              <div ref={observerTarget} className="w-full h-24 mt-4 flex flex-col items-center justify-center">
+                {isFetchingNextPage && (
+                  <div className="flex flex-col items-center gap-3">
+                    <div className="w-6 h-6 border-2 border-[#C68E58] border-t-transparent rounded-full animate-spin"></div>
+                    <span className="text-xs font-bold text-[#8C7A6B] dark:text-[#A1A1A1]">بارگذاری ادامه لیست...</span>
+                  </div>
+                )}
+                
+                {!hasMore && products.length > 0 && !isLoading && (
+                  <span className="text-xs font-bold text-[#8C7A6B] dark:text-[#6A5A4F] mt-4">
+                    پایان لیست محصولات
+                  </span>
+                )}
+              </div>
+            </>
           )}
         </main>
       </div>
@@ -272,7 +353,7 @@ function ProductsPageContent() {
       <MobileFilterDrawer 
         isOpen={isMobileFilterOpen} 
         onClose={() => setIsMobileFilterOpen(false)}
-        resultCount={filteredAndSortedProducts.length}
+        resultCount={totalProductsCount}
       >
         {FilterComponent}
       </MobileFilterDrawer>
