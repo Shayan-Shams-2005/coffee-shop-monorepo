@@ -1,7 +1,7 @@
 // app/(main)/shop/page.tsx
 "use client";
 
-import { useState, useMemo, useRef, useEffect, Suspense } from "react";
+import { useState, useRef, useEffect, Suspense } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { Search, ChevronLeft, Filter, X } from "lucide-react";
@@ -39,6 +39,12 @@ const SHOP_SORT_OPTIONS: SortOption[] = [
 function ShopPageContent() {
   const searchParams = useSearchParams();
   
+  // Pagination States
+  const [page, setPage] = useState(1);
+  const [hasMore, setHasMore] = useState(true);
+  const [isFetchingNextPage, setIsFetchingNextPage] = useState(false);
+  const PAGE_SIZE = 24; 
+
   const [products, setProducts] = useState<Product[]>([]);
   const [totalProductsCount, setTotalProductsCount] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
@@ -65,6 +71,35 @@ function ShopPageContent() {
   
   const [isMobileFilterOpen, setIsMobileFilterOpen] = useState(false);
   const productsTopRef = useRef<HTMLDivElement>(null);
+  
+  // Intersection Observer Ref 
+  const observerTarget = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const fetchSidebarFilters = async () => {
+      try {
+        const [categoriesData, brandsData] = await Promise.all([
+          ShopPublicApi.getCategories().catch(() => ({ items: [] })), 
+          ShopPublicApi.getBrands().catch(() => ({ items: [] }))
+        ]);
+        
+        const catList = Array.isArray(categoriesData) ? categoriesData : (categoriesData?.items || categoriesData?.data || []);
+        const brandList = Array.isArray(brandsData) ? brandsData : (brandsData?.items || brandsData?.data || []);
+
+        setRawCategories(catList);
+        setRawBrands(brandList);
+
+        const uniqueCategories = Array.from(new Set(catList.map((c: any) => c?.categoryName || c?.CategoryName || c?.name || c?.Name || "").filter(Boolean))) as string[];
+        const uniqueBrands = Array.from(new Set(brandList.map((b: any) => b?.brandName || b?.BrandName || b?.name || b?.Name || "").filter(Boolean))) as string[];
+
+        setAvailableCategories(uniqueCategories);
+        setAvailableBrands(uniqueBrands);
+      } catch (err) {
+        console.error("Failed to load filter options", err);
+      }
+    };
+    fetchSidebarFilters();
+  }, []);
 
   useEffect(() => {
     const urlQuery = searchParams.get("search");
@@ -81,52 +116,29 @@ function ShopPageContent() {
   }, [searchQuery, minPrice, maxPrice]);
 
   useEffect(() => {
-    const fetchSidebarFilters = async () => {
-      try {
-        const [categoriesData, brandsData] = await Promise.all([
-          ShopPublicApi.getCategories().catch(() => ({ items: [] })), 
-          ShopPublicApi.getBrands().catch(() => ({ items: [] }))
-        ]);
-        
-        const catList = Array.isArray(categoriesData) ? categoriesData : (categoriesData?.items || categoriesData?.data || []);
-        const brandList = Array.isArray(brandsData) ? brandsData : (brandsData?.items || brandsData?.data || []);
+    setPage(1);
+  }, [debouncedSearch, debouncedMinPrice, debouncedMaxPrice, activeSort, selectedCategories, selectedBrands]);
 
-        setRawCategories(catList);
-        setRawBrands(brandList);
-
-        // Remove duplicate keys for sidebar mapping
-        const uniqueCategories = Array.from(new Set(catList.map((c: any) => c?.categoryName || c?.CategoryName || c?.name || c?.Name || "").filter(Boolean))) as string[];
-        const uniqueBrands = Array.from(new Set(brandList.map((b: any) => b?.brandName || b?.BrandName || b?.name || b?.Name || "").filter(Boolean))) as string[];
-
-        setAvailableCategories(uniqueCategories);
-        setAvailableBrands(uniqueBrands);
-      } catch (err) {
-        console.error("Failed to load filter options", err);
-      }
-    };
-    fetchSidebarFilters();
-  }, []);
-
-  // 🚀 FIX: Map frontend sort options strictly to backend allowed values
   const getSortParams = (sort: SortType) => {
     switch (sort) {
-      case "cheapest": 
-        return { sortBy: "price", sortOrder: "asc" };
-      case "expensive": 
-        return { sortBy: "price", sortOrder: "desc" };
+      case "cheapest": return { sortBy: "price", sortOrder: "asc" };
+      case "expensive": return { sortBy: "price", sortOrder: "desc" };
       case "newest": 
       case "bestselling": 
       case "most_viewed": 
       case "bestoffer": 
-      default: 
-        return { sortBy: "relevance", sortOrder: "desc" }; 
+      default: return { sortBy: "relevance", sortOrder: "desc" }; 
     }
   };
 
   useEffect(() => {
+    let ignore = false; 
+
     const fetchProducts = async () => {
       try {
-        setIsLoading(true);
+        if (page === 1) setIsLoading(true);
+        else setIsFetchingNextPage(true);
+
         const { sortBy, sortOrder } = getSortParams(activeSort);
 
         let categoryId = undefined;
@@ -149,16 +161,17 @@ function ShopPageContent() {
           sortOrder,
           categoryId: categoryId && !isNaN(categoryId) ? categoryId : undefined,
           brandId: brandId && !isNaN(brandId) ? brandId : undefined,
-          page: 1, 
-          pageSize: 50 
+          page: page, 
+          pageSize: PAGE_SIZE 
         });
         
+        if (ignore) return; 
+
         const rawArray = Array.isArray(data) ? data : (data?.items || data?.Items || data?.data || []);
         setTotalProductsCount(data?.totalCount || data?.TotalCount || rawArray.length);
         
         const mappedProducts = rawArray.map((p: any, index: number) => {
           if (!p) return null;
-
           let rawImageStr = "";
           if (Array.isArray(p.images) && p.images.length > 0) {
             const mainImg = p.images.find((img: any) => img?.isMain === true || img?.IsMain === true) || p.images[0];
@@ -184,17 +197,34 @@ function ShopPageContent() {
           };
         }).filter(Boolean);
 
-        setProducts(mappedProducts);
+        if (page === 1) {
+          setProducts(mappedProducts);
+        } else {
+          setProducts(prev => [...prev, ...mappedProducts]);
+        }
+
+        setHasMore(rawArray.length === PAGE_SIZE);
 
       } catch (err) {
-        setProducts([]);
+        if (!ignore) {
+          if (page === 1) setProducts([]);
+          setHasMore(false);
+        }
       } finally {
-        setIsLoading(false);
+        if (!ignore) {
+          setIsLoading(false);
+          setIsFetchingNextPage(false);
+        }
       }
     };
 
     fetchProducts();
+    
+    return () => {
+      ignore = true;
+    };
   }, [
+    page,
     debouncedSearch, 
     debouncedMinPrice, 
     debouncedMaxPrice, 
@@ -204,6 +234,26 @@ function ShopPageContent() {
     rawCategories, 
     rawBrands
   ]); 
+
+  // 🚀 FIXED: Added optional chaining (entries[0]?.isIntersecting)
+  useEffect(() => {
+    const target = observerTarget.current;
+    if (!target) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0]?.isIntersecting && hasMore && !isLoading && !isFetchingNextPage) {
+          setPage((p) => p + 1);
+        }
+      },
+      { threshold: 0.1 }
+    );
+
+    observer.observe(target);
+    return () => {
+      observer.unobserve(target);
+    };
+  }, [hasMore, isLoading, isFetchingNextPage]);
 
   useEffect(() => {
     document.body.style.overflow = isMobileFilterOpen ? "hidden" : "auto";
@@ -221,16 +271,19 @@ function ShopPageContent() {
 
   const toggleBrand = (brand: string) => {
     setSelectedBrands((prev) => prev.includes(brand) ? prev.filter((b) => b !== brand) : [...prev, brand]);
+    setPage(1);
     scrollToProducts();
   };
 
   const toggleCategory = (category: string) => {
     setSelectedCategories((prev) => prev.includes(category) ? prev.filter((c) => c !== category) : [...prev, category]);
+    setPage(1);
     scrollToProducts();
   };
 
   const handleSortChange = (sort: SortType) => {
     setActiveSort(sort);
+    setPage(1);
     scrollToProducts();
   };
 
@@ -240,10 +293,11 @@ function ShopPageContent() {
     setSelectedCategories([]);
     setMinPrice("");
     setMaxPrice("");
+    setPage(1);
     scrollToProducts();
   };
 
-  if (isLoading && products.length === 0) {
+  if (isLoading && products.length === 0 && page === 1) {
     return (
       <div className="bg-[#FCF9F5] dark:bg-[#1A1412] min-h-screen flex items-center justify-center">
         <div className="w-8 h-8 border-4 border-[#C68E58] border-t-transparent rounded-full animate-spin"></div>
@@ -295,7 +349,7 @@ function ShopPageContent() {
               </button>
             </SortBar>
 
-            {products.length === 0 ? (
+            {products.length === 0 && !isLoading ? (
               <div className="bg-white dark:bg-[#1A110F] rounded-[24px] border border-[#F5EFE6] dark:border-[#3c2317] p-10 flex flex-col items-center justify-center text-center h-64 transition-colors">
                 <Search className="w-12 h-12 text-[#E3C3A4] dark:text-[#6A5A4F] mb-4 transition-colors" />
                 <h3 className="text-lg font-black text-[#3D2616] dark:text-[#EAE0D5] mb-2 transition-colors">محصولی یافت نشد!</h3>
@@ -308,15 +362,32 @@ function ShopPageContent() {
                 </button>
               </div>
             ) : (
-              <div className={`grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6 ${isLoading ? 'opacity-50 pointer-events-none' : ''}`}>
-                {products.map((product, index) => (
-                  <ShopProductCard
-                    key={product.id}
-                    product={product as any}
-                    index={index}
-                  />
-                ))}
-              </div>
+              <>
+                <div className={`grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6 ${isLoading && page === 1 ? 'opacity-50 pointer-events-none' : ''}`}>
+                  {products.map((product, index) => (
+                    <ShopProductCard
+                      key={`prod-${product.id}-${index}`}
+                      product={product as any}
+                      index={index}
+                    />
+                  ))}
+                </div>
+                
+                <div ref={observerTarget} className="w-full h-24 mt-8 flex flex-col items-center justify-center">
+                  {isFetchingNextPage && (
+                    <div className="flex flex-col items-center gap-3">
+                      <div className="w-6 h-6 border-2 border-[#C68E58] border-t-transparent rounded-full animate-spin"></div>
+                      <span className="text-xs font-bold text-[#8C7A6B] dark:text-[#A1A1A1]">بارگذاری محصولات بیشتر...</span>
+                    </div>
+                  )}
+                  
+                  {!hasMore && products.length > 0 && !isLoading && (
+                    <span className="text-xs font-bold text-[#8C7A6B] dark:text-[#6A5A4F] mt-4">
+                      پایان لیست محصولات
+                    </span>
+                  )}
+                </div>
+              </>
             )}
           </main>
         </div>
