@@ -1,19 +1,31 @@
+
 // app/admin/constants.tsx
-import { 
-  Users, ShoppingBag, DollarSign, Package, 
-  Layers, Tag, Image as ImageIcon,
-  Clock, CheckCircle, RotateCcw,
-  Bell, MessageSquare, TicketPercent,
+
+import {
+  Users,
+  ShoppingBag,
+  DollarSign,
+  Package,
+  Layers,
+  Tag,
+  Image as ImageIcon,
+  Clock,
+  CheckCircle,
+  RotateCcw,
+  Bell,
+  MessageSquare,
+  TicketPercent,
   AlignRight,
   MessageCircleQuestion,
   Scale,
-  Hash // 🚀 Imported Hash icon for Product Tags
+  Hash,
+  type LucideIcon,
 } from "lucide-react";
 
 export interface DashboardStat {
   label: string;
   value: string;
-  icon: React.ElementType;
+  icon: LucideIcon;
   color: string;
   bg: string;
 }
@@ -22,7 +34,7 @@ export interface QuickLinkItem {
   title: string;
   desc: string;
   href: string;
-  icon: React.ElementType;
+  icon: LucideIcon;
   accent: string;
   bg: string;
   hover: string;
@@ -34,88 +46,203 @@ export interface RecentOrder {
   total: string;
   status: string;
   time: string;
-  icon: React.ElementType;
+  icon: LucideIcon;
   color: string;
 }
 
 export const STATS_DATA: DashboardStat[] = [
-  { label: "درآمد کل", value: "۴۵,۵۰۰,۰۰۰ تومان", icon: DollarSign, color: "text-emerald-600 dark:text-emerald-500", bg: "bg-emerald-500/15 dark:bg-emerald-500/20" },
-  { label: "سفارشات جدید", value: "۱۲۴", icon: ShoppingBag, color: "text-sky-600 dark:text-sky-500", bg: "bg-sky-500/15 dark:bg-sky-500/20" },
-  { label: "کاربران فعال", value: "۱,۰۴۲", icon: Users, color: "text-indigo-600 dark:text-indigo-500", bg: "bg-indigo-500/15 dark:bg-indigo-500/20" },
-  { label: "محصولات ناموجود", value: "۳", icon: Package, color: "text-rose-600 dark:text-rose-500", bg: "bg-rose-500/15 dark:bg-rose-500/20" },
+  {
+    label: "درآمد کل",
+    value: "۴۵,۵۰۰,۰۰۰ تومان",
+    icon: DollarSign,
+    color: "text-emerald-600 dark:text-emerald-500",
+    bg: "bg-emerald-500/15 dark:bg-emerald-500/20",
+  },
+  {
+    label: "سفارشات جدید",
+    value: "۱۲۴",
+    icon: ShoppingBag,
+    color: "text-sky-600 dark:text-sky-500",
+    bg: "bg-sky-500/15 dark:bg-sky-500/20",
+  },
+  {
+    label: "کاربران فعال",
+    value: "۱,۰۴۲",
+    icon: Users,
+    color: "text-indigo-600 dark:text-indigo-500",
+    bg: "bg-indigo-500/15 dark:bg-indigo-500/20",
+  },
+  {
+    label: "محصولات ناموجود",
+    value: "۳",
+    icon: Package,
+    color: "text-rose-600 dark:text-rose-500",
+    bg: "bg-rose-500/15 dark:bg-rose-500/20",
+  },
 ];
 
 export const QUICK_LINKS_DATA: QuickLinkItem[] = [
-  { 
-    title: "محصولات و موجودی", desc: "افزودن، ویرایش و مدیریت کالاها", href: "/admin/products", icon: Package, 
-    accent: "text-amber-600 dark:text-amber-500", bg: "bg-amber-500/15 dark:bg-amber-500/10", 
-    hover: "group-hover:bg-amber-500 group-hover:text-white dark:group-hover:bg-amber-500 dark:group-hover:text-[#1A110F] group-hover:shadow-lg group-hover:shadow-amber-500/30" 
+  {
+    title: "محصولات و موجودی",
+    desc: "افزودن، ویرایش و مدیریت کالاها",
+    href: "/admin/products",
+    icon: Package,
+    accent: "text-amber-600 dark:text-amber-500",
+    bg: "bg-amber-500/15 dark:bg-amber-500/10",
+    hover:
+      "group-hover:bg-amber-500 group-hover:text-white dark:group-hover:bg-amber-500 dark:group-hover:text-[#1A110F] group-hover:shadow-lg group-hover:shadow-amber-500/30",
   },
-  { 
-    title: "دسته‌‌بندی‌ها", desc: "مدیریت ساختار دسته‌بندی فروشگاه", href: "/admin/categories", icon: Layers, 
-    accent: "text-purple-600 dark:text-purple-500", bg: "bg-purple-500/15 dark:bg-purple-500/10", 
-    hover: "group-hover:bg-purple-500 group-hover:text-white dark:group-hover:bg-purple-500 dark:group-hover:text-[#1A110F] group-hover:shadow-lg group-hover:shadow-purple-500/30" 
+  {
+    title: "دسته‌‌بندی‌ها",
+    desc: "مدیریت ساختار دسته‌بندی فروشگاه",
+    href: "/admin/categories",
+    icon: Layers,
+    accent: "text-purple-600 dark:text-purple-500",
+    bg: "bg-purple-500/15 dark:bg-purple-500/10",
+    hover:
+      "group-hover:bg-purple-500 group-hover:text-white dark:group-hover:bg-purple-500 dark:group-hover:text-[#1A110F] group-hover:shadow-lg group-hover:shadow-purple-500/30",
   },
-  // 🚀 Added Tags Link
-  { 
-    title: "برچسب‌های کالا", desc: "مدیریت تگ‌ها برای گروه‌بندی محصولات", href: "/admin/tags", icon: Hash, 
-    accent: "text-cyan-600 dark:text-cyan-500", bg: "bg-cyan-500/15 dark:bg-cyan-500/10", 
-    hover: "group-hover:bg-cyan-500 group-hover:text-white dark:group-hover:bg-cyan-500 dark:group-hover:text-[#1A110F] group-hover:shadow-lg group-hover:shadow-cyan-500/30" 
+  {
+    title: "برچسب‌های کالا",
+    desc: "مدیریت تگ‌ها برای گروه‌بندی محصولات",
+    href: "/admin/tags",
+    icon: Hash,
+    accent: "text-cyan-600 dark:text-cyan-500",
+    bg: "bg-cyan-500/15 dark:bg-cyan-500/10",
+    hover:
+      "group-hover:bg-cyan-500 group-hover:text-white dark:group-hover:bg-cyan-500 dark:group-hover:text-[#1A110F] group-hover:shadow-lg group-hover:shadow-cyan-500/30",
   },
-  { 
-    title: "برندهای فروشگاه", desc: "تعریف برندها برای فیلتر محصولات", href: "/admin/brands", icon: Tag, 
-    accent: "text-indigo-600 dark:text-indigo-500", bg: "bg-indigo-500/15 dark:bg-indigo-500/10", 
-    hover: "group-hover:bg-indigo-500 group-hover:text-white dark:group-hover:bg-indigo-500 dark:group-hover:text-[#1A110F] group-hover:shadow-lg group-hover:shadow-indigo-500/30" 
+  {
+    title: "برندهای فروشگاه",
+    desc: "تعریف برندها برای فیلتر محصولات",
+    href: "/admin/brands",
+    icon: Tag,
+    accent: "text-indigo-600 dark:text-indigo-500",
+    bg: "bg-indigo-500/15 dark:bg-indigo-500/10",
+    hover:
+      "group-hover:bg-indigo-500 group-hover:text-white dark:group-hover:bg-indigo-500 dark:group-hover:text-[#1A110F] group-hover:shadow-lg group-hover:shadow-indigo-500/30",
   },
-  { 
-    title: "بنرهای تبلیغاتی", desc: "مدیریت اسلایدر و بنرهای صفحه اصلی", href: "/admin/banners", icon: ImageIcon, 
-    accent: "text-rose-600 dark:text-rose-500", bg: "bg-rose-500/15 dark:bg-rose-500/10", 
-    hover: "group-hover:bg-rose-500 group-hover:text-white dark:group-hover:bg-rose-500 dark:group-hover:text-[#1A110F] group-hover:shadow-lg group-hover:shadow-rose-500/30" 
+  {
+    title: "بنرهای تبلیغاتی",
+    desc: "مدیریت اسلایدر و بنرهای صفحه اصلی",
+    href: "/admin/banners",
+    icon: ImageIcon,
+    accent: "text-rose-600 dark:text-rose-500",
+    bg: "bg-rose-500/15 dark:bg-rose-500/10",
+    hover:
+      "group-hover:bg-rose-500 group-hover:text-white dark:group-hover:bg-rose-500 dark:group-hover:text-[#1A110F] group-hover:shadow-lg group-hover:shadow-rose-500/30",
   },
-  { 
-    title: "سفارشات مشتریان", desc: "بررسی و تغییر وضعیت سفارشات", href: "/admin/orders", icon: ShoppingBag, 
-    accent: "text-emerald-600 dark:text-emerald-500", bg: "bg-emerald-500/15 dark:bg-emerald-500/10", 
-    hover: "group-hover:bg-emerald-500 group-hover:text-white dark:group-hover:bg-emerald-500 dark:group-hover:text-[#1A110F] group-hover:shadow-lg group-hover:shadow-emerald-500/30" 
+  {
+    title: "سفارشات مشتریان",
+    desc: "بررسی و تغییر وضعیت سفارشات",
+    href: "/admin/orders",
+    icon: ShoppingBag,
+    accent: "text-emerald-600 dark:text-emerald-500",
+    bg: "bg-emerald-500/15 dark:bg-emerald-500/10",
+    hover:
+      "group-hover:bg-emerald-500 group-hover:text-white dark:group-hover:bg-emerald-500 dark:group-hover:text-[#1A110F] group-hover:shadow-lg group-hover:shadow-emerald-500/30",
   },
-  { 
-    title: "لیست کاربران", desc: "مشاهده و مدیریت حساب‌های کاربری", href: "/admin/users", icon: Users, 
-    accent: "text-blue-600 dark:text-blue-500", bg: "bg-blue-500/15 dark:bg-blue-500/10", 
-    hover: "group-hover:bg-blue-500 group-hover:text-white dark:group-hover:bg-blue-500 dark:group-hover:text-[#1A110F] group-hover:shadow-lg group-hover:shadow-blue-500/30" 
+  {
+    title: "لیست کاربران",
+    desc: "مشاهده و مدیریت حساب‌های کاربری",
+    href: "/admin/users",
+    icon: Users,
+    accent: "text-blue-600 dark:text-blue-500",
+    bg: "bg-blue-500/15 dark:bg-blue-500/10",
+    hover:
+      "group-hover:bg-blue-500 group-hover:text-white dark:group-hover:bg-blue-500 dark:group-hover:text-[#1A110F] group-hover:shadow-lg group-hover:shadow-blue-500/30",
   },
-  { 
-    title: "صندوق پیام‌ها و خطاها", desc: "بررسی سوالات و گزارشات باگ", href: "/admin/notifications", icon: Bell, 
-    accent: "text-orange-600 dark:text-orange-500", bg: "bg-orange-500/15 dark:bg-orange-500/10", 
-    hover: "group-hover:bg-orange-500 group-hover:text-white dark:group-hover:bg-orange-500 dark:group-hover:text-[#1A110F] group-hover:shadow-lg group-hover:shadow-orange-500/30" 
+  {
+    title: "صندوق پیام‌ها و خطاها",
+    desc: "بررسی سوالات و گزارشات باگ",
+    href: "/admin/support-chat",
+    icon: Bell,
+    accent: "text-orange-600 dark:text-orange-500",
+    bg: "bg-orange-500/15 dark:bg-orange-500/10",
+    hover:
+      "group-hover:bg-orange-500 group-hover:text-white dark:group-hover:bg-orange-500 dark:group-hover:text-[#1A110F] group-hover:shadow-lg group-hover:shadow-orange-500/30",
   },
-  { 
-    title: "مدیریت نظرات", desc: "تایید یا حذف نظرات کاربران", href: "/admin/reviews", icon: MessageSquare, 
-    accent: "text-teal-600 dark:text-teal-500", bg: "bg-teal-500/15 dark:bg-teal-500/10", 
-    hover: "group-hover:bg-teal-500 group-hover:text-white dark:group-hover:bg-teal-500 dark:group-hover:text-[#1A110F] group-hover:shadow-lg group-hover:shadow-teal-500/30" 
+  {
+    title: "مدیریت نظرات",
+    desc: "تایید یا حذف نظرات کاربران",
+    href: "/admin/reviews",
+    icon: MessageSquare,
+    accent: "text-teal-600 dark:text-teal-500",
+    bg: "bg-teal-500/15 dark:bg-teal-500/10",
+    hover:
+      "group-hover:bg-teal-500 group-hover:text-white dark:group-hover:bg-teal-500 dark:group-hover:text-[#1A110F] group-hover:shadow-lg group-hover:shadow-teal-500/30",
   },
-  { 
-    title: "کدهای تخفیف", desc: "ساخت و مدیریت درصدهای تخفیف", href: "/admin/coupons", icon: TicketPercent, 
-    accent: "text-pink-600 dark:text-pink-500", bg: "bg-pink-500/15 dark:bg-pink-500/10", 
-    hover: "group-hover:bg-pink-500 group-hover:text-white dark:group-hover:bg-pink-500 dark:group-hover:text-[#1A110F] group-hover:shadow-lg group-hover:shadow-pink-500/30" 
+  {
+    title: "کدهای تخفیف",
+    desc: "ساخت و مدیریت درصدهای تخفیف",
+    href: "/admin/coupons",
+    icon: TicketPercent,
+    accent: "text-pink-600 dark:text-pink-500",
+    bg: "bg-pink-500/15 dark:bg-pink-500/10",
+    hover:
+      "group-hover:bg-pink-500 group-hover:text-white dark:group-hover:bg-pink-500 dark:group-hover:text-[#1A110F] group-hover:shadow-lg group-hover:shadow-pink-500/30",
   },
-  { 
-    title: "تنظیمات فوتر", desc: "توضیحات، تماس و شبکه‌های اجتماعی", href: "/admin/settings/footer", icon: AlignRight, 
-    accent: "text-[#C68E58] dark:text-[#EAE0D5]", bg: "bg-[#C68E58]/10 dark:bg-[#7D4F35]/20", 
-    hover: "group-hover:bg-[#C68E58] group-hover:text-white dark:group-hover:bg-[#C68E58] dark:group-hover:text-[#1A110F] group-hover:shadow-lg group-hover:shadow-[#C68E58]/30" 
+  {
+    title: "تنظیمات فوتر",
+    desc: "توضیحات، تماس و شبکه‌های اجتماعی",
+    href: "/admin/settings/footer",
+    icon: AlignRight,
+    accent: "text-[#C68E58] dark:text-[#EAE0D5]",
+    bg: "bg-[#C68E58]/10 dark:bg-[#7D4F35]/20",
+    hover:
+      "group-hover:bg-[#C68E58] group-hover:text-white dark:group-hover:bg-[#C68E58] dark:group-hover:text-[#1A110F] group-hover:shadow-lg group-hover:shadow-[#C68E58]/30",
   },
-  { 
-    title: "سوالات متداول (FAQ)", desc: "مدیریت گروه‌ها و پرسش و پاسخ‌ها", href: "/admin/settings/faq", icon: MessageCircleQuestion, 
-    accent: "text-[#C68E58] dark:text-[#EAE0D5]", bg: "bg-[#C68E58]/10 dark:bg-[#7D4F35]/20", 
-    hover: "group-hover:bg-[#C68E58] group-hover:text-white dark:group-hover:bg-[#C68E58] dark:group-hover:text-[#1A110F] group-hover:shadow-lg group-hover:shadow-[#C68E58]/30" 
+  {
+    title: "سوالات متداول (FAQ)",
+    desc: "مدیریت گروه‌ها و پرسش و پاسخ‌ها",
+    href: "/admin/settings/faq",
+    icon: MessageCircleQuestion,
+    accent: "text-[#C68E58] dark:text-[#EAE0D5]",
+    bg: "bg-[#C68E58]/10 dark:bg-[#7D4F35]/20",
+    hover:
+      "group-hover:bg-[#C68E58] group-hover:text-white dark:group-hover:bg-[#C68E58] dark:group-hover:text-[#1A110F] group-hover:shadow-lg group-hover:shadow-[#C68E58]/30",
   },
-  { 
-    title: "شرایط و قوانین", desc: "ویرایش بندها و قوانین سایت", href: "/admin/settings/terms", icon: Scale, 
-    accent: "text-[#C68E58] dark:text-[#EAE0D5]", bg: "bg-[#C68E58]/10 dark:bg-[#7D4F35]/20", 
-    hover: "group-hover:bg-[#C68E58] group-hover:text-white dark:group-hover:bg-[#C68E58] dark:group-hover:text-[#1A110F] group-hover:shadow-lg group-hover:shadow-[#C68E58]/30" 
+  {
+    title: "شرایط و قوانین",
+    desc: "ویرایش بندها و قوانین سایت",
+    href: "/admin/settings/terms",
+    icon: Scale,
+    accent: "text-[#C68E58] dark:text-[#EAE0D5]",
+    bg: "bg-[#C68E58]/10 dark:bg-[#7D4F35]/20",
+    hover:
+      "group-hover:bg-[#C68E58] group-hover:text-white dark:group-hover:bg-[#C68E58] dark:group-hover:text-[#1A110F] group-hover:shadow-lg group-hover:shadow-[#C68E58]/30",
   },
 ];
 
 export const RECENT_ORDERS_DATA: RecentOrder[] = [
-  { id: "NEO-8472", customer: "علی رضایی", total: "۸۵۰,۰۰۰", status: "در حال پردازش", time: "۱۰ دقیقه پیش", icon: Clock, color: "text-blue-600 bg-blue-50 dark:text-sky-400 dark:bg-sky-500/10 border-blue-200 dark:border-sky-500/20" },
-  { id: "NEO-8471", customer: "سارا احمدی", total: "۱,۲۴۰,۰۰۰", status: "تحویل شده", time: "۲ ساعت پیش", icon: CheckCircle, color: "text-emerald-600 bg-emerald-50 dark:text-emerald-400 dark:bg-emerald-500/10 border-emerald-200 dark:border-emerald-500/20" },
-  { id: "NEO-8470", customer: "محمد کریمی", total: "۳۲۰,۰۰۰", status: "مرجوعی", time: "دیروز", icon: RotateCcw, color: "text-rose-600 bg-rose-50 dark:text-rose-400 dark:bg-rose-500/10 border-rose-200 dark:border-rose-500/20" },
+  {
+    id: "NEO-8472",
+    customer: "علی رضایی",
+    total: "۸۵۰,۰۰۰",
+    status: "در حال پردازش",
+    time: "۱۰ دقیقه پیش",
+    icon: Clock,
+    color:
+      "text-blue-600 bg-blue-50 dark:text-sky-400 dark:bg-sky-500/10 border-blue-200 dark:border-sky-500/20",
+  },
+  {
+    id: "NEO-8471",
+    customer: "سارا احمدی",
+    total: "۱,۲۴۰,۰۰۰",
+    status: "تحویل شده",
+    time: "۲ ساعت پیش",
+    icon: CheckCircle,
+    color:
+      "text-emerald-600 bg-emerald-50 dark:text-emerald-400 dark:bg-emerald-500/10 border-emerald-200 dark:border-emerald-500/20",
+  },
+  {
+    id: "NEO-8470",
+    customer: "محمد کریمی",
+    total: "۳۲۰,۰۰۰",
+    status: "مرجوعی",
+    time: "دیروز",
+    icon: RotateCcw,
+    color:
+      "text-rose-600 bg-rose-50 dark:text-rose-400 dark:bg-rose-500/10 border-rose-200 dark:border-rose-500/20",
+  },
 ];
