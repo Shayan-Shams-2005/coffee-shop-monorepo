@@ -83,11 +83,9 @@ export function CategoryNode({
             className={`flex items-center gap-2 text-xs font-bold transition-all active:scale-95 ${
               level === 0 
                 ? "text-[#4A3022] dark:text-[#EAE0D5] bg-[#FCF9F5] dark:bg-[#1A0F0C] px-3 py-1.5 rounded-lg border border-[#E3C3A4]/60 dark:border-[#3c2317] hover:border-[#C68E58] dark:hover:border-[#C68E58] hover:text-[#C68E58] shadow-sm" 
-                // 🚀 Changed text color here to match the root level
                 : "text-[#4A3022] dark:text-[#EAE0D5] bg-white dark:bg-[#2A1B16] px-3 py-1.5 rounded-lg border border-transparent hover:bg-[#F5EFE6] dark:hover:bg-[#3A221C] hover:text-[#C68E58] dark:hover:text-[#FFD7BA]"
             }`}
           >
-            {/* 🚀 Removed the level === 0 condition so the icon is always colored */}
             <Package className="w-3.5 h-3.5 text-[#C68E58]" />
             {toFarsiNumber(category.productCount)} کالا
           </Link>

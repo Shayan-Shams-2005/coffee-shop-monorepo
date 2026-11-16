@@ -8,7 +8,6 @@ import { Category } from "./types";
 import { CategoryNode } from "./components/CategoryNode";
 import { CategoryModal } from "./components/CategoryModal";
 import { CategoryApi } from "./api"; 
-// 🚀 FIX: ایمپورت کردن ای‌پی‌آی محصولات برای محاسبه تعداد کالاها
 import { ProductApi } from "../products/api";
 
 export default function AdminCategoriesPage() {
@@ -30,13 +29,11 @@ export default function AdminCategoriesPage() {
     try {
       setIsLoading(true);
       
-      // 🚀 FIX: دریافت همزمان دسته‌بندی‌ها و محصولات برای شمارش دقیق
       const [categoriesData, productsData] = await Promise.all([
         CategoryApi.getAll(),
-        ProductApi.getAll().catch(() => []) // اگر محصولات لود نشد، خطایی ندهد و آرایه خالی در نظر بگیرد
+        ProductApi.getAll().catch(() => []) 
       ]);
 
-      // 🚀 FIX: محاسبه تعداد کالاها برای هر دسته‌بندی
       const productCounts: Record<string, number> = {};
       const rawProducts = Array.isArray(productsData) ? productsData : (productsData.items || []);
       
@@ -48,14 +45,12 @@ export default function AdminCategoriesPage() {
       });
       
       const mappedCats: Category[] = categoriesData.map((c: any) => {
-        const catId = c.categoryId || c.id;
         return {
-          id: catId,
-          name: c.categoryName || c.name,
-          parentId: c.parentId || null, 
-          image: CategoryApi.getImageUrl(c.mainImageUrl || c.imageUrl || ""),
-          // 🚀 FIX: جایگذاری تعداد محاسبه شده (در غیر این صورت ۰)
-          productCount: productCounts[catId] || c.productCount || 0,
+          id: c.categoryId,
+          name: c.categoryName,
+          parentId: c.parentCategoryId || null,
+          image: CategoryApi.getImageUrl(c.mainImageUrl || ""),
+          productCount: productCounts[c.categoryId] || 0,
         };
       });
       
@@ -108,10 +103,15 @@ export default function AdminCategoriesPage() {
       const formData = new FormData();
       formData.append("CategoryName", data.name);
       
+      if (data.parentId !== null) {
+        formData.append("ParentCategoryId", data.parentId.toString());
+      }
+      
       if (data.file) {
-        formData.append("File", data.file);
-      } else {
-        alert("آپلود تصویر برای ایجاد/ویرایش دسته‌بندی الزامی است.");
+        // 🚀 FIXED: The key must match the backend exactly: "File"
+        formData.append("File", data.file); 
+      } else if (!editingCategory) {
+        alert("آپلود تصویر برای ایجاد دسته‌بندی الزامی است.");
         return; 
       }
 

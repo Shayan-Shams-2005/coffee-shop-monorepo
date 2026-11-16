@@ -6,7 +6,8 @@ import {
   Bell, MessageSquare, TicketPercent,
   AlignRight,
   MessageCircleQuestion,
-  Scale // 🚀 Imported Scale icon for Terms & Conditions
+  Scale,
+  Hash // 🚀 Imported Hash icon for Product Tags
 } from "lucide-react";
 
 export interface DashboardStat {
@@ -55,6 +56,12 @@ export const QUICK_LINKS_DATA: QuickLinkItem[] = [
     accent: "text-purple-600 dark:text-purple-500", bg: "bg-purple-500/15 dark:bg-purple-500/10", 
     hover: "group-hover:bg-purple-500 group-hover:text-white dark:group-hover:bg-purple-500 dark:group-hover:text-[#1A110F] group-hover:shadow-lg group-hover:shadow-purple-500/30" 
   },
+  // 🚀 Added Tags Link
+  { 
+    title: "برچسب‌های کالا", desc: "مدیریت تگ‌ها برای گروه‌بندی محصولات", href: "/admin/tags", icon: Hash, 
+    accent: "text-cyan-600 dark:text-cyan-500", bg: "bg-cyan-500/15 dark:bg-cyan-500/10", 
+    hover: "group-hover:bg-cyan-500 group-hover:text-white dark:group-hover:bg-cyan-500 dark:group-hover:text-[#1A110F] group-hover:shadow-lg group-hover:shadow-cyan-500/30" 
+  },
   { 
     title: "برندهای فروشگاه", desc: "تعریف برندها برای فیلتر محصولات", href: "/admin/brands", icon: Tag, 
     accent: "text-indigo-600 dark:text-indigo-500", bg: "bg-indigo-500/15 dark:bg-indigo-500/10", 
@@ -100,7 +107,6 @@ export const QUICK_LINKS_DATA: QuickLinkItem[] = [
     accent: "text-[#C68E58] dark:text-[#EAE0D5]", bg: "bg-[#C68E58]/10 dark:bg-[#7D4F35]/20", 
     hover: "group-hover:bg-[#C68E58] group-hover:text-white dark:group-hover:bg-[#C68E58] dark:group-hover:text-[#1A110F] group-hover:shadow-lg group-hover:shadow-[#C68E58]/30" 
   },
-  // 🚀 Added Terms and Conditions settings button
   { 
     title: "شرایط و قوانین", desc: "ویرایش بندها و قوانین سایت", href: "/admin/settings/terms", icon: Scale, 
     accent: "text-[#C68E58] dark:text-[#EAE0D5]", bg: "bg-[#C68E58]/10 dark:bg-[#7D4F35]/20", 

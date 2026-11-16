@@ -20,8 +20,6 @@ export function CategoryModal({ isOpen, onClose, editingCategory, allCategories,
     imagePreview: "",
   });
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
-  
-  // 🚀 اضافه شدن حالت لودینگ برای دکمه سابمیت
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
@@ -52,12 +50,10 @@ export function CategoryModal({ isOpen, onClose, editingCategory, allCategories,
 
   const handleSubmitForm = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (isSubmitting) return; // جلوگیری از کلیک تکراری
+    if (isSubmitting) return; 
     
     setIsSubmitting(true);
     try {
-      console.log("شروع ارسال فرم...");
-      // منتظر می‌مانیم تا عملیات در page.tsx تمام شود
       await onSubmit({
         name: formData.name,
         parentId: formData.parentId === "null" ? null : parseInt(formData.parentId),
@@ -158,7 +154,6 @@ export function CategoryModal({ isOpen, onClose, editingCategory, allCategories,
             </div>
           </div>
 
-          {/* 🚀 دکمه سابمیت داینامیک که وضعیت لودینگ را نشان می‌دهد */}
           <button
             type="submit"
             disabled={isSubmitting}
