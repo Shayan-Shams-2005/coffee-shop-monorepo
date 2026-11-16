@@ -21,11 +21,17 @@ export function CouponModal({ isOpen, onClose, editingCoupon, onSubmit }: Coupon
 
   useEffect(() => {
     if (isOpen && editingCoupon) {
+      const starts = new Date(editingCoupon.startsAt).getTime();
+      const expires = new Date(editingCoupon.expiresAt).getTime();
+      const days = Math.max(0, Math.ceil((expires - starts) / (1000 * 60 * 60 * 24)));
+
       setFormData({
         code: editingCoupon.code,
-        discount: editingCoupon.discount,
-        expiresInDays: editingCoupon.expiresInDays,
+        discount: editingCoupon.discountPercentage,
+        expiresInDays: days,
       });
+    } else {
+      setFormData({ code: "", discount: 0, expiresInDays: 0 });
     }
   }, [isOpen, editingCoupon]);
 
